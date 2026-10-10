@@ -1,0 +1,8 @@
+# Configurações locais e segredos
+config/firebase-config.js
+.env
+.env.*
+service-account*.json
+node_modules/
+.DS_Store
+Thumbs.db

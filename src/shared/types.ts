@@ -1,0 +1,206 @@
+import type {
+  IntegrationStatus,
+  Language,
+  LocationType,
+  OrderStatus,
+  StaffRole,
+  WhatsAppMode,
+} from "./constants";
+
+/** Text stored in several languages. Portuguese is mandatory; others fall back to it. */
+export type LocalizedText = { pt: string } & Partial<Record<Exclude<Language, "pt">, string>>;
+
+export interface OptionDto {
+  id: number;
+  name: LocalizedText;
+  priceDeltaCents: number;
+  isAvailable: boolean;
+  sortOrder: number;
+}
+
+export interface OptionGroupDto {
+  id: number;
+  name: LocalizedText;
+  minSelect: number;
+  maxSelect: number;
+  sortOrder: number;
+  options: OptionDto[];
+}
+
+export interface CategoryDto {
+  id: number;
+  name: LocalizedText;
+  description: LocalizedText | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface ProductDto {
+  id: number;
+  categoryId: number;
+  name: LocalizedText;
+  description: LocalizedText | null;
+  imageUrl: string | null;
+  priceCents: number;
+  currency: string;
+  isAvailable: boolean;
+  sortOrder: number;
+  optionGroups: OptionGroupDto[];
+}
+
+export interface AdminProductDto extends ProductDto {
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminCategoryDto extends CategoryDto {
+  productCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A configurable surcharge (e.g. service charge). None exist until the hotel confirms them. */
+export interface ChargeRule {
+  id: string;
+  label: LocalizedText;
+  kind: "percent" | "fixed";
+  /** Percent value (e.g. 10 = 10%) or fixed amount in centavos. */
+  value: number;
+}
+
+/** Settings that are safe to show to guests. */
+export interface PublicSettings {
+  hotelName: string;
+  currency: string;
+  currencySymbol: string;
+  ordersEnabled: boolean;
+  ordersPausedMessage: LocalizedText | null;
+  locationTypes: LocationType[];
+  requireGuestName: boolean;
+  requireContactPhone: boolean;
+  charges: ChargeRule[];
+  whatsappContactNumber: string | null;
+  whatsappMode: WhatsAppMode;
+}
+
+/** Full settings, editable by administrators. */
+export interface AdminSettings extends Omit<PublicSettings, "whatsappContactNumber" | "whatsappMode"> {
+  whatsappNumber: string;
+}
+
+export interface PublicMenuDto {
+  settings: PublicSettings;
+  categories: CategoryDto[];
+  products: ProductDto[];
+}
+
+export interface SelectedOptionSnapshot {
+  optionId: number;
+  groupName: string;
+  name: string;
+  priceDeltaCents: number;
+}
+
+export interface OrderItemDto {
+  id: number;
+  productId: number | null;
+  productName: string;
+  unitPriceCents: number;
+  quantity: number;
+  options: SelectedOptionSnapshot[];
+  notes: string | null;
+  lineTotalCents: number;
+}
+
+export interface AppliedCharge {
+  id: string;
+  label: string;
+  amountCents: number;
+}
+
+export interface OrderDto {
+  id: number;
+  reference: string;
+  status: OrderStatus;
+  locationType: LocationType;
+  locationLabel: string;
+  guestName: string | null;
+  contactPhone: string | null;
+  notes: string | null;
+  language: Language;
+  currency: string;
+  subtotalCents: number;
+  chargesCents: number;
+  charges: AppliedCharge[];
+  totalCents: number;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItemDto[];
+}
+
+export interface OrderSummaryDto extends Omit<OrderDto, "items"> {
+  itemCount: number;
+  whatsappStatus: IntegrationStatus | null;
+}
+
+export interface StatusHistoryDto {
+  id: number;
+  fromStatus: OrderStatus | null;
+  toStatus: OrderStatus;
+  staffName: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface IntegrationEventDto {
+  id: number;
+  integration: string;
+  channel: WhatsAppMode;
+  status: IntegrationStatus;
+  attempts: number;
+  lastError: string | null;
+  updatedAt: string;
+}
+
+export interface AdminOrderDetailDto extends OrderDto {
+  history: StatusHistoryDto[];
+  integrations: IntegrationEventDto[];
+}
+
+/** What a guest sees after submitting, and when checking status later. */
+export interface GuestOrderDto {
+  reference: string;
+  publicToken: string;
+  status: OrderStatus;
+  locationType: LocationType;
+  locationLabel: string;
+  currency: string;
+  subtotalCents: number;
+  charges: AppliedCharge[];
+  totalCents: number;
+  createdAt: string;
+  updatedAt: string;
+  items: Pick<OrderItemDto, "productName" | "quantity" | "options" | "lineTotalCents" | "notes">[];
+  whatsapp: { mode: WhatsAppMode; status: IntegrationStatus | null; url: string | null };
+}
+
+export interface StaffDto {
+  id: number;
+  email: string;
+  displayName: string;
+  role: StaffRole;
+  isActive: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+}
+
+export interface OrderListResponse {
+  orders: OrderSummaryDto[];
+  counts: Record<OrderStatus, number>;
+  serverTime: string;
+}
+
+export interface ApiErrorBody {
+  error: { code: string; message: string; details?: unknown };
+}

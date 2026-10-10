@@ -1,0 +1,23 @@
+# Dependencies and build output
+node_modules/
+dist/
+
+# Local configuration and secrets — never commit
+.env
+.env.*
+!.env.example
+service-account*.json
+
+# Runtime data (database, backups, uploaded images)
+data/
+backups/
+uploads/
+
+# Test artefacts
+playwright-report/
+test-results/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db

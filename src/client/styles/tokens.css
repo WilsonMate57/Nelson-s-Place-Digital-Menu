@@ -1,0 +1,91 @@
+/*
+ * Nelson's Place design tokens.
+ * Colours and typefaces come from the original prototype. The brand palette
+ * is provisional until official brand guidelines are supplied.
+ */
+@import "@fontsource/dm-sans/latin-400.css";
+@import "@fontsource/dm-sans/latin-500.css";
+@import "@fontsource/dm-sans/latin-700.css";
+@import "@fontsource/playfair-display/latin-600.css";
+
+:root {
+  /* Brand */
+  --c-green-900: #12302a;
+  --c-green-800: #183b32;
+  --c-green-700: #254b40;
+  --c-green-100: #e4ece8;
+  --c-gold-500: #c6a66a;
+  --c-gold-700: #8a6d35; /* gold for text: 4.6:1 on paper */
+  --c-gold-100: #f5ecdb;
+
+  /* Neutrals */
+  --c-paper: #fffefa;
+  --c-cream: #f7f4ed;
+  --c-surface: #ffffff;
+  --c-ink: #202622;
+  --c-muted: #5f665f; /* 5.9:1 on paper */
+  --c-line: #e8e3d8;
+  --c-line-strong: #d4cdbd;
+
+  /* Feedback */
+  --c-danger: #a8322a;
+  --c-danger-bg: #fbeceb;
+  --c-success: #1f6b45;
+  --c-success-bg: #e6f3ec;
+  --c-warning: #8a5a00;
+  --c-warning-bg: #fdf3dc;
+  --c-info: #1d4f7a;
+  --c-info-bg: #e7f0f8;
+
+  /* Order status colours */
+  --s-pending: #b45309;
+  --s-pending-bg: #fef3c7;
+  --s-confirmed: #1d4f7a;
+  --s-confirmed-bg: #e0ecf7;
+  --s-preparing: #6b3fa0;
+  --s-preparing-bg: #efe7f8;
+  --s-ready: #1f6b45;
+  --s-ready-bg: #dff1e7;
+  --s-completed: #4b524c;
+  --s-completed-bg: #eceeec;
+  --s-cancelled: #a8322a;
+  --s-cancelled-bg: #fbeceb;
+
+  /* Typography */
+  --font-sans: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: clamp(2rem, 6vw, 3.25rem);
+  --lh-tight: 1.2;
+  --lh-normal: 1.55;
+
+  /* Spacing (4px base) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+
+  /* Shape & depth */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(18 48 42 / 0.06), 0 1px 3px rgb(18 48 42 / 0.08);
+  --shadow-md: 0 6px 18px rgb(18 48 42 / 0.1);
+  --shadow-lg: 0 18px 48px rgb(18 48 42 / 0.18);
+
+  --focus-ring: 0 0 0 3px rgb(198 166 106 / 0.6);
+  --container: 1120px;
+  --tap: 44px; /* minimum touch target */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

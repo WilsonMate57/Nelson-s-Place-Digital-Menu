@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isStaff() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.active == true;
+    }
+    // Regra conservadora para início do projecto: negar acesso por defeito.
+    // Publicar regras específicas para leitura do menu e criação de pedidos via backend.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    // O painel só deverá aceder a dados após regras de staff testadas.
+    // A criação de pedidos públicos deve passar por uma Cloud Function/API validada,
+    // não por permissões abertas de escrita nesta colecção.
+  }
+}
