@@ -42,15 +42,29 @@ export function securityHeaders(isProduction: boolean): MiddlewareHandler {
 
 export function clientIp(c: Context, trustProxy: boolean): string {
   if (trustProxy) {
-    const forwarded = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+    // Use the right-most entry: it is appended by our own proxy (nginx/Plesk).
+    // Left-most entries are supplied by the client and can be forged.
+    const forwarded = c.req.header("x-forwarded-for")?.split(",").at(-1)?.trim();
     if (forwarded) return forwarded;
+    const realIp = c.req.header("x-real-ip")?.trim();
+    if (realIp) return realIp;
   }
+  let address: string | undefined;
   try {
-    return getConnInfo(c).remote.address ?? "unknown";
+    address = getConnInfo(c).remote.address;
   } catch {
-    return "unknown"; // e.g. in-process test requests
+    // e.g. in-process test requests
   }
+  if (!address && !warnedUnknownIp && process.env.NODE_ENV === "production") {
+    warnedUnknownIp = true;
+    console.warn(
+      "Could not determine client IP addresses; all guests share one rate-limit bucket. " +
+        "Set TRUST_PROXY=true behind Plesk/nginx (see docs/PLESK.md).",
+    );
+  }
+  return address ?? "unknown";
 }
+let warnedUnknownIp = false;
 
 /** Fixed-window, in-memory rate limiter. Adequate for a single-process deployment. */
 export class RateLimiter {

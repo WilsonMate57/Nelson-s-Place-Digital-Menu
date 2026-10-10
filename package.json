@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22.9"
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
@@ -13,7 +13,7 @@
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "esbuild src/server/index.ts src/server/cli/create-admin.ts src/server/cli/seed-demo.ts src/server/cli/backup.ts --bundle --platform=node --format=esm --target=node20 --packages=external --outbase=src/server --outdir=dist/server --log-level=warning",
-    "start": "node --env-file-if-exists=.env dist/server/index.js",
+    "start": "node --env-file-if-exists=.env app.cjs",
     "admin:create": "node --env-file-if-exists=.env dist/server/cli/create-admin.js",
     "db:seed-demo": "node --env-file-if-exists=.env dist/server/cli/seed-demo.js",
     "db:backup": "node --env-file-if-exists=.env dist/server/cli/backup.js",

@@ -4,7 +4,7 @@ Target: the hotel's existing VPS with Plesk (Node.js extension), behind Plesk's 
 
 ## Requirements
 
-- Node.js **20.19+** (22 or 24 LTS recommended). `better-sqlite3` ships prebuilt binaries for Linux x64/arm64 (glibc and musl); no compiler is needed on those platforms.
+- Node.js **22.9+** (22 LTS or 24 LTS). `better-sqlite3` ships prebuilt binaries for Linux x64/arm64 (glibc and musl); no compiler is needed on those platforms.
 - A (sub)domain with a TLS certificate (Plesk → Let's Encrypt), e.g. `menu.<hotel-domain>`.
 - Persistent disk for the database (`data/`), uploads (`uploads/`) and backups.
 - Outbound HTTPS to `graph.facebook.com` only if using WhatsApp `cloud_api` mode.
@@ -22,19 +22,15 @@ Deploy (or keep on the server): `package.json`, `package-lock.json`, `node_modul
 
 ## Plesk setup
 
-1. **Domains → menu.<domain> → Node.js**:
-   - Application root: the project folder (e.g. `/var/www/vhosts/<domain>/nelsons-menu`).
-   - Document root: `dist/client` (static files are also served by the app itself; this setting is required by Plesk).
-   - Application startup file: `dist/server/index.js`.
-   - Application mode: `production`.
-2. **Custom environment variables** (from `.env.example`): at least
-   `NODE_ENV=production`, `DATABASE_PATH=<abs path>/data/nelsons-place.db`, `UPLOADS_DIR=<abs path>/uploads`, `STATIC_DIR=<abs path>/dist/client`, `PUBLIC_BASE_URL=https://menu.<domain>`, `TRUST_PROXY=true`, `WHATSAPP_MODE=link`.
-   Passenger sets `PORT` itself; do not hard-code it there.
-3. **Run a single application process.** Rate limiting is in-memory per process; with several Passenger processes the limits are multiplied (SQLite itself is safe with multiple processes). In Apache & nginx Settings → additional nginx directives: `passenger_max_pool_size 1;` (or the equivalent Passenger setting your Plesk version exposes).
-4. Enforce HTTPS (Plesk → Hosting Settings → permanent 301 redirect to HTTPS). The app sends HSTS in production and marks cookies `Secure`.
-5. Restart the app, then open `https://menu.<domain>/api/health` → `{"ok":true}`.
+Follow the step-by-step guide in **[PLESK.md](PLESK.md)**. Key points:
 
-Plain VPS without Plesk: run `npm start` under systemd (or pm2) with the same environment, behind nginx/Caddy terminating TLS and proxying to `127.0.0.1:3000` with `X-Forwarded-For`.
+- Startup file `app.cjs` (CommonJS wrapper that Passenger can `require()`); document root `plesk-public` (empty, so every request goes through the app and gets the security headers).
+- Database, uploads and backups under the subscription's `private/` folder, configured with absolute paths in the environment variables.
+- `NODE_ENV=production`, `TRUST_PROXY=true`, `PUBLIC_BASE_URL`; do not set `PORT`.
+- **Run a single application process**: rate limiting is in-memory per process.
+- HTTPS enforced; cookies are HTTPS-only in production.
+
+Plain VPS without Plesk: run `npm start` (which starts `app.cjs`) under systemd (or pm2) with the same environment, behind nginx/Caddy terminating TLS and proxying to `127.0.0.1:3000` with `X-Forwarded-For`.
 
 ## First administrator
 

@@ -165,6 +165,14 @@ describe("guest order submission", () => {
     }
     expect(statuses.slice(0, 30).every((s) => s === 400)).toBe(true);
     expect(statuses.slice(30)).toEqual([429, 429]);
+    // A forged left-most X-Forwarded-For entry does not bypass the limit:
+    // the proxy-appended (right-most) address is the one that counts.
+    const forged = await limited.request("/api/orders", {
+      method: "POST",
+      headers: { "x-forwarded-for": "1.2.3.4, 203.0.113.5" },
+      body: "{}",
+    });
+    expect(forged.status).toBe(429);
     // Another guest is unaffected.
     const other = await limited.request("/api/orders", { method: "POST", headers: { "x-forwarded-for": "203.0.113.6" }, body: "{}" });
     expect(other.status).toBe(400);
