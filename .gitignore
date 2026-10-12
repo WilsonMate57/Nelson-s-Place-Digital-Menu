@@ -21,3 +21,6 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Source photos of the printed menu (reference only, not part of the app)
+assets/images/menu/

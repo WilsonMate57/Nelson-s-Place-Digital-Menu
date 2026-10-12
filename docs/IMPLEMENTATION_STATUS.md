@@ -66,9 +66,13 @@ Coverage of the required verification list:
 
 **Not tested** (cannot be from this environment): real WhatsApp delivery (link or Cloud API), deployment on Plesk/Passenger, HTTPS/cookie `Secure` behaviour behind the proxy, Safari/iOS and low-end Android devices, real QR codes, backup restore on the server, behaviour under real network loss on phones.
 
+## Real menu (2026-10-12)
+
+The printed menu (9 photos) was transcribed to `menu-import/MENU_REVISAO.md` and `menu-import/menu-nelsons-place.json` (16 categories, 116 items, with side/size/pasta options). Import with `npm run db:import-menu`. **Not imported** (unreadable or uncertain): items hidden on page 1 (Early Bird, "Sc…", a starter, a salad), Red Bull, small water, 1 L soft drinks, juices, sparkling wine, ciders, aperitifs, digestifs, port, rum/tequila, and wines with uncertain names. Prices of imported items still need management confirmation. Corrections can be made in the dashboard.
+
 ## Pending business decisions (blockers for go-live)
 
-1. **Real menu**: categories, products, descriptions, prices (MZN), options, approved photos. Demo items must not go live.
+1. **Real menu**: partially transcribed (see above); management must confirm prices, resolve the doubts in MENU_REVISAO.md and provide dish photos.
 2. **WhatsApp number** of the hotel (international format), and whether automatic sending (Cloud API, paid per message, needs Meta Business verification) is wanted or the free link mode is enough.
 3. **Ordering scope**: rooms/apartments, restaurant tables, or both; delivery vs. collection.
 4. **Required guest data**: name and/or phone required?

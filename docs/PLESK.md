@@ -116,8 +116,12 @@ npm run admin:create -- --email gerente@example.co.mz --name "Nome Apelido"
 
 Type a password of at least 10 characters (hidden). Then sign in at `https://menu.example.co.mz/admin/`, and in the dashboard:
 
+0. **Menu**: load the transcribed hotel menu once (empty database only):
+   ```bash
+   npm run db:import-menu -- --file menu-import/menu-nelsons-place.json
+   ```
 1. **Definições**: set the hotel's WhatsApp number, rooms/tables, required fields; leave charges empty unless approved.
-2. **Menu**: create categories and products with approved prices and photos.
+2. **Menu**: review the imported items, fix pending doubts (menu-import/MENU_REVISAO.md) and add missing items and photos.
 3. **Equipa**: create one account per reception/restaurant staff member.
 
 (Without SSH: you can put the same commands in a one-off Git deployment action, using `ADMIN_PASSWORD=...` instead of the prompt — then **remove that action immediately** so the password is not stored.)
