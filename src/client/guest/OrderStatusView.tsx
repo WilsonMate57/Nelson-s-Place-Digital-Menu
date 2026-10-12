@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { OrderStatus } from "../../shared/constants";
 import { isFinalStatus } from "../../shared/order-status";
 import type { GuestOrderDto } from "../../shared/types";
 import { api, ApiError } from "../lib/api";
 import { formatTime } from "../lib/util";
 import { useGuest } from "./context";
-import { locationTypeKey, statusKey } from "./i18n";
+import { locationTypeKey, noticeTextKey, noticeTitleKey, statusKey } from "./i18n";
 
 const STEPS: OrderStatus[] = ["PENDING", "CONFIRMED", "PREPARING", "READY", "COMPLETED"];
 const POLL_MS = 15_000;
@@ -22,34 +22,65 @@ export function OrderStatusView({ token, initial, onBackToMenu, onForget }: Prop
   const { t, money, language } = useGuest();
   const [order, setOrder] = useState<GuestOrderDto | null>(initial);
   const [error, setError] = useState<"notFound" | "network" | null>(null);
+  /** Status change to announce; only set when the status changes while this page is open. */
+  const [notice, setNotice] = useState<OrderStatus | null>(null);
+  const lastStatus = useRef<OrderStatus | null>(initial?.status ?? null);
 
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
+    let stopped = false;
     const load = async () => {
+      clearTimeout(timer);
       try {
         const next = await api<GuestOrderDto>(`/api/orders/track/${encodeURIComponent(token)}`);
         if (cancelled) return;
+        if (lastStatus.current && lastStatus.current !== next.status) {
+          setNotice(next.status);
+          // Vibration works on most Android browsers; silently ignored elsewhere (e.g. iPhone).
+          if (typeof navigator.vibrate === "function") navigator.vibrate(next.status === "READY" ? [250, 120, 250, 120, 250] : [200, 100, 200]);
+        }
+        lastStatus.current = next.status;
         setOrder(next);
         setError(null);
-        if (!isFinalStatus(next.status)) timer = setTimeout(load, POLL_MS);
+        if (isFinalStatus(next.status)) stopped = true;
+        else timer = setTimeout(load, POLL_MS);
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 404) {
           setError("notFound");
+          stopped = true;
           return;
         }
         setError("network");
         timer = setTimeout(load, POLL_MS);
       }
     };
+    // Phones pause timers in background tabs: refresh as soon as the guest returns.
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !stopped) void load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     // When we already have a fresh copy from submission, wait before polling.
     timer = setTimeout(load, initial ? POLL_MS : 0);
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [token, initial]);
+
+  // The tab title shows the current status, so it is visible even in another tab.
+  const reference = order?.reference;
+  const status = order?.status;
+  useEffect(() => {
+    if (!reference || !status) return;
+    const previous = document.title;
+    document.title = `${status === "READY" ? "✅ " : ""}${t(statusKey(status))} · ${reference}`;
+    return () => {
+      document.title = previous;
+    };
+  }, [reference, status, t]);
 
   if (error === "notFound") {
     return (
@@ -83,6 +114,17 @@ export function OrderStatusView({ token, initial, onBackToMenu, onForget }: Prop
 
   return (
     <main id="main" className="container order-view">
+      {notice && (
+        <div className={`status-notice status-notice-${notice}`} role="alert">
+          <div className="status-notice-body">
+            <strong>{t(noticeTitleKey(notice))}</strong>
+            <span>{t(noticeTextKey(notice))}</span>
+          </div>
+          <button type="button" className="icon-btn" onClick={() => setNotice(null)} aria-label={t("close")}>
+            ×
+          </button>
+        </div>
+      )}
       <div className="order-card">
         <div className="order-check" aria-hidden="true">
           {cancelled ? "!" : "✓"}

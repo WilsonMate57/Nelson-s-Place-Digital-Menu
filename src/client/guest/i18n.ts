@@ -103,6 +103,18 @@ const pt = {
   status_COMPLETED: "Concluído",
   status_CANCELLED: "Cancelado",
   cancelledText: "Este pedido foi cancelado. Contacte a recepção se precisar de ajuda.",
+  noticeTitle_PENDING: "Pedido recebido",
+  noticeText_PENDING: "Aguarda confirmação da nossa equipa.",
+  noticeTitle_CONFIRMED: "Pedido confirmado",
+  noticeText_CONFIRMED: "A nossa equipa aceitou o seu pedido.",
+  noticeTitle_PREPARING: "Em preparação",
+  noticeText_PREPARING: "O seu pedido está a ser preparado.",
+  noticeTitle_READY: "O seu pedido está pronto!",
+  noticeText_READY: "Já está pronto para entrega.",
+  noticeTitle_COMPLETED: "Pedido concluído",
+  noticeText_COMPLETED: "Obrigado! Bom apetite.",
+  noticeTitle_CANCELLED: "Pedido cancelado",
+  noticeText_CANCELLED: "Contacte a recepção se precisar de ajuda.",
 };
 
 export type MessageKey = keyof typeof pt;
@@ -205,6 +217,18 @@ const en: Dictionary = {
   status_COMPLETED: "Completed",
   status_CANCELLED: "Cancelled",
   cancelledText: "This order was cancelled. Please contact reception if you need help.",
+  noticeTitle_PENDING: "Order received",
+  noticeText_PENDING: "Waiting for our team to confirm it.",
+  noticeTitle_CONFIRMED: "Order confirmed",
+  noticeText_CONFIRMED: "Our team has accepted your order.",
+  noticeTitle_PREPARING: "Being prepared",
+  noticeText_PREPARING: "Your order is being prepared.",
+  noticeTitle_READY: "Your order is ready!",
+  noticeText_READY: "It is ready to be delivered.",
+  noticeTitle_COMPLETED: "Order completed",
+  noticeText_COMPLETED: "Thank you! Enjoy your meal.",
+  noticeTitle_CANCELLED: "Order cancelled",
+  noticeText_CANCELLED: "Please contact reception if you need help.",
 };
 
 const DICTIONARIES: Partial<Record<Language, Dictionary>> = { pt, en };
@@ -226,6 +250,8 @@ export function makeTranslator(language: Language): Translate {
 }
 
 export const statusKey = (s: OrderStatus) => `status_${s}` as MessageKey;
+export const noticeTitleKey = (s: OrderStatus) => `noticeTitle_${s}` as MessageKey;
+export const noticeTextKey = (s: OrderStatus) => `noticeText_${s}` as MessageKey;
 export const locationTypeKey = (t: LocationType) => `locationType_${t}` as MessageKey;
 export const locationLabelKey = (t: LocationType) => `locationLabel_${t}` as MessageKey;
 export const locationPlaceholderKey = (t: LocationType) => `locationPlaceholder_${t}` as MessageKey;

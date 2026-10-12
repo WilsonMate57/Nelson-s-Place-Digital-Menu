@@ -96,6 +96,15 @@ test("guest places an order on a phone and staff processes it", async ({ page, b
   await staff.screenshot({ path: "test-results/screens/admin-orders-desktop.png" });
   await staff.getByRole("button", { name: "Confirmar pedido" }).click();
   await expect(staff.locator(".order-detail .badge-lg")).toHaveText("Confirmado");
+
+  // The guest's open status page announces the change without a reload (polls every 15 s).
+  const notice = page.locator(".status-notice");
+  await expect(notice).toContainText("Pedido confirmado", { timeout: 20_000 });
+  await expect(page).toHaveTitle(/Confirmado · NP-/);
+  await page.screenshot({ path: "test-results/screens/guest-status-notice-mobile.png" });
+  await notice.getByRole("button", { name: "Fechar" }).click();
+  await expect(notice).toHaveCount(0);
+
   await staff.getByRole("button", { name: "Iniciar preparação" }).click();
   await expect(staff.locator(".order-detail .badge-lg")).toHaveText("Em preparação");
   await staff.screenshot({ path: "test-results/screens/admin-detail-desktop.png" });

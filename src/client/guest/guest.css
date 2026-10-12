@@ -633,3 +633,64 @@
   font-size: var(--fs-3xl);
   color: var(--c-green-800);
 }
+
+/* ------------------------------------------- Order status change notice */
+
+.status-notice {
+  position: fixed;
+  top: calc(var(--sp-3) + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: min(520px, calc(100vw - 2 * var(--sp-4)));
+  padding: var(--sp-3) var(--sp-2) var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--c-green-800);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  animation: notice-in 0.3s var(--ease);
+}
+.status-notice .icon-btn {
+  color: inherit;
+  flex-shrink: 0;
+}
+.status-notice .icon-btn:hover {
+  background: rgb(255 255 255 / 0.15);
+}
+.status-notice-body {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  padding-top: 2px;
+}
+.status-notice-body strong {
+  font-size: var(--fs-lg);
+}
+.status-notice-body span {
+  font-size: var(--fs-sm);
+  opacity: 0.9;
+}
+.status-notice-READY {
+  background: var(--c-gold-500);
+  color: var(--c-green-900);
+  animation:
+    notice-in 0.3s var(--ease),
+    notice-pulse 1.2s ease-in-out 0.3s 3;
+}
+.status-notice-CANCELLED {
+  background: var(--c-danger);
+}
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -16px);
+  }
+}
+@keyframes notice-pulse {
+  50% {
+    box-shadow: 0 0 0 8px rgb(198 166 106 / 0.35), var(--shadow-lg);
+  }
+}

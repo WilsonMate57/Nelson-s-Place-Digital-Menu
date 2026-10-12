@@ -8,7 +8,7 @@ const PORT = Number(process.env.E2E_PORT ?? 3200);
  */
 export default defineConfig({
   testDir: "e2e",
-  timeout: 30_000,
+  timeout: 60_000,
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
@@ -24,6 +24,6 @@ export default defineConfig({
     command: "node scripts/e2e-server.mjs",
     url: `http://127.0.0.1:${PORT}/api/health`,
     reuseExistingServer: false,
-    timeout: 30_000,
+    timeout: 60_000,
   },
 });
