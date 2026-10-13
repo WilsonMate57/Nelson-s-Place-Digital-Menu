@@ -218,6 +218,8 @@ export function GuestApp() {
           lines={cart.lines}
           priced={priced}
           qrLocation={qrLocation}
+          products={menu!.products}
+          categories={menu!.categories}
           onQuantity={cart.setQuantity}
           onRemove={cart.remove}
           onMenuStale={() => void loadMenu()}

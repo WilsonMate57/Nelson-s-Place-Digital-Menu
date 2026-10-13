@@ -18,6 +18,17 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   requireGuestName: false,
   requireContactPhone: false,
   charges: [],
+  // "Encomendar". Closing time, 45-minute notice and the 50% take-away deposit
+  // were confirmed by the hotel (2026-10-13); the 07:00 opening is PROVISIONAL.
+  preOrdersEnabled: true,
+  kitchenOpen: "07:00",
+  kitchenClose: "23:00",
+  minLeadMinutes: 45,
+  maxDaysAhead: 1,
+  takeawayEnabled: true,
+  takeawayDepositPercent: 50,
+  // Take-away is only offered once the hotel sets how to pay (e.g. M-Pesa number).
+  paymentInstructions: null,
 };
 
 const KEY = "general";

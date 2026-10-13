@@ -21,6 +21,9 @@ export function CategoryEditor({ open, category, onClose, onSaved }: Props) {
   const [descEn, setDescEn] = useState("");
   const [sortOrder, setSortOrder] = useState("0");
   const [isActive, setIsActive] = useState(true);
+  const [limited, setLimited] = useState(false);
+  const [from, setFrom] = useState("07:00");
+  const [until, setUntil] = useState("11:00");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -32,6 +35,9 @@ export function CategoryEditor({ open, category, onClose, onSaved }: Props) {
     setDescEn(category?.description?.en ?? "");
     setSortOrder(String(category?.sortOrder ?? 0));
     setIsActive(category?.isActive ?? true);
+    setLimited(!!category?.availableFrom);
+    setFrom(category?.availableFrom ?? "07:00");
+    setUntil(category?.availableUntil ?? "11:00");
     setError(null);
   }, [open, category]);
 
@@ -45,6 +51,8 @@ export function CategoryEditor({ open, category, onClose, onSaved }: Props) {
       description: descPt.trim() ? { pt: descPt, en: descEn || undefined } : null,
       sortOrder: Number(sortOrder) || 0,
       isActive,
+      availableFrom: limited ? from : null,
+      availableUntil: limited ? until : null,
     };
     try {
       await api(category ? `/api/admin/categories/${category.id}` : "/api/admin/categories", { method: category ? "PUT" : "POST", body });
@@ -120,6 +128,22 @@ export function CategoryEditor({ open, category, onClose, onSaved }: Props) {
           <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
           Visível para os hóspedes
         </label>
+        <label className="check">
+          <input type="checkbox" checked={limited} onChange={(e) => setLimited(e.target.checked)} />
+          Disponível só em certo horário (ex.: pequeno-almoço de manhã)
+        </label>
+        {limited && (
+          <div className="grid-2">
+            <div className="field">
+              <label className="label" htmlFor="cat-from">Das</label>
+              <input id="cat-from" className="input" type="time" value={from} onChange={(e) => setFrom(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="cat-until">Até às</label>
+              <input id="cat-until" className="input" type="time" value={until} onChange={(e) => setUntil(e.target.value)} required />
+            </div>
+          </div>
+        )}
         {error && <p className="alert alert-error" role="alert">{error}</p>}
       </form>
     </Dialog>

@@ -721,3 +721,41 @@ body {
     padding: 0;
   }
 }
+
+/* ------------------------------------------------ Encomendas / take-away */
+
+.badge-scheduled {
+  background: var(--c-info-bg);
+  color: var(--c-info);
+}
+.order-row-flags {
+  gap: var(--sp-1);
+}
+.order-row.due {
+  border-left-color: var(--c-danger);
+  background: #fff6f5;
+}
+.scheduled-banner {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--c-info-bg);
+  color: var(--c-info);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+}
+.deposit-panel {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid #f0d58f;
+  border-radius: var(--r-md);
+  background: var(--c-warning-bg);
+}
+.deposit-panel.is-confirmed {
+  border-color: #b9dcc7;
+  background: var(--c-success-bg);
+}
+.deposit-panel .btn {
+  justify-self: start;
+}

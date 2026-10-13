@@ -38,7 +38,7 @@ Business-initiated messages must use a **pre-approved message template**, so the
    Total: {{4}}
    {{5}}
    ```
-   Variables: `{{1}}` reference, `{{2}}` location + guest name, `{{3}}` items (one line, `;`-separated), `{{4}}` total, `{{5}}` notes and dashboard link (or `-`). Wait for approval.
+   Variables: `{{1}}` reference, `{{2}}` location + guest name, `{{3}}` items (one line, `;`-separated), `{{4}}` total, `{{5}}` scheduled time, deposit, notes and dashboard link (or `-`). Wait for approval.
 5. Set the environment variables and restart:
 
    ```

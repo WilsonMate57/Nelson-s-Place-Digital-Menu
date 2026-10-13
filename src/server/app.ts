@@ -40,6 +40,8 @@ export interface AppDeps {
   /** Injected in tests to mock the WhatsApp Cloud API. */
   fetchImpl?: FetchLike;
   log?: (message: string, error?: unknown) => void;
+  /** Injected in tests to fix the clock (kitchen hours, scheduling). */
+  now?: () => Date;
 }
 
 export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): Services {
@@ -74,7 +76,7 @@ export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): S
     auditRepo,
     integrationRepo,
     auth: new AuthService(staffRepo, auditRepo, config.sessionTtlHours),
-    orders: new OrderService(db, menuRepo, ordersRepo, settingsRepo, whatsapp, log),
+    orders: new OrderService(db, menuRepo, ordersRepo, settingsRepo, whatsapp, log, deps.now),
     whatsapp,
     images: new ImageStore(config.uploadsDir),
   };

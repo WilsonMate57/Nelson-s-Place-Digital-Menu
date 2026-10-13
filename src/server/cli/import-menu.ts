@@ -28,6 +28,9 @@ export const menuFileSchema = z.object({
       key: z.string(),
       name: text,
       description: text.optional(),
+      /** Optional daily window, e.g. breakfast "07:00"–"11:00". */
+      availableFrom: z.string().optional(),
+      availableUntil: z.string().optional(),
       products: z.array(
         z.object({
           name: text,
@@ -53,7 +56,14 @@ export function importMenu(db: Db, file: MenuFile): { categories: number; produc
   db.transaction(() => {
     file.categories.forEach((category, ci) => {
       const categoryId = menu.createCategory(
-        categoryInputSchema.parse({ name: category.name, description: category.description ?? null, sortOrder: ci + 1, isActive: true }),
+        categoryInputSchema.parse({
+          name: category.name,
+          description: category.description ?? null,
+          sortOrder: ci + 1,
+          isActive: true,
+          availableFrom: category.availableFrom ?? null,
+          availableUntil: category.availableUntil ?? null,
+        }),
       );
       category.products.forEach((product, pi) => {
         const optionGroups = (product.optionGroups ?? []).map((ref) => {

@@ -7,6 +7,8 @@
         "pt": "Pequeno-almoço",
         "en": "Breakfast"
       },
+      "availableFrom": "07:00",
+      "availableUntil": "11:00",
       "products": [
         {
           "name": {

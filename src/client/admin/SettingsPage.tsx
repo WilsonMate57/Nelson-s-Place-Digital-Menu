@@ -22,6 +22,8 @@ export function SettingsPage() {
   const errorMessage = useErrorMessage();
   const [form, setForm] = useState<AdminSettingsView | null>(settings);
   const [pausedPt, setPausedPt] = useState("");
+  const [payPt, setPayPt] = useState("");
+  const [payEn, setPayEn] = useState("");
   const [pausedEn, setPausedEn] = useState("");
   const [charges, setCharges] = useState<ChargeDraft[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,8 @@ export function SettingsPage() {
     if (!settings) return;
     setForm(settings);
     setPausedPt(settings.ordersPausedMessage?.pt ?? "");
+    setPayPt(settings.paymentInstructions?.pt ?? "");
+    setPayEn(settings.paymentInstructions?.en ?? "");
     setPausedEn(settings.ordersPausedMessage?.en ?? "");
     setCharges(
       settings.charges.map((c) => ({
@@ -80,6 +84,14 @@ export function SettingsPage() {
           requireGuestName: form.requireGuestName,
           requireContactPhone: form.requireContactPhone,
           charges: parsedCharges,
+          preOrdersEnabled: form.preOrdersEnabled,
+          kitchenOpen: form.kitchenOpen,
+          kitchenClose: form.kitchenClose,
+          minLeadMinutes: form.minLeadMinutes,
+          maxDaysAhead: form.maxDaysAhead,
+          takeawayEnabled: form.takeawayEnabled,
+          takeawayDepositPercent: form.takeawayDepositPercent,
+          paymentInstructions: payPt.trim() ? { pt: payPt, en: payEn || undefined } : null,
         },
       });
       setSettings(saved);
@@ -161,6 +173,67 @@ export function SettingsPage() {
           <input type="checkbox" checked={form.requireContactPhone} onChange={(e) => set("requireContactPhone", e.target.checked)} />
           Telefone de contacto obrigatório
         </label>
+      </section>
+
+      <section className="card stack">
+        <h2 className="card-title">Horário da cozinha e encomendas</h2>
+        <div className="grid-2">
+          <div className="field">
+            <label className="label" htmlFor="st-open">Cozinha abre</label>
+            <input id="st-open" className="input" type="time" value={form.kitchenOpen} onChange={(e) => set("kitchenOpen", e.target.value)} required />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="st-close">Cozinha fecha</label>
+            <input id="st-close" className="input" type="time" value={form.kitchenClose} onChange={(e) => set("kitchenClose", e.target.value)} required />
+          </div>
+        </div>
+        <p className="hint">Fora deste horário o menu não aceita pedidos para «agora». Horários por categoria (ex.: pequeno-almoço) definem-se em Menu → Editar categoria.</p>
+        <label className="check">
+          <input type="checkbox" checked={form.preOrdersEnabled} onChange={(e) => set("preOrdersEnabled", e.target.checked)} />
+          Aceitar encomendas para mais tarde («Encomendar»)
+        </label>
+        <div className="grid-2">
+          <div className="field">
+            <label className="label" htmlFor="st-lead">Antecedência mínima (minutos)</label>
+            <input id="st-lead" className="input" type="number" min={0} max={600} value={form.minLeadMinutes} onChange={(e) => set("minLeadMinutes", Number(e.target.value) || 0)} />
+            <span className="hint">Também é quando o painel avisa para começar a preparar.</span>
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="st-days">Encomendas até</label>
+            <select id="st-days" className="select" value={form.maxDaysAhead} onChange={(e) => set("maxDaysAhead", Number(e.target.value))}>
+              <option value={0}>Só para hoje</option>
+              <option value={1}>Hoje e amanhã</option>
+              <option value={2}>Até 2 dias</option>
+              <option value={3}>Até 3 dias</option>
+              <option value={7}>Até 7 dias</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section className="card stack">
+        <h2 className="card-title">Levantar no hotel (take-away)</h2>
+        <label className="check">
+          <input type="checkbox" checked={form.takeawayEnabled} onChange={(e) => set("takeawayEnabled", e.target.checked)} />
+          Permitir pedidos para levantar no hotel
+        </label>
+        <div className="field">
+          <label className="label" htmlFor="st-deposit">Sinal a pagar ao fazer o pedido (%)</label>
+          <input id="st-deposit" className="input input-narrow" type="number" min={0} max={100} value={form.takeawayDepositPercent} onChange={(e) => set("takeawayDepositPercent", Number(e.target.value) || 0)} />
+        </div>
+        <div className="grid-2">
+          <div className="field">
+            <label className="label" htmlFor="st-pay-pt">Instruções de pagamento (PT)</label>
+            <textarea id="st-pay-pt" className="textarea" rows={3} maxLength={400} value={payPt} onChange={(e) => setPayPt(e.target.value)} placeholder="Ex.: M-Pesa 84 XXX XXXX (Nelson's Place)" />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="st-pay-en">Instruções de pagamento (EN)</label>
+            <textarea id="st-pay-en" className="textarea" rows={3} maxLength={400} value={payEn} onChange={(e) => setPayEn(e.target.value)} placeholder="Optional" />
+          </div>
+        </div>
+        {form.takeawayEnabled && !payPt.trim() && (
+          <p className="alert alert-warning small">Enquanto não houver instruções de pagamento, a opção «Levantar» não aparece aos clientes.</p>
+        )}
       </section>
 
       <section className="card stack">

@@ -1,5 +1,5 @@
 import type { OrderDto } from "../../shared/types";
-import { LOCATION_LABELS_PT } from "../../shared/whatsapp-message";
+import { describeLocation, formatOrderDateTime } from "../../shared/whatsapp-message";
 import { formatMoney } from "../../shared/money";
 
 /**
@@ -47,8 +47,16 @@ export function templateParameters(order: OrderDto, currencySymbol: string, dash
       return `${i.quantity}× ${i.productName}${opts}`;
     })
     .join("; ");
-  const location = `${LOCATION_LABELS_PT[order.locationType]} ${order.locationLabel}${order.guestName ? ` — ${order.guestName}` : ""}`;
-  const extra = [order.notes ? `Obs.: ${order.notes}` : null, dashboardUrl].filter(Boolean).join(" · ") || "-";
+  const location = `${describeLocation(order.locationType, order.locationLabel)}${order.guestName ? ` — ${order.guestName}` : ""}`;
+  const extra =
+    [
+      order.scheduledFor ? `ENCOMENDA PARA ${formatOrderDateTime(order.scheduledFor)}` : null,
+      order.depositCents > 0 ? `Sinal ${formatMoney(order.depositCents, { symbol: currencySymbol })} (${order.depositStatus === "confirmed" ? "confirmado" : "por verificar"})` : null,
+      order.notes ? `Obs.: ${order.notes}` : null,
+      dashboardUrl,
+    ]
+      .filter(Boolean)
+      .join(" · ") || "-";
   return [order.reference, location, items, formatMoney(order.totalCents, { symbol: currencySymbol }), extra].map((v) =>
     sanitiseTemplateParam(v),
   );

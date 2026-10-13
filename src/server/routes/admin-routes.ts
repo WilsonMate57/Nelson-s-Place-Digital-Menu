@@ -57,6 +57,14 @@ export function adminRoutes(s: Services) {
     return c.json(result);
   });
 
+  /** Staff confirm they received the take-away deposit (checked in M-Pesa, bank, etc.). */
+  app.post("/orders/:id/deposit/confirm", (c) => {
+    const id = parseId(c.req.param("id"));
+    const result = s.orders.confirmDeposit(id, c.get("staff").id);
+    s.auditRepo.record(c.get("staff").id, "deposit_confirmed", "order", id, { depositCents: result.depositCents, reference: result.paymentReference });
+    return c.json(result);
+  });
+
   app.get("/orders/:id/whatsapp", (c) => {
     const id = parseId(c.req.param("id"));
     const order = s.ordersRepo.get(id);

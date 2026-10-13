@@ -157,4 +157,49 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX idx_audit_created ON audit_log(created_at);
   `,
+
+  /* 2 — "Encomendar": scheduled orders, take-away with deposit, category availability windows.
+     SQLite cannot alter a CHECK constraint, so the orders table is rebuilt
+     (foreign keys are switched off around migrations by migrate()). */ `
+  CREATE TABLE orders_v2 (
+    id                    INTEGER PRIMARY KEY,
+    reference             TEXT    NOT NULL UNIQUE,
+    public_token          TEXT    NOT NULL UNIQUE,
+    idempotency_key       TEXT    NOT NULL UNIQUE,
+    request_hash          TEXT    NOT NULL,
+    status                TEXT    NOT NULL CHECK (status IN ('PENDING','CONFIRMED','PREPARING','READY','COMPLETED','CANCELLED')),
+    location_type         TEXT    NOT NULL CHECK (location_type IN ('room','table','takeaway')),
+    location_label        TEXT    NOT NULL,
+    scheduled_for         TEXT,
+    guest_name            TEXT,
+    contact_phone         TEXT,
+    notes                 TEXT,
+    language              TEXT    NOT NULL,
+    currency              TEXT    NOT NULL,
+    subtotal_cents        INTEGER NOT NULL CHECK (subtotal_cents >= 0),
+    charges_cents         INTEGER NOT NULL DEFAULT 0 CHECK (charges_cents >= 0),
+    charges_json          TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(charges_json)),
+    total_cents           INTEGER NOT NULL CHECK (total_cents = subtotal_cents + charges_cents),
+    deposit_cents         INTEGER NOT NULL DEFAULT 0 CHECK (deposit_cents >= 0 AND deposit_cents <= total_cents),
+    deposit_status        TEXT    NOT NULL DEFAULT 'not_required' CHECK (deposit_status IN ('not_required','pending','confirmed')),
+    payment_reference     TEXT,
+    deposit_confirmed_at  TEXT,
+    deposit_confirmed_by  INTEGER REFERENCES staff(id) ON DELETE SET NULL,
+    created_at            TEXT    NOT NULL DEFAULT ${NOW},
+    updated_at            TEXT    NOT NULL DEFAULT ${NOW}
+  );
+  INSERT INTO orders_v2 (id, reference, public_token, idempotency_key, request_hash, status, location_type, location_label,
+    guest_name, contact_phone, notes, language, currency, subtotal_cents, charges_cents, charges_json, total_cents, created_at, updated_at)
+  SELECT id, reference, public_token, idempotency_key, request_hash, status, location_type, location_label,
+    guest_name, contact_phone, notes, language, currency, subtotal_cents, charges_cents, charges_json, total_cents, created_at, updated_at
+  FROM orders;
+  DROP TABLE orders;
+  ALTER TABLE orders_v2 RENAME TO orders;
+  CREATE INDEX idx_orders_status_created ON orders(status, created_at);
+  CREATE INDEX idx_orders_created ON orders(created_at);
+  CREATE INDEX idx_orders_scheduled ON orders(scheduled_for) WHERE scheduled_for IS NOT NULL;
+
+  ALTER TABLE categories ADD COLUMN available_from TEXT;
+  ALTER TABLE categories ADD COLUMN available_until TEXT;
+  `,
 ];

@@ -21,8 +21,17 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export const STAFF_ROLES = ["admin", "reception", "restaurant"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
+/** On-site places where an order can be served (configurable in settings). */
 export const LOCATION_TYPES = ["room", "table"] as const;
 export type LocationType = (typeof LOCATION_TYPES)[number];
+
+/** Where an order is received: on site, or collected at the hotel (take-away). */
+export const ORDER_LOCATION_TYPES = ["room", "table", "takeaway"] as const;
+export type OrderLocationType = (typeof ORDER_LOCATION_TYPES)[number];
+
+/** Advance payment (deposit) state. Only take-away orders require one. */
+export const DEPOSIT_STATUSES = ["not_required", "pending", "confirmed"] as const;
+export type DepositStatus = (typeof DEPOSIT_STATUSES)[number];
 
 export const WHATSAPP_MODES = ["link", "cloud_api"] as const;
 export type WhatsAppMode = (typeof WHATSAPP_MODES)[number];
@@ -46,6 +55,7 @@ export const ORDER_LIMITS = {
   maxGuestNameLength: 80,
   maxLocationLabelLength: 40,
   maxPhoneLength: 20,
+  maxPaymentReferenceLength: 60,
 } as const;
 
 export const HOTEL_TIME_ZONE = "Africa/Maputo";

@@ -1,13 +1,14 @@
-import { useRef, useState } from "react";
-import { ORDER_LIMITS, type LocationType } from "../../shared/constants";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ORDER_LIMITS, type LocationType, type OrderLocationType } from "../../shared/constants";
+import { addDays, availableSlots, formatHm, hotelClock, inWindow, isKitchenOpen, type TimeWindow } from "../../shared/schedule";
 import type { OrderSubmissionInput } from "../../shared/schemas";
-import type { GuestOrderDto } from "../../shared/types";
+import type { CategoryDto, GuestOrderDto, ProductDto } from "../../shared/types";
 import { Dialog } from "../components/Dialog";
 import { ApiError, api } from "../lib/api";
 import { uuid } from "../lib/util";
 import type { CartLine, usePricedCart } from "./cart";
 import { useGuest } from "./context";
-import { locationLabelKey, locationPlaceholderKey, locationTypeKey, type MessageKey } from "./i18n";
+import { locationLabelKey, locationPlaceholderKey, locationTypeKey } from "./i18n";
 
 export interface QrLocation {
   type: LocationType | null;
@@ -20,13 +21,15 @@ interface Props {
   lines: CartLine[];
   priced: ReturnType<typeof usePricedCart>;
   qrLocation: QrLocation;
+  products: ProductDto[];
+  categories: CategoryDto[];
   onQuantity: (lineId: string, quantity: number) => void;
   onRemove: (lineId: string) => void;
   onOrderPlaced: (order: GuestOrderDto) => void;
   onMenuStale: () => void;
 }
 
-type Errors = Partial<Record<"location" | "guestName" | "contactPhone" | "form", string>>;
+type Errors = Partial<Record<"location" | "guestName" | "contactPhone" | "paymentReference" | "when" | "form", string>>;
 
 const LOCATION_DISPLAY_ORDER: LocationType[] = ["table", "room"];
 const LOCATION_PATTERN =/^[\p{L}\p{N} ._\-/#]+$/u;
@@ -147,30 +150,78 @@ function CartStep({ priced, onQuantity, onRemove, onClose, onContinue }: Props &
   );
 }
 
-function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenuStale }: Props & { onBack: () => void }) {
-  const { t, money, settings, language } = useGuest();
+function CheckoutStep({ lines, priced, qrLocation, products, categories, onBack, onOrderPlaced, onMenuStale }: Props & { onBack: () => void }) {
+  const { t, money, settings, language, text } = useGuest();
   // "Mesa" first and selected by default; a room QR code (?t=room) still pre-selects the room.
-  const allowedTypes = LOCATION_DISPLAY_ORDER.filter((type) => settings.locationTypes.includes(type));
+  const onSite = LOCATION_DISPLAY_ORDER.filter((type) => settings.locationTypes.includes(type));
+  const allowedTypes: OrderLocationType[] = settings.takeawayEnabled ? [...onSite, "takeaway"] : onSite;
   const initialType = qrLocation.type && allowedTypes.includes(qrLocation.type) ? qrLocation.type : allowedTypes[0]!;
-  const [locationType, setLocationType] = useState<LocationType>(initialType);
+  const [locationType, setLocationType] = useState<OrderLocationType>(initialType);
   const [locationLabel, setLocationLabel] = useState(qrLocation.label);
   const [guestName, setGuestName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   // Reused for retries of the same content so a lost response never creates a duplicate order.
   const attempt = useRef<{ key: string; fingerprint: string } | null>(null);
 
+  // --- When: now or later ("Encomendar") ----------------------------------
+  const now = useMinuteClock();
+  const windows = useMemo(() => {
+    const byId = new Map(categories.map((c) => [c.id, c]));
+    const result: TimeWindow[] = [];
+    for (const line of lines) {
+      const category = byId.get(products.find((p) => p.id === line.productId)?.categoryId ?? -1);
+      if (category?.availableFrom && category.availableUntil) result.push({ from: category.availableFrom, until: category.availableUntil });
+    }
+    return result;
+  }, [lines, products, categories]);
+  const kitchenOpen = isKitchenOpen(now, settings);
+  const itemsAvailableNow = windows.every((w) => inWindow(hotelClock(now).minutes, w));
+  const canOrderNow = kitchenOpen && itemsAvailableNow;
+  const slots = useMemo(() => (settings.preOrdersEnabled ? availableSlots(now, settings, windows) : []), [now, settings, windows]);
+  const [when, setWhen] = useState<"now" | "later">(canOrderNow || slots.length === 0 ? "now" : "later");
+  const days = useMemo(() => [...new Set(slots.map((s) => s.day))], [slots]);
+  const [day, setDay] = useState<string>("");
+  const [slotIso, setSlotIso] = useState<string>("");
+  const activeDay = days.includes(day) ? day : (days[0] ?? "");
+  const daySlots = slots.filter((s) => s.day === activeDay);
+  const activeSlot = daySlots.find((s) => s.iso === slotIso) ?? daySlots[0] ?? null;
+
+  const takeaway = locationType === "takeaway";
+  const later = when === "later";
+  const nameRequired = settings.requireGuestName || takeaway;
+  const phoneRequired = settings.requireContactPhone || takeaway || later;
+  const depositCents = takeaway ? Math.round((priced.totalCents * settings.takeawayDepositPercent) / 100) : 0;
+  const dayLabel = (d: string) => {
+    const today = hotelClock(now).day;
+    if (d === today) return t("today");
+    if (d === addDays(today, 1)) return t("tomorrow");
+    return new Intl.DateTimeFormat(language === "pt" ? "pt-PT" : "en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(
+      new Date(`${d}T12:00:00Z`),
+    );
+  };
+
+  const clearError = (key: keyof Errors) => {
+    if (errors[key]) setErrors(({ [key]: _removed, ...rest }) => rest);
+  };
+
   const validate = (): Errors => {
     const e: Errors = {};
-    const label = locationLabel.trim();
-    if (!label) e.location = t("errRequired");
-    else if (!LOCATION_PATTERN.test(label)) e.location = t("errLocation");
-    if (settings.requireGuestName && !guestName.trim()) e.guestName = t("errRequired");
+    if (!takeaway) {
+      const label = locationLabel.trim();
+      if (!label) e.location = t("errRequired");
+      else if (!LOCATION_PATTERN.test(label)) e.location = t("errLocation");
+    }
+    if (nameRequired && !guestName.trim()) e.guestName = t("errRequired");
     const phone = contactPhone.trim();
-    if (settings.requireContactPhone && !phone) e.contactPhone = t("errRequired");
+    if (phoneRequired && !phone) e.contactPhone = t("errRequired");
     else if (phone && !PHONE_PATTERN.test(phone)) e.contactPhone = t("errPhone");
+    if (takeaway && settings.takeawayDepositPercent > 0 && !paymentReference.trim()) e.paymentReference = t("errRequired");
+    if (!later && !canOrderNow) e.when = kitchenOpen ? t("itemsNotNow") : t("errKitchenClosed");
+    if (later && !activeSlot) e.when = t("noSlots");
     return e;
   };
 
@@ -185,7 +236,9 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
     }
     const content: Omit<OrderSubmissionInput, "idempotencyKey"> = {
       language,
-      location: { type: locationType, label: locationLabel.trim() },
+      location: { type: locationType, label: takeaway ? "" : locationLabel.trim() },
+      scheduledFor: later ? activeSlot!.iso : null,
+      paymentReference: takeaway ? paymentReference.trim() || null : null,
       guestName: guestName.trim() || null,
       contactPhone: contactPhone.trim() || null,
       notes: notes.trim() || null,
@@ -205,19 +258,25 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
       onOrderPlaced(order);
     } catch (err) {
       const e = err instanceof ApiError ? err : new ApiError(0, "UNKNOWN", "");
-      let message: MessageKey = "errGeneric";
-      if (e.isNetwork) message = "errNetwork";
+      let message: string = t("errGeneric");
+      if (e.isNetwork) message = t("errNetwork");
       else if (e.code === "MENU_CHANGED") {
-        message = "errMenuChanged";
+        message = t("errMenuChanged");
         onMenuStale();
-      } else if (e.code === "ORDERS_PAUSED") message = "errPaused";
-      else if (e.code === "RATE_LIMITED") message = "errRateLimited";
+      } else if (e.code === "ORDERS_PAUSED") message = t("errPaused");
+      else if (e.code === "RATE_LIMITED") message = t("errRateLimited");
+      else if (e.code === "KITCHEN_CLOSED") message = t("errKitchenClosed");
+      else if (e.code === "SCHEDULE_INVALID") message = t("errSchedule");
+      // Messages written for guests by the server (Portuguese).
+      else if (["ITEM_NOT_AVAILABLE_NOW", "TAKEAWAY_DISABLED", "PREORDERS_DISABLED", "CONTACT_REQUIRED", "GUEST_NAME_REQUIRED", "PAYMENT_REFERENCE_REQUIRED"].includes(e.code)) message = e.message;
       else if (e.code === "IDEMPOTENCY_KEY_REUSED") attempt.current = null;
-      setErrors({ form: t(message) });
+      setErrors({ form: message });
     } finally {
       setSubmitting(false);
     }
   };
+
+  const optional = (required: boolean) => (!required ? <span className="muted">{t("optionalSuffix")}</span> : null);
 
   return (
     <form className="checkout" onSubmit={submit} noValidate>
@@ -226,9 +285,9 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
       </button>
 
       <fieldset className="checkout-section">
-        <legend className="label">{t("where")}</legend>
+        <legend className="label">{t("howToReceive")}</legend>
         {allowedTypes.length > 1 && (
-          <div className="segmented" role="radiogroup" aria-label={t("where")}>
+          <div className="segmented" role="radiogroup" aria-label={t("howToReceive")}>
             {allowedTypes.map((type) => (
               <label key={type} className={type === locationType ? "segment active" : "segment"}>
                 <input type="radio" name="locationType" value={type} checked={type === locationType} onChange={() => setLocationType(type)} />
@@ -237,42 +296,115 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
             ))}
           </div>
         )}
-        <div className="field">
-          <label className="label" htmlFor="location-label">
-            {t(locationLabelKey(locationType))}
-          </label>
-          <input
-            id="location-label"
-            className="input"
-            inputMode="text"
-            autoComplete="off"
-            maxLength={ORDER_LIMITS.maxLocationLabelLength}
-            placeholder={t(locationPlaceholderKey(locationType))}
-            value={locationLabel}
-            onChange={(e) => {
-              setLocationLabel(e.target.value);
-              if (errors.location) setErrors(({ location: _l, ...rest }) => rest);
-            }}
-            aria-invalid={errors.location ? true : undefined}
-            aria-describedby="location-help"
-          />
-          {errors.location ? (
-            <span id="location-help" className="field-error">
-              {errors.location}
-            </span>
-          ) : (
-            qrLocation.label && (
-              <span id="location-help" className="hint">
-                {t("locationFromQr")}
+        {takeaway ? (
+          <p className="hint">{t("takeawayHint")}</p>
+        ) : (
+          <div className="field">
+            <label className="label" htmlFor="location-label">
+              {t(locationLabelKey(locationType))}
+            </label>
+            <input
+              id="location-label"
+              className="input"
+              inputMode="text"
+              autoComplete="off"
+              maxLength={ORDER_LIMITS.maxLocationLabelLength}
+              placeholder={t(locationPlaceholderKey(locationType))}
+              value={locationLabel}
+              onChange={(e) => {
+                setLocationLabel(e.target.value);
+                clearError("location");
+              }}
+              aria-invalid={errors.location ? true : undefined}
+              aria-describedby="location-help"
+            />
+            {errors.location ? (
+              <span id="location-help" className="field-error">
+                {errors.location}
               </span>
-            )
-          )}
-        </div>
+            ) : (
+              qrLocation.label && (
+                <span id="location-help" className="hint">
+                  {t("locationFromQr")}
+                </span>
+              )
+            )}
+          </div>
+        )}
       </fieldset>
+
+      {(settings.preOrdersEnabled || !canOrderNow) && (
+        <fieldset className="checkout-section">
+          <legend className="label">{t("when")}</legend>
+          {settings.preOrdersEnabled && (
+            <div className="segmented" role="radiogroup" aria-label={t("when")}>
+              {(["now", "later"] as const).map((option) => (
+                <label key={option} className={option === when ? "segment active" : "segment"}>
+                  <input
+                    type="radio"
+                    name="when"
+                    value={option}
+                    checked={option === when}
+                    onChange={() => {
+                      setWhen(option);
+                      clearError("when");
+                    }}
+                  />
+                  {option === "now" ? t("whenNow") : t("whenLater")}
+                </label>
+              ))}
+            </div>
+          )}
+          {!later && !canOrderNow && (
+            <p className="alert alert-warning small">
+              {kitchenOpen ? t("itemsNotNow") : t("kitchenClosedNow", { open: settings.kitchenOpen, close: settings.kitchenClose })}
+            </p>
+          )}
+          {later &&
+            (slots.length === 0 ? (
+              <p className="alert alert-warning small">{t("noSlots")}</p>
+            ) : (
+              <div className="schedule-pickers">
+                <div className="field">
+                  <label className="label" htmlFor="schedule-day">
+                    {t("scheduleDay")}
+                  </label>
+                  <select id="schedule-day" className="select" value={activeDay} onChange={(e) => setDay(e.target.value)}>
+                    {days.map((d) => (
+                      <option key={d} value={d}>
+                        {dayLabel(d)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label className="label" htmlFor="schedule-time">
+                    {t("scheduleTime")}
+                  </label>
+                  <select id="schedule-time" className="select" value={activeSlot?.iso ?? ""} onChange={(e) => setSlotIso(e.target.value)}>
+                    {daySlots.map((s) => (
+                      <option key={s.iso} value={s.iso}>
+                        {formatHm(s.minutes)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="hint schedule-hint">
+                  {t("scheduleHint", { min: settings.minLeadMinutes, open: settings.kitchenOpen, close: settings.kitchenClose })}
+                </p>
+              </div>
+            ))}
+          {errors.when && (
+            <span className="field-error" role="alert">
+              {errors.when}
+            </span>
+          )}
+        </fieldset>
+      )}
 
       <div className="field">
         <label className="label" htmlFor="guest-name">
-          {t("guestName")} {!settings.requireGuestName && <span className="muted">{t("optionalSuffix")}</span>}
+          {t("guestName")} {optional(nameRequired)}
         </label>
         <input
           id="guest-name"
@@ -282,7 +414,7 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
           value={guestName}
           onChange={(e) => {
             setGuestName(e.target.value);
-            if (errors.guestName) setErrors(({ guestName: _g, ...rest }) => rest);
+            clearError("guestName");
           }}
           aria-invalid={errors.guestName ? true : undefined}
         />
@@ -291,7 +423,7 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
 
       <div className="field">
         <label className="label" htmlFor="contact-phone">
-          {t("contactPhone")} {!settings.requireContactPhone && <span className="muted">{t("optionalSuffix")}</span>}
+          {t("contactPhone")} {optional(phoneRequired)}
         </label>
         <input
           id="contact-phone"
@@ -304,12 +436,41 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
           value={contactPhone}
           onChange={(e) => {
             setContactPhone(e.target.value);
-            if (errors.contactPhone) setErrors(({ contactPhone: _p, ...rest }) => rest);
+            clearError("contactPhone");
           }}
           aria-invalid={errors.contactPhone ? true : undefined}
         />
         {errors.contactPhone && <span className="field-error">{errors.contactPhone}</span>}
       </div>
+
+      {takeaway && depositCents > 0 && (
+        <section className="deposit-box" aria-labelledby="deposit-title">
+          <h3 id="deposit-title" className="label">
+            {t("depositTitle", { pct: settings.takeawayDepositPercent, amount: money(depositCents) })}
+          </h3>
+          <p className="small">{t("depositText")}</p>
+          {settings.paymentInstructions && <p className="payment-instructions">{text(settings.paymentInstructions)}</p>}
+          <div className="field">
+            <label className="label" htmlFor="payment-reference">
+              {t("paymentReference")}
+            </label>
+            <input
+              id="payment-reference"
+              className="input"
+              autoComplete="off"
+              maxLength={ORDER_LIMITS.maxPaymentReferenceLength}
+              placeholder={t("paymentReferencePlaceholder")}
+              value={paymentReference}
+              onChange={(e) => {
+                setPaymentReference(e.target.value);
+                clearError("paymentReference");
+              }}
+              aria-invalid={errors.paymentReference ? true : undefined}
+            />
+            {errors.paymentReference && <span className="field-error">{errors.paymentReference}</span>}
+          </div>
+        </section>
+      )}
 
       <div className="field">
         <label className="label" htmlFor="order-notes">
@@ -330,6 +491,13 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
         <h3 id="review-title" className="label">
           {t("review")}
         </h3>
+        {later && activeSlot && (
+          <p className="small">
+            <strong>
+              {t("scheduledFor")}: {dayLabel(activeSlot.day)}, {formatHm(activeSlot.minutes)}
+            </strong>
+          </p>
+        )}
         <ul className="review-lines">
           {priced.views.map(({ line, priced: p }) =>
             p ? (
@@ -344,6 +512,12 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
           )}
         </ul>
         <Totals priced={priced} />
+        {depositCents > 0 && (
+          <div className="row-between small">
+            <span>{t("deposit")}</span>
+            <strong>{money(depositCents)}</strong>
+          </div>
+        )}
       </section>
 
       {errors.form && (
@@ -358,4 +532,14 @@ function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenu
       </button>
     </form>
   );
+}
+
+/** Current time, refreshed every minute so the offered time slots stay valid. */
+function useMinuteClock(): Date {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
 }

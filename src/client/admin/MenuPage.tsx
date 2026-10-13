@@ -118,6 +118,11 @@ export function MenuPage() {
                   {category.name.pt}
                 </h2>
                 {!category.isActive && <span className="badge badge-warning">Oculta aos hóspedes</span>}
+                {category.availableFrom && (
+                  <span className="badge badge-scheduled">
+                    🕒 {category.availableFrom}–{category.availableUntil}
+                  </span>
+                )}
                 <span className="small muted">{category.productCount} produto(s)</span>
               </div>
               {isAdmin && (

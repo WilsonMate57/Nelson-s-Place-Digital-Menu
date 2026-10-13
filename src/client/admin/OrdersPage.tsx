@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ORDER_STATUSES, type OrderStatus } from "../../shared/constants";
 import { formatMoney } from "../../shared/money";
 import type { OrderListResponse, OrderSummaryDto } from "../../shared/types";
-import { LOCATION_LABELS_PT } from "../../shared/whatsapp-message";
+import { describeLocation } from "../../shared/whatsapp-message";
 import { useToast } from "../components/Toasts";
 import { api } from "../lib/api";
 import { cx, formatDateTime, formatTime, storage, timeAgo } from "../lib/util";
@@ -15,9 +15,10 @@ import { useSession } from "./session";
 const POLL_MS = 10_000;
 const SOUND_KEY = "np.admin.sound";
 
-type Filter = OrderStatus | "ACTIVE" | "ALL";
+type Filter = OrderStatus | "ACTIVE" | "ALL" | "SCHEDULED";
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "ACTIVE", label: "Em curso" },
+  { value: "SCHEDULED", label: "Encomendas" },
   ...ORDER_STATUSES.map((s) => ({ value: s as Filter, label: STATUS_LABEL[s] })),
   { value: "ALL", label: "Todos" },
 ];
@@ -57,6 +58,8 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
   const [sound, setSound] = useState<boolean>(() => storage.get<boolean>(SOUND_KEY) ?? false);
   const [freshIds, setFreshIds] = useState<Set<number>>(new Set());
   const knownPending = useRef<Set<number> | null>(null);
+  const notifiedDue = useRef<Set<number>>(new Set());
+  const [dueIds, setDueIds] = useState<Set<number>>(new Set());
   const symbol = settings?.currencySymbol ?? "MT";
 
   const load = async () => {
@@ -86,12 +89,35 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
           const arrived = pending.orders.filter((o) => !known.has(o.id));
           if (arrived.length) {
             setFreshIds((s) => new Set([...s, ...arrived.map((o) => o.id)]));
-            toast(arrived.length === 1 ? `Novo pedido ${arrived[0]!.reference} — ${LOCATION_LABELS_PT[arrived[0]!.locationType]} ${arrived[0]!.locationLabel}` : `${arrived.length} novos pedidos`);
+            toast(
+              arrived.length === 1
+                ? `${arrived[0]!.scheduledFor ? "Nova encomenda" : "Novo pedido"} ${arrived[0]!.reference} — ${describeLocation(arrived[0]!.locationType, arrived[0]!.locationLabel)}`
+                : `${arrived.length} novos pedidos`,
+            );
             if (storage.get<boolean>(SOUND_KEY)) playChime();
           }
         }
         knownPending.current = ids;
         document.title = ids.size > 0 ? `(${ids.size}) Pedidos | Nelson's Place` : "Painel | Nelson's Place";
+
+        // Scheduled orders: alert once when it is time to start preparing them.
+        const scheduled = await api<OrderListResponse>("/api/admin/orders?status=SCHEDULED&limit=200");
+        const leadMs = (settings?.minLeadMinutes ?? 45) * 60_000;
+        const due = scheduled.orders.filter(
+          (o) => o.scheduledFor && (o.status === "PENDING" || o.status === "CONFIRMED") && new Date(o.scheduledFor).getTime() - leadMs <= Date.now(),
+        );
+        setDueIds(new Set(due.map((o) => o.id)));
+        const newlyDue = due.filter((o) => !notifiedDue.current.has(o.id));
+        for (const o of newlyDue) notifiedDue.current.add(o.id);
+        if (newlyDue.length) {
+          const o = newlyDue[0]!;
+          toast(
+            newlyDue.length === 1
+              ? `Começar a preparar: ${describeLocation(o.locationType, o.locationLabel)} — para as ${formatTime(o.scheduledFor!)}`
+              : `${newlyDue.length} encomendas para começar a preparar`,
+          );
+          if (storage.get<boolean>(SOUND_KEY)) playChime();
+        }
       } catch {
         /* the main list shows connection errors */
       }
@@ -133,7 +159,9 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
           <div className="filter-tabs" role="tablist" aria-label="Filtrar por estado">
             {FILTERS.map((f) => {
               const count =
-                f.value === "ACTIVE"
+                f.value === "SCHEDULED"
+                  ? (data?.scheduledCount ?? null)
+                  : f.value === "ACTIVE"
                   ? data && (data.counts.PENDING + data.counts.CONFIRMED + data.counts.PREPARING + data.counts.READY)
                   : f.value !== "ALL" && data
                     ? data.counts[f.value]
@@ -203,14 +231,12 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
                 <li key={o.id}>
                   <button
                     type="button"
-                    className={cx("order-row", o.id === selectedId && "selected", freshIds.has(o.id) && "fresh", o.status === "PENDING" && "pending")}
+                    className={cx("order-row", o.id === selectedId && "selected", freshIds.has(o.id) && "fresh", o.status === "PENDING" && "pending", dueIds.has(o.id) && "due")}
                     onClick={() => open(o)}
                     aria-current={o.id === selectedId ? "true" : undefined}
                   >
                     <div className="row-between">
-                      <strong className="order-row-location">
-                        {LOCATION_LABELS_PT[o.locationType]} {o.locationLabel}
-                      </strong>
+                      <strong className="order-row-location">{describeLocation(o.locationType, o.locationLabel)}</strong>
                       <span className={`badge status-${o.status}`}>{STATUS_LABEL[o.status]}</span>
                     </div>
                     <div className="row-between small muted">
@@ -225,6 +251,13 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
                       </span>
                       {wa && <span className={`badge badge-${wa.tone}`}>WhatsApp: {wa.label}</span>}
                     </div>
+                    {(o.scheduledFor || o.depositStatus === "pending" || dueIds.has(o.id)) && (
+                      <div className="row wrap order-row-flags">
+                        {o.scheduledFor && <span className="badge badge-scheduled">🕒 Para {formatDateTime(o.scheduledFor)}</span>}
+                        {dueIds.has(o.id) && <span className="badge badge-danger">Começar a preparar</span>}
+                        {o.depositStatus === "pending" && <span className="badge badge-warning">Sinal por verificar</span>}
+                      </div>
+                    )}
                   </button>
                 </li>
               );

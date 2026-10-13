@@ -22,7 +22,12 @@ export interface TestContext {
   menu: () => Promise<PublicMenuDto>;
 }
 
-export async function makeTestContext(options: { env?: Record<string, string>; fetchImpl?: FetchLike } = {}): Promise<TestContext> {
+/** Default test clock: 2026-10-13 12:00 in Maputo (kitchen open, lunch time). */
+export const TEST_NOW = new Date("2026-10-13T10:00:00.000Z");
+
+export async function makeTestContext(
+  options: { env?: Record<string, string>; fetchImpl?: FetchLike; now?: () => Date } = {},
+): Promise<TestContext> {
   const config = loadConfig({
     NODE_ENV: "test",
     DATABASE_PATH: ":memory:",
@@ -32,7 +37,7 @@ export async function makeTestContext(options: { env?: Record<string, string>; f
   });
   const db = openDatabase(":memory:");
   const logs: string[] = [];
-  const deps = { fetchImpl: options.fetchImpl, log: (m: string) => void logs.push(m) };
+  const deps = { fetchImpl: options.fetchImpl, log: (m: string) => void logs.push(m), now: options.now ?? (() => TEST_NOW) };
   const services = createServices(config, db, deps);
   const app = createApp(services, deps);
 

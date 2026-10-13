@@ -1,5 +1,5 @@
 import { HOTEL_TIME_ZONE } from "./constants";
-import type { LocationType, OrderStatus } from "./constants";
+import type { OrderLocationType, OrderStatus } from "./constants";
 import { formatMoney } from "./money";
 import type { OrderDto } from "./types";
 
@@ -17,10 +17,16 @@ export const STATUS_LABELS_PT: Record<OrderStatus, string> = {
   CANCELLED: "Cancelado",
 };
 
-export const LOCATION_LABELS_PT: Record<LocationType, string> = {
+export const LOCATION_LABELS_PT: Record<OrderLocationType, string> = {
   room: "Apartamento",
   table: "Mesa",
+  takeaway: "Levantar no hotel",
 };
+
+/** "Mesa 4", "Apartamento 12" or "Levantar no hotel". */
+export function describeLocation(type: OrderLocationType, label: string): string {
+  return type === "takeaway" ? LOCATION_LABELS_PT.takeaway : `${LOCATION_LABELS_PT[type]} ${label}`;
+}
 
 export interface MessageContext {
   hotelName: string;
@@ -48,7 +54,12 @@ export function buildOrderMessage(order: OrderDto, ctx: MessageContext): string 
   lines.push(`*${ctx.hotelName} — Novo pedido*`);
   lines.push(`Ref.: *${order.reference}*`);
   lines.push(`Data: ${formatOrderDateTime(order.createdAt, ctx.timeZone)}`);
-  lines.push(`${LOCATION_LABELS_PT[order.locationType]}: ${order.locationLabel}`);
+  if (order.scheduledFor) lines.push(`*Encomenda para: ${formatOrderDateTime(order.scheduledFor, ctx.timeZone)}*`);
+  lines.push(
+    order.locationType === "takeaway"
+      ? `Entrega: ${LOCATION_LABELS_PT.takeaway}`
+      : `${LOCATION_LABELS_PT[order.locationType]}: ${order.locationLabel}`,
+  );
   if (order.guestName) lines.push(`Hóspede: ${order.guestName}`);
   if (order.contactPhone) lines.push(`Contacto: ${order.contactPhone}`);
   lines.push(`Estado: ${STATUS_LABELS_PT[order.status]}`);
@@ -67,6 +78,10 @@ export function buildOrderMessage(order: OrderDto, ctx: MessageContext): string 
   lines.push(`Subtotal: ${money(order.subtotalCents)}`);
   for (const charge of order.charges) lines.push(`${charge.label}: ${money(charge.amountCents)}`);
   lines.push(`*Total: ${money(order.totalCents)}*`);
+  if (order.depositCents > 0) {
+    const state = order.depositStatus === "confirmed" ? "confirmado" : "por verificar";
+    lines.push(`Sinal: ${money(order.depositCents)} (${state})${order.paymentReference ? ` — ref. ${order.paymentReference}` : ""}`);
+  }
 
   if (order.notes) {
     lines.push("");

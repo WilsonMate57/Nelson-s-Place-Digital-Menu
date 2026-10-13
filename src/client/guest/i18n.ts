@@ -1,4 +1,4 @@
-import type { Language, LocationType, OrderStatus } from "../../shared/constants";
+import type { Language, LocationType, OrderLocationType, OrderStatus } from "../../shared/constants";
 
 /**
  * Guest interface strings. Portuguese (Mozambique) is the reference
@@ -106,6 +106,33 @@ const pt = {
   status_COMPLETED: "Concluído",
   status_CANCELLED: "Cancelado",
   cancelledText: "Este pedido foi cancelado. Contacte a recepção se precisar de ajuda.",
+  howToReceive: "Como quer receber?",
+  locationType_takeaway: "Levantar",
+  takeawayHint: "Levante o seu pedido na recepção do hotel.",
+  receive: "Entrega",
+  takeawayLong: "Levantar no hotel",
+  when: "Quando?",
+  whenNow: "Agora",
+  whenLater: "Mais tarde",
+  scheduleDay: "Dia",
+  scheduleTime: "Hora",
+  today: "Hoje",
+  tomorrow: "Amanhã",
+  scheduleHint: "Pelo menos {min} min de antecedência. Cozinha aberta das {open} às {close}.",
+  noSlots: "Não há horários disponíveis para estes artigos.",
+  kitchenClosedNow: "A cozinha está fechada agora (funciona das {open} às {close}). Escolha uma hora para mais tarde.",
+  itemsNotNow: "Alguns artigos só estão disponíveis noutro horário (ex.: pequeno-almoço só de manhã). Escolha «Mais tarde» ou remova-os.",
+  depositTitle: "Sinal de {pct}% a pagar agora: {amount}",
+  depositText: "Para levantar no hotel, pague o sinal e indique a referência do pagamento. O pedido é confirmado depois de verificarmos o pagamento.",
+  paymentReference: "Referência do pagamento",
+  paymentReferencePlaceholder: "Ex.: código da transacção M-Pesa",
+  scheduledFor: "Encomenda para",
+  deposit: "Sinal",
+  depositPending: "a aguardar verificação",
+  depositConfirmed: "confirmado",
+  availableBetween: "Disponível das {from} às {until}",
+  errKitchenClosed: "A cozinha está fechada. Escolha uma hora para mais tarde.",
+  errSchedule: "A hora escolhida já não está disponível. Escolha outra.",
   noticeTitle_PENDING: "Pedido recebido",
   noticeText_PENDING: "Aguarda confirmação da nossa equipa.",
   noticeTitle_CONFIRMED: "Pedido confirmado",
@@ -223,6 +250,33 @@ const en: Dictionary = {
   status_COMPLETED: "Completed",
   status_CANCELLED: "Cancelled",
   cancelledText: "This order was cancelled. Please contact reception if you need help.",
+  howToReceive: "How would you like it?",
+  locationType_takeaway: "Take-away",
+  takeawayHint: "Collect your order at the hotel reception.",
+  receive: "Delivery",
+  takeawayLong: "Collect at the hotel",
+  when: "When?",
+  whenNow: "Now",
+  whenLater: "Later",
+  scheduleDay: "Day",
+  scheduleTime: "Time",
+  today: "Today",
+  tomorrow: "Tomorrow",
+  scheduleHint: "At least {min} min notice. Kitchen open {open}–{close}.",
+  noSlots: "There are no available times for these items.",
+  kitchenClosedNow: "The kitchen is closed now (open {open}–{close}). Choose a later time.",
+  itemsNotNow: "Some items are only available at other times (e.g. breakfast in the morning). Choose “Later” or remove them.",
+  depositTitle: "{pct}% deposit to pay now: {amount}",
+  depositText: "To collect at the hotel, pay the deposit and enter the payment reference. Your order is confirmed once we have checked the payment.",
+  paymentReference: "Payment reference",
+  paymentReferencePlaceholder: "E.g. M-Pesa transaction code",
+  scheduledFor: "Scheduled for",
+  deposit: "Deposit",
+  depositPending: "awaiting verification",
+  depositConfirmed: "confirmed",
+  availableBetween: "Available {from}–{until}",
+  errKitchenClosed: "The kitchen is closed. Choose a later time.",
+  errSchedule: "The chosen time is no longer available. Please choose another.",
   noticeTitle_PENDING: "Order received",
   noticeText_PENDING: "Waiting for our team to confirm it.",
   noticeTitle_CONFIRMED: "Order confirmed",
@@ -258,6 +312,6 @@ export function makeTranslator(language: Language): Translate {
 export const statusKey = (s: OrderStatus) => `status_${s}` as MessageKey;
 export const noticeTitleKey = (s: OrderStatus) => `noticeTitle_${s}` as MessageKey;
 export const noticeTextKey = (s: OrderStatus) => `noticeText_${s}` as MessageKey;
-export const locationTypeKey = (t: LocationType) => `locationType_${t}` as MessageKey;
+export const locationTypeKey = (t: OrderLocationType) => `locationType_${t}` as MessageKey;
 export const locationLabelKey = (t: LocationType) => `locationLabel_${t}` as MessageKey;
 export const locationPlaceholderKey = (t: LocationType) => `locationPlaceholder_${t}` as MessageKey;

@@ -139,6 +139,89 @@ test("checkout defaults to Mesa when there is no QR location", async ({ page }) 
   await page.screenshot({ path: "test-results/screens/guest-checkout-table-mobile.png" });
 });
 
+async function openCheckoutWithSoup(page: Page) {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Sopa do dia/ }).click();
+  await page.getByRole("dialog").getByRole("button", { name: /Adicionar ao pedido/ }).click();
+  await page.getByRole("button", { name: /Ver pedido/ }).click();
+  await page.getByRole("dialog", { name: "O seu pedido" }).getByRole("button", { name: "Continuar" }).click();
+  return page.getByRole("dialog", { name: "Confirmar pedido" });
+}
+
+test("guest schedules an order for later (Encomendar) and staff see it under Encomendas", async ({ page, browser }) => {
+  const checkout = await openCheckoutWithSoup(page);
+  await checkout.locator(".segment", { hasText: "Mais tarde" }).click();
+  await expect(checkout.getByLabel("Dia")).toBeVisible();
+  const time = checkout.getByLabel("Hora");
+  await expect(time).toBeVisible();
+  const chosen = (await time.locator("option").first().textContent())!.trim();
+  await checkout.getByLabel("Número da mesa").fill("7");
+  await checkout.getByRole("button", { name: /Enviar pedido/ }).click();
+  // A phone number is required for scheduled orders.
+  await expect(checkout.getByText("Campo obrigatório.")).toBeVisible();
+  await checkout.getByLabel(/Telefone de contacto/).fill("+258 84 123 4567");
+  await page.screenshot({ path: "test-results/screens/guest-schedule-mobile.png" });
+  await checkout.getByRole("button", { name: /Enviar pedido/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Pedido recebido" })).toBeVisible();
+  await expect(page.locator(".order-meta")).toContainText("Encomenda para");
+  await expect(page.locator(".order-meta")).toContainText(chosen);
+  const reference = (await page.locator(".order-ref").textContent())!.trim();
+
+  const staffContext = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const staff = await staffContext.newPage();
+  await adminLogin(staff);
+  await staff.getByRole("tab", { name: /Encomendas/ }).click();
+  const row = staff.getByRole("button", { name: new RegExp(reference) });
+  await expect(row).toContainText("Para");
+  await row.click();
+  await expect(staff.locator(".scheduled-banner")).toContainText("Encomenda para");
+  await staffContext.close();
+});
+
+test("take-away asks for the 50% deposit and staff must confirm it before the order", async ({ page, browser }) => {
+  const checkout = await openCheckoutWithSoup(page);
+  await checkout.locator(".segment", { hasText: "Levantar" }).click();
+  await expect(checkout.getByLabel("Número da mesa")).toHaveCount(0);
+  await expect(checkout.locator(".deposit-box")).toContainText("Sinal de 50% a pagar agora: 125 MT");
+  await expect(checkout.locator(".deposit-box")).toContainText("M-Pesa 84 000 0000 (teste)");
+
+  await checkout.getByRole("button", { name: /Enviar pedido/ }).click();
+  await expect(checkout.getByText("Campo obrigatório.")).toHaveCount(3); // name, phone, payment reference
+  await checkout.getByLabel(/^Nome/).fill("Carlos Teste");
+  await checkout.getByLabel(/Telefone de contacto/).fill("+258 84 765 4321");
+  await checkout.getByLabel("Referência do pagamento").fill("MP261013.TESTE.01");
+  await page.screenshot({ path: "test-results/screens/guest-takeaway-mobile.png" });
+  await checkout.getByRole("button", { name: /Enviar pedido/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Pedido recebido" })).toBeVisible();
+  await expect(page.locator(".order-meta")).toContainText("Levantar no hotel");
+  await expect(page.getByText(/Sinal 125 MT: a aguardar verificação/)).toBeVisible();
+  const reference = (await page.locator(".order-ref").textContent())!.trim();
+
+  const staffContext = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const staff = await staffContext.newPage();
+  await adminLogin(staff);
+  const row = staff.getByRole("button", { name: new RegExp(reference) });
+  await expect(row).toContainText("Sinal por verificar");
+  await row.click();
+  const confirmOrder = staff.getByRole("button", { name: "Confirmar pedido" });
+  await expect(confirmOrder).toBeDisabled();
+  await expect(staff.locator(".deposit-panel")).toContainText("MP261013.TESTE.01");
+  await staff.screenshot({ path: "test-results/screens/admin-deposit-desktop.png" });
+  staff.once("dialog", (d) => void d.accept());
+  await staff.getByRole("button", { name: "Sinal recebido" }).click();
+  await expect(staff.locator(".deposit-panel")).toContainText("Recebido");
+  await expect(confirmOrder).toBeEnabled();
+  await confirmOrder.click();
+  await expect(staff.locator(".order-detail .badge-lg")).toHaveText("Confirmado");
+  await staffContext.close();
+
+  await page.reload();
+  await expect(page.getByText(/Sinal 125 MT: confirmado/)).toBeVisible();
+});
+
 test("sold-out products cannot be ordered", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("tab", { name: "Bebidas" }).click();

@@ -17,13 +17,26 @@ export function openDatabase(path: string): Db {
   return db;
 }
 
+/**
+ * Applies pending migrations, each in its own transaction. Foreign keys are
+ * switched off during a migration (as SQLite's documented table-rebuild
+ * procedure requires, so dropping a rebuilt table does not cascade) and the
+ * result is checked for broken references before committing.
+ */
 export function migrate(db: Db): void {
   const current = db.pragma("user_version", { simple: true }) as number;
   for (let version = current; version < MIGRATIONS.length; version++) {
-    db.transaction(() => {
-      db.exec(MIGRATIONS[version]!);
-      db.pragma(`user_version = ${version + 1}`);
-    })();
+    db.pragma("foreign_keys = OFF");
+    try {
+      db.transaction(() => {
+        db.exec(MIGRATIONS[version]!);
+        const problems = db.pragma("foreign_key_check") as unknown[];
+        if (problems.length > 0) throw new Error(`Migration ${version + 1} broke ${problems.length} foreign key reference(s)`);
+        db.pragma(`user_version = ${version + 1}`);
+      })();
+    } finally {
+      db.pragma("foreign_keys = ON");
+    }
   }
 }
 

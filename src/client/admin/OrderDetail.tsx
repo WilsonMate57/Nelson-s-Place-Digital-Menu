@@ -3,7 +3,7 @@ import type { OrderStatus, WhatsAppMode } from "../../shared/constants";
 import { formatMoney } from "../../shared/money";
 import { allowedTransitions } from "../../shared/order-status";
 import type { AdminOrderDetailDto } from "../../shared/types";
-import { LOCATION_LABELS_PT } from "../../shared/whatsapp-message";
+import { describeLocation } from "../../shared/whatsapp-message";
 import { useToast } from "../components/Toasts";
 import { api } from "../lib/api";
 import { formatDateTime } from "../lib/util";
@@ -61,6 +61,20 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
     }
   };
 
+  const confirmDeposit = async () => {
+    if (!order || !confirm(`Confirma que recebeu o sinal de ${money(order.depositCents)} (ref. ${order.paymentReference ?? "—"})?`)) return;
+    setBusy(true);
+    try {
+      setOrder(await api<AdminOrderDetailDto>(`/api/admin/orders/${id}/deposit/confirm`, { method: "POST" }));
+      toast("Sinal registado como recebido.");
+      onChanged();
+    } catch (err) {
+      toast(errorMessage(err), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (error && !order) {
     return (
       <div className="state-block">
@@ -90,19 +104,49 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
         </button>
         <div className="row-between">
           <h2 id="order-detail-title" className="order-detail-title">
-            {LOCATION_LABELS_PT[order.locationType]} {order.locationLabel}
+            {describeLocation(order.locationType, order.locationLabel)}
           </h2>
           <span className={`badge badge-lg status-${order.status}`}>{STATUS_LABEL[order.status]}</span>
         </div>
         <p className="muted small">
           {order.reference} · recebido {formatDateTime(order.createdAt)}
         </p>
+        {order.scheduledFor && <p className="scheduled-banner">🕒 Encomenda para {formatDateTime(order.scheduledFor)}</p>}
       </div>
+
+      {order.depositCents > 0 && (
+        <div className={order.depositStatus === "confirmed" ? "deposit-panel is-confirmed" : "deposit-panel"}>
+          <div className="row-between wrap">
+            <strong>Sinal (pagamento antecipado): {money(order.depositCents)}</strong>
+            <span className={order.depositStatus === "confirmed" ? "badge badge-success" : "badge badge-warning"}>
+              {order.depositStatus === "confirmed" ? "Recebido" : "Por verificar"}
+            </span>
+          </div>
+          <p className="small">
+            Referência indicada pelo cliente: <strong>{order.paymentReference ?? "—"}</strong>
+          </p>
+          {order.depositStatus === "pending" && (
+            <>
+              <p className="small muted">Verifique o pagamento (M-Pesa, banco, etc.) antes de confirmar. O pedido só pode ser confirmado depois do sinal.</p>
+              <button type="button" className="btn btn-primary btn-sm no-print" disabled={busy} onClick={() => void confirmDeposit()}>
+                Sinal recebido
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {(next.length > 0 || canCancel) && (
         <div className="status-actions no-print">
           {next.map((s) => (
-            <button key={s} type="button" className="btn btn-primary" disabled={busy} onClick={() => void changeStatus(s)}>
+            <button
+              key={s}
+              type="button"
+              className="btn btn-primary"
+              disabled={busy || (s === "CONFIRMED" && order.depositStatus === "pending")}
+              title={s === "CONFIRMED" && order.depositStatus === "pending" ? "Confirme primeiro o sinal" : undefined}
+              onClick={() => void changeStatus(s)}
+            >
               {STATUS_ACTION[s]}
             </button>
           ))}

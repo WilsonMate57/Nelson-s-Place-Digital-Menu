@@ -70,6 +70,16 @@ Coverage of the required verification list:
 
 The printed menu (9 photos) was transcribed to `menu-import/MENU_REVISAO.md` and `menu-import/menu-nelsons-place.json` (16 categories, 116 items, with side/size/pasta options). Import with `npm run db:import-menu`. **Not imported** (unreadable or uncertain): items hidden on page 1 (Early Bird, "Sc…", a starter, a salad), Red Bull, small water, 1 L soft drinks, juices, sparkling wine, ciders, aperitifs, digestifs, port, rum/tequila, and wines with uncertain names. Prices of imported items still need management confirmation. Corrections can be made in the dashboard.
 
+## "Encomendar" — scheduled orders and take-away (2026-10-13)
+
+Decided by the hotel: anyone may order; kitchen closes at **23:00**; **45 min** minimum notice; guests receive at the table, in the apartment or by collecting at the hotel; breakfast only in the morning; **take-away pays a 50% deposit** when ordering.
+
+- Guests choose "Agora" or "Mais tarde" (day + 15-minute slot, today/tomorrow by default). The server enforces kitchen hours, notice, days ahead and category windows (shared rules in `src/shared/schedule.ts`).
+- Take-away: name, phone and the payment reference are required; the server computes the deposit. Staff press "Sinal recebido" after checking the payment; until then the order cannot be confirmed. **No payment provider is integrated** — verification is manual. Take-away is hidden until payment instructions are set in Definições.
+- Dashboard: "Encomendas" filter (soonest first), alert + chime when it is time to start preparing (scheduled time minus the notice period), deposit panel, scheduled time on the ticket and in WhatsApp messages.
+- **Provisional values to confirm:** kitchen opening 07:00, breakfast window 07:00–11:00, orders up to the next day. All editable in the dashboard.
+- Not included: delivery to addresses outside the hotel; automatic M-Pesa/e-Mola payment.
+
 ## Pending business decisions (blockers for go-live)
 
 1. **Real menu**: partially transcribed (see above); management must confirm prices, resolve the doubts in MENU_REVISAO.md and provide dish photos.

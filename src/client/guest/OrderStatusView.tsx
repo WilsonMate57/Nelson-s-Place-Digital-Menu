@@ -3,7 +3,7 @@ import type { OrderStatus } from "../../shared/constants";
 import { isFinalStatus } from "../../shared/order-status";
 import type { GuestOrderDto } from "../../shared/types";
 import { api, ApiError } from "../lib/api";
-import { formatTime } from "../lib/util";
+import { formatDateTime, formatTime } from "../lib/util";
 import { useGuest } from "./context";
 import { locationTypeKey, noticeTextKey, noticeTitleKey, statusKey } from "./i18n";
 
@@ -138,14 +138,20 @@ export function OrderStatusView({ token, initial, onBackToMenu, onForget }: Prop
             <dd className="order-ref">{order.reference}</dd>
           </div>
           <div>
-            <dt>{t(locationTypeKey(order.locationType))}</dt>
-            <dd>{order.locationLabel}</dd>
+            <dt>{order.locationType === "takeaway" ? t("receive") : t(locationTypeKey(order.locationType))}</dt>
+            <dd>{order.locationType === "takeaway" ? t("takeawayLong") : order.locationLabel}</dd>
           </div>
           <div>
-            <dt>{t("placedAt")}</dt>
-            <dd>{formatTime(order.createdAt, locale)}</dd>
+            <dt>{order.scheduledFor ? t("scheduledFor") : t("placedAt")}</dt>
+            <dd>{order.scheduledFor ? formatDateTime(order.scheduledFor, locale) : formatTime(order.createdAt, locale)}</dd>
           </div>
         </dl>
+
+        {order.depositCents > 0 && !cancelled && (
+          <p className={order.depositStatus === "confirmed" ? "alert alert-success small" : "alert alert-warning small"}>
+            {t("deposit")} {money(order.depositCents)}: {order.depositStatus === "confirmed" ? t("depositConfirmed") : t("depositPending")}
+          </p>
+        )}
 
         {!cancelled && (
           <section aria-labelledby="status-title" className="order-progress">

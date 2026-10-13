@@ -167,6 +167,9 @@ export function MenuView({ categories, products, onOpenProduct }: Props) {
               <span className="category-count">{items.length}</span>
             </h2>
             {category.description && <p className="muted category-description">{text(category.description)}</p>}
+            {category.availableFrom && category.availableUntil && (
+              <p className="category-hours">🕒 {t("availableBetween", { from: category.availableFrom, until: category.availableUntil })}</p>
+            )}
             <ul className="product-grid">
               {items.map((product) => (
                 <li key={product.id}>

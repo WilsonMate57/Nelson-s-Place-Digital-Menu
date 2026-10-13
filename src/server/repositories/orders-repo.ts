@@ -1,4 +1,11 @@
-import { ORDER_STATUSES, type IntegrationStatus, type Language, type LocationType, type OrderStatus } from "../../shared/constants";
+import {
+  ORDER_STATUSES,
+  type DepositStatus,
+  type IntegrationStatus,
+  type Language,
+  type OrderLocationType,
+  type OrderStatus,
+} from "../../shared/constants";
 import type { PricedOrder } from "../../shared/pricing";
 import type {
   AppliedCharge,
@@ -18,8 +25,12 @@ interface OrderRow {
   idempotency_key: string;
   request_hash: string;
   status: OrderStatus;
-  location_type: LocationType;
+  location_type: OrderLocationType;
   location_label: string;
+  scheduled_for: string | null;
+  deposit_cents: number;
+  deposit_status: DepositStatus;
+  payment_reference: string | null;
   guest_name: string | null;
   contact_phone: string | null;
   notes: string | null;
@@ -50,8 +61,11 @@ export interface NewOrder {
   publicToken: string;
   idempotencyKey: string;
   requestHash: string;
-  locationType: LocationType;
+  locationType: OrderLocationType;
   locationLabel: string;
+  scheduledFor: string | null;
+  depositCents: number;
+  paymentReference: string | null;
   guestName: string | null;
   contactPhone: string | null;
   notes: string | null;
@@ -61,7 +75,8 @@ export interface NewOrder {
 }
 
 export interface OrderListFilter {
-  status: OrderStatus | "ACTIVE" | "ALL";
+  /** SCHEDULED = active orders with a requested time, soonest first. */
+  status: OrderStatus | "ACTIVE" | "ALL" | "SCHEDULED";
   q?: string | undefined;
   /** Inclusive UTC ISO bounds. */
   fromIso?: string | undefined;
@@ -91,12 +106,14 @@ export class OrdersRepo {
       this.db
         .prepare(
           `INSERT INTO orders (reference, public_token, idempotency_key, request_hash, status, location_type, location_label,
+             scheduled_for, deposit_cents, deposit_status, payment_reference,
              guest_name, contact_phone, notes, language, currency, subtotal_cents, charges_cents, charges_json, total_cents,
              created_at, updated_at)
-           VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           order.reference, order.publicToken, order.idempotencyKey, order.requestHash, order.locationType, order.locationLabel,
+          order.scheduledFor, order.depositCents, order.depositCents > 0 ? "pending" : "not_required", order.paymentReference,
           order.guestName, order.contactPhone, order.notes, order.language, order.currency, priced.subtotalCents,
           priced.chargesCents, JSON.stringify(priced.charges), priced.totalCents, now, now,
         ).lastInsertRowid,
@@ -132,9 +149,10 @@ export class OrdersRepo {
   list(filter: OrderListFilter): OrderSummaryDto[] {
     const where: string[] = [];
     const params: unknown[] = [];
-    if (filter.status === "ACTIVE") {
+    if (filter.status === "ACTIVE" || filter.status === "SCHEDULED") {
       where.push(`o.status IN (${ACTIVE_STATUSES.map(() => "?").join(",")})`);
       params.push(...ACTIVE_STATUSES);
+      if (filter.status === "SCHEDULED") where.push("o.scheduled_for IS NOT NULL");
     } else if (filter.status !== "ALL") {
       where.push("o.status = ?");
       params.push(filter.status);
@@ -160,7 +178,7 @@ export class OrdersRepo {
            (SELECT status FROM integration_events e WHERE e.order_id = o.id AND e.integration = 'whatsapp') AS whatsapp_status
          FROM orders o
          ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-         ORDER BY o.created_at DESC, o.id DESC
+         ORDER BY ${filter.status === "SCHEDULED" ? "o.scheduled_for ASC," : ""} o.created_at DESC, o.id DESC
          LIMIT ?`,
       )
       .all(...params) as (OrderRow & { item_count: number; whatsapp_status: IntegrationStatus | null })[];
@@ -172,6 +190,27 @@ export class OrdersRepo {
     const rows = this.db.prepare("SELECT status, COUNT(*) AS n FROM orders GROUP BY status").all() as { status: OrderStatus; n: number }[];
     for (const r of rows) counts[r.status] = r.n;
     return counts;
+  }
+
+  countScheduledActive(): number {
+    return (
+      this.db
+        .prepare(`SELECT COUNT(*) AS n FROM orders WHERE scheduled_for IS NOT NULL AND status IN (${ACTIVE_STATUSES.map(() => "?").join(",")})`)
+        .get(...ACTIVE_STATUSES) as { n: number }
+    ).n;
+  }
+
+  /** Marks a pending deposit as received. Returns false if it was not pending. */
+  confirmDeposit(id: number, staffId: number): boolean {
+    const now = nowIso();
+    return (
+      this.db
+        .prepare(
+          `UPDATE orders SET deposit_status = 'confirmed', deposit_confirmed_at = ?, deposit_confirmed_by = ?, updated_at = ?
+           WHERE id = ? AND deposit_status = 'pending'`,
+        )
+        .run(now, staffId, now, id).changes === 1
+    );
   }
 
   /** Atomic compare-and-set; returns false if the order was not in `from`. */
@@ -229,6 +268,10 @@ export class OrdersRepo {
       status: row.status,
       locationType: row.location_type,
       locationLabel: row.location_label,
+      scheduledFor: row.scheduled_for,
+      depositCents: row.deposit_cents,
+      depositStatus: row.deposit_status,
+      paymentReference: row.payment_reference,
       guestName: row.guest_name,
       contactPhone: row.contact_phone,
       notes: row.notes,

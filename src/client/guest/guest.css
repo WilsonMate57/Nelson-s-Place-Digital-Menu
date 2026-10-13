@@ -808,3 +808,42 @@
 .next-category strong {
   font-size: var(--fs-lg);
 }
+
+/* ------------------------------------------------ Encomendar / take-away */
+
+.category-hours {
+  display: inline-block;
+  margin-top: var(--sp-1);
+  padding: 2px var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--c-gold-100);
+  color: var(--c-gold-700);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.schedule-pickers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+.schedule-pickers .field + .field {
+  margin-top: 0;
+}
+.schedule-hint {
+  grid-column: 1 / -1;
+}
+.deposit-box {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--c-gold-500);
+  border-radius: var(--r-md);
+  background: var(--c-gold-100);
+}
+.payment-instructions {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  font-weight: 700;
+  white-space: pre-line;
+}

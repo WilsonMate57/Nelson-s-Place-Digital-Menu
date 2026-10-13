@@ -1,7 +1,9 @@
 import type {
+  DepositStatus,
   IntegrationStatus,
   Language,
   LocationType,
+  OrderLocationType,
   OrderStatus,
   StaffRole,
   WhatsAppMode,
@@ -33,6 +35,9 @@ export interface CategoryDto {
   description: LocalizedText | null;
   sortOrder: number;
   isActive: boolean;
+  /** Daily availability window in hotel time ("HH:MM"), e.g. breakfast 07:00–11:00. Null = whenever the kitchen is open. */
+  availableFrom: string | null;
+  availableUntil: string | null;
 }
 
 export interface ProductDto {
@@ -80,6 +85,17 @@ export interface PublicSettings {
   requireGuestName: boolean;
   requireContactPhone: boolean;
   charges: ChargeRule[];
+  /** "Encomendar": orders scheduled for a later time. */
+  preOrdersEnabled: boolean;
+  kitchenOpen: string;
+  kitchenClose: string;
+  minLeadMinutes: number;
+  maxDaysAhead: number;
+  /** Collection at the hotel; guests must pay a deposit when ordering. */
+  takeawayEnabled: boolean;
+  takeawayDepositPercent: number;
+  /** How to pay the deposit (e.g. M-Pesa number). Take-away is offered only when set. */
+  paymentInstructions: LocalizedText | null;
   whatsappContactNumber: string | null;
   whatsappMode: WhatsAppMode;
 }
@@ -123,8 +139,13 @@ export interface OrderDto {
   id: number;
   reference: string;
   status: OrderStatus;
-  locationType: LocationType;
+  locationType: OrderLocationType;
   locationLabel: string;
+  /** Requested delivery time (UTC ISO) for scheduled orders; null = as soon as possible. */
+  scheduledFor: string | null;
+  depositCents: number;
+  depositStatus: DepositStatus;
+  paymentReference: string | null;
   guestName: string | null;
   contactPhone: string | null;
   notes: string | null;
@@ -173,8 +194,11 @@ export interface GuestOrderDto {
   reference: string;
   publicToken: string;
   status: OrderStatus;
-  locationType: LocationType;
+  locationType: OrderLocationType;
   locationLabel: string;
+  scheduledFor: string | null;
+  depositCents: number;
+  depositStatus: DepositStatus;
   currency: string;
   subtotalCents: number;
   charges: AppliedCharge[];
@@ -198,6 +222,8 @@ export interface StaffDto {
 export interface OrderListResponse {
   orders: OrderSummaryDto[];
   counts: Record<OrderStatus, number>;
+  /** Active orders with a requested time ("Encomendas"). */
+  scheduledCount: number;
   serverTime: string;
 }
 

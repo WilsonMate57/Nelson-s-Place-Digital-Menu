@@ -8,6 +8,11 @@ SQLite 3 (via `better-sqlite3`), one file at `DATABASE_PATH` (default `data/nels
 - The applied version is stored in `PRAGMA user_version`; pending migrations run automatically (each in its own transaction) whenever the server or a CLI tool opens the database.
 - To change the schema: append a new script; never edit one that has already run in production. Back up before deploying a migration.
 
+## Migration history
+
+1. Initial schema.
+2. "Encomendar" (2026-10-13): `orders` rebuilt to allow `location_type = 'takeaway'` and to add `scheduled_for`, `deposit_cents`, `deposit_status` (`not_required | pending | confirmed`), `payment_reference`, `deposit_confirmed_at`, `deposit_confirmed_by`; `categories` gained `available_from` / `available_until` (daily window, e.g. breakfast). Existing orders are copied unchanged. Foreign keys are switched off during each migration and checked with `foreign_key_check` before commit.
+
 ## Entity overview
 
 ```

@@ -3,10 +3,12 @@ import {
   LANGUAGES,
   LOCATION_TYPES,
   ORDER_LIMITS,
+  ORDER_LOCATION_TYPES,
   ORDER_STATUSES,
   PASSWORD_MIN_LENGTH,
   STAFF_ROLES,
 } from "./constants";
+import { HM_PATTERN, parseHm } from "./schedule";
 
 /** Removes control characters (except newlines/tabs) that have no place in user text. */
 // eslint-disable-next-line no-control-regex -- intentionally strips control characters
@@ -53,12 +55,22 @@ export const orderItemInputSchema = z.object({
 export const orderSubmissionSchema = z.object({
   idempotencyKey: z.uuid(),
   language: z.enum(LANGUAGES),
-  location: z.object({
-    type: z.enum(LOCATION_TYPES),
-    label: requiredText(ORDER_LIMITS.maxLocationLabelLength).pipe(
-      z.string().regex(/^[\p{L}\p{N} ._\-/#]+$/u, "Caracteres inválidos"),
-    ),
-  }),
+  location: z
+    .object({
+      type: z.enum(ORDER_LOCATION_TYPES),
+      // Table or apartment number; not used for take-away.
+      label: text(ORDER_LIMITS.maxLocationLabelLength)
+        .pipe(z.string().regex(/^[\p{L}\p{N} ._\-/#]*$/u, "Caracteres inválidos"))
+        .default(""),
+    })
+    .refine((l) => l.type === "takeaway" || l.label.length > 0, { message: "Obrigatório", path: ["label"] }),
+  /** Requested delivery time ("Encomendar"); null/absent = as soon as possible. */
+  scheduledFor: z.iso
+    .datetime({ offset: true })
+    .nullish()
+    .transform((v) => (v ? new Date(v).toISOString() : null)),
+  /** Reference of the deposit payment (take-away), e.g. the M-Pesa transaction ID. */
+  paymentReference: optionalText(ORDER_LIMITS.maxPaymentReferenceLength),
   guestName: optionalText(ORDER_LIMITS.maxGuestNameLength),
   contactPhone: z
     .string()
@@ -107,19 +119,33 @@ export const orderStatusUpdateSchema = z.object({
 });
 
 export const orderListQuerySchema = z.object({
-  status: z.union([z.enum(ORDER_STATUSES), z.literal("ACTIVE"), z.literal("ALL")]).default("ACTIVE"),
+  status: z.union([z.enum(ORDER_STATUSES), z.literal("ACTIVE"), z.literal("ALL"), z.literal("SCHEDULED")]).default("ACTIVE"),
   q: z.string().trim().max(60).optional(),
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
 });
 
-export const categoryInputSchema = z.object({
-  name: localizedTextSchema(80),
-  description: optionalLocalizedText(300),
-  sortOrder: z.number().int().min(0).max(9999).default(0),
-  isActive: z.boolean().default(true),
-});
+const hm = z.string().regex(HM_PATTERN, "Hora inválida (HH:MM)");
+const optionalHm = hm.nullish().transform((v) => v ?? null);
+
+export const categoryInputSchema = z
+  .object({
+    name: localizedTextSchema(80),
+    description: optionalLocalizedText(300),
+    sortOrder: z.number().int().min(0).max(9999).default(0),
+    isActive: z.boolean().default(true),
+    availableFrom: optionalHm,
+    availableUntil: optionalHm,
+  })
+  .refine((c) => (c.availableFrom === null) === (c.availableUntil === null), {
+    message: "Indique as duas horas ou nenhuma",
+    path: ["availableUntil"],
+  })
+  .refine((c) => c.availableFrom === null || parseHm(c.availableFrom) < parseHm(c.availableUntil!), {
+    message: "A hora final deve ser depois da inicial",
+    path: ["availableUntil"],
+  });
 
 export const optionInputSchema = z.object({
   id: id.optional(),
@@ -193,6 +219,17 @@ export const settingsInputSchema = z.object({
   requireGuestName: z.boolean(),
   requireContactPhone: z.boolean(),
   charges: z.array(chargeRuleSchema).max(5),
+  preOrdersEnabled: z.boolean(),
+  kitchenOpen: hm,
+  kitchenClose: hm,
+  minLeadMinutes: z.number().int().min(0).max(600),
+  maxDaysAhead: z.number().int().min(0).max(7),
+  takeawayEnabled: z.boolean(),
+  takeawayDepositPercent: z.number().int().min(0).max(100),
+  paymentInstructions: optionalLocalizedText(400),
+}).refine((s) => parseHm(s.kitchenOpen) < parseHm(s.kitchenClose), {
+  message: "O fecho da cozinha deve ser depois da abertura",
+  path: ["kitchenClose"],
 });
 
 export type SettingsInput = z.infer<typeof settingsInputSchema>;

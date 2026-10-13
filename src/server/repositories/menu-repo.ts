@@ -6,6 +6,7 @@ import type {
   OptionGroupDto,
   ProductDto,
 } from "../../shared/types";
+import type { TimeWindow } from "../../shared/schedule";
 import { nowIso, type Db } from "../db/connection";
 import { badRequest, conflict, notFound } from "../http/errors";
 
@@ -15,6 +16,8 @@ interface CategoryRow {
   description: string | null;
   sort_order: number;
   is_active: number;
+  available_from: string | null;
+  available_until: string | null;
   created_at: string;
   updated_at: string;
   product_count: number;
@@ -85,10 +88,22 @@ export class MenuRepo {
       description: parseOptionalText(r.description),
       sortOrder: r.sort_order,
       isActive: r.is_active === 1,
+      availableFrom: r.available_from,
+      availableUntil: r.available_until,
       productCount: r.product_count,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
     }));
+  }
+
+  /** Availability windows of the given categories (only those that have one). */
+  categoryWindows(categoryIds: number[]): Map<number, TimeWindow> {
+    const unique = [...new Set(categoryIds)];
+    if (unique.length === 0) return new Map();
+    const rows = this.db
+      .prepare(`SELECT id, available_from, available_until FROM categories WHERE id IN (${unique.map(() => "?").join(",")}) AND available_from IS NOT NULL`)
+      .all(...unique) as { id: number; available_from: string; available_until: string }[];
+    return new Map(rows.map((r) => [r.id, { from: r.available_from, until: r.available_until }]));
   }
 
   categoryExists(id: number): boolean {
@@ -99,19 +114,20 @@ export class MenuRepo {
     const now = nowIso();
     const result = this.db
       .prepare(
-        `INSERT INTO categories (name, description, sort_order, is_active, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO categories (name, description, sort_order, is_active, available_from, available_until, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.sortOrder, input.isActive ? 1 : 0, now, now);
+      .run(JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.sortOrder, input.isActive ? 1 : 0, input.availableFrom, input.availableUntil, now, now);
     return Number(result.lastInsertRowid);
   }
 
   updateCategory(id: number, input: CategoryInput): void {
     const result = this.db
       .prepare(
-        `UPDATE categories SET name = ?, description = ?, sort_order = ?, is_active = ?, updated_at = ? WHERE id = ?`,
+        `UPDATE categories SET name = ?, description = ?, sort_order = ?, is_active = ?, available_from = ?, available_until = ?, updated_at = ?
+         WHERE id = ?`,
       )
-      .run(JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.sortOrder, input.isActive ? 1 : 0, nowIso(), id);
+      .run(JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.sortOrder, input.isActive ? 1 : 0, input.availableFrom, input.availableUntil, nowIso(), id);
     if (result.changes === 0) throw notFound("Categoria não encontrada");
   }
 

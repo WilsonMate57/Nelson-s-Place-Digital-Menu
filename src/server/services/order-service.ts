@@ -1,9 +1,10 @@
 import { createHash, randomBytes, randomInt } from "node:crypto";
-import { HOTEL_TIME_ZONE } from "../../shared/constants";
+import { HOTEL_TIME_ZONE, type LocationType } from "../../shared/constants";
 import { canTransition } from "../../shared/order-status";
 import { PricingError, priceOrder } from "../../shared/pricing";
+import { checkScheduledTime, hotelClock, inWindow, isKitchenOpen, type ScheduleError, type ScheduleRules } from "../../shared/schedule";
 import type { OrderSubmission } from "../../shared/schemas";
-import type { AdminOrderDetailDto, GuestOrderDto, OrderDto, OrderListResponse } from "../../shared/types";
+import type { AdminOrderDetailDto, AdminSettings, GuestOrderDto, OrderDto, OrderListResponse, ProductDto } from "../../shared/types";
 import type { Db } from "../db/connection";
 import { AppError, badRequest, conflict, notFound } from "../http/errors";
 import type { MenuRepo } from "../repositories/menu-repo";
@@ -57,6 +58,8 @@ export class OrderService {
     private readonly settings: SettingsRepo,
     private readonly whatsapp: WhatsAppService,
     private readonly log: (message: string, error?: unknown) => void = console.error,
+    /** Injectable clock so tests can run "at" any hotel time. */
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   submit(submission: OrderSubmission): SubmitResult {
@@ -77,17 +80,28 @@ export class OrderService {
       if (!settings.ordersEnabled) {
         throw new AppError(503, "ORDERS_PAUSED", "De momento não estamos a aceitar pedidos pelo menu digital.");
       }
-      if (!settings.locationTypes.includes(submission.location.type)) {
+      const takeaway = submission.location.type === "takeaway";
+      const scheduled = submission.scheduledFor !== null;
+      if (takeaway) {
+        if (!settings.takeawayEnabled || !settings.paymentInstructions) {
+          throw badRequest("TAKEAWAY_DISABLED", "De momento não aceitamos pedidos para levantar.");
+        }
+      } else if (!settings.locationTypes.includes(submission.location.type as LocationType)) {
         throw badRequest("LOCATION_TYPE_NOT_ALLOWED", "Tipo de localização não disponível.");
       }
-      if (settings.requireGuestName && !submission.guestName) {
+      if ((settings.requireGuestName || takeaway) && !submission.guestName) {
         throw badRequest("GUEST_NAME_REQUIRED", "Indique o seu nome.");
       }
-      if (settings.requireContactPhone && !submission.contactPhone) {
+      // Scheduled and take-away orders need a phone so staff can reach the guest.
+      if ((settings.requireContactPhone || takeaway || scheduled) && !submission.contactPhone) {
         throw badRequest("CONTACT_REQUIRED", "Indique um número de contacto.");
+      }
+      if (takeaway && settings.takeawayDepositPercent > 0 && !submission.paymentReference) {
+        throw badRequest("PAYMENT_REFERENCE_REQUIRED", "Indique a referência do pagamento do sinal.");
       }
 
       const catalogue = this.menu.getOrderableCatalogue(submission.items.map((i) => i.productId));
+      this.checkTiming(submission, catalogue, settings);
       let priced;
       try {
         // Snapshots are stored in Portuguese because they are read by staff.
@@ -115,7 +129,10 @@ export class OrderService {
         idempotencyKey: submission.idempotencyKey,
         requestHash: fingerprint,
         locationType: submission.location.type,
-        locationLabel: submission.location.label,
+        locationLabel: takeaway ? "" : submission.location.label,
+        scheduledFor: submission.scheduledFor,
+        depositCents: takeaway ? Math.round((priced.totalCents * settings.takeawayDepositPercent) / 100) : 0,
+        paymentReference: takeaway ? submission.paymentReference : null,
         guestName: submission.guestName,
         contactPhone: submission.contactPhone,
         notes: submission.notes,
@@ -149,7 +166,12 @@ export class OrderService {
   }
 
   list(filter: OrderListFilter): OrderListResponse {
-    return { orders: this.orders.list(filter), counts: this.orders.countByStatus(), serverTime: new Date().toISOString() };
+    return {
+      orders: this.orders.list(filter),
+      counts: this.orders.countByStatus(),
+      scheduledCount: this.orders.countScheduledActive(),
+      serverTime: this.now().toISOString(),
+    };
   }
 
   detail(id: number): AdminOrderDetailDto {
@@ -169,10 +191,69 @@ export class OrderService {
     if (!canTransition(order.status, to)) {
       throw badRequest("INVALID_TRANSITION", `Não é possível passar de ${order.status} para ${to}.`);
     }
+    if (to === "CONFIRMED" && order.depositStatus === "pending") {
+      throw conflict("DEPOSIT_NOT_CONFIRMED", "Confirme primeiro a recepção do sinal (pagamento de 50%).");
+    }
     if (!this.orders.updateStatus(id, expected, to, staffId, note)) {
       throw conflict("STATUS_CHANGED", "O estado deste pedido foi alterado por outra pessoa. Actualize e tente novamente.");
     }
     return this.detail(id);
+  }
+
+  /** Records that staff received the take-away deposit. */
+  confirmDeposit(id: number, staffId: number): AdminOrderDetailDto {
+    const order = this.orders.get(id);
+    if (!order) throw notFound("Pedido não encontrado");
+    if (order.depositStatus !== "pending") {
+      throw conflict("DEPOSIT_NOT_PENDING", order.depositStatus === "confirmed" ? "O sinal já foi confirmado." : "Este pedido não tem sinal.");
+    }
+    if (!this.orders.confirmDeposit(id, staffId)) throw conflict("DEPOSIT_NOT_PENDING", "O sinal já foi confirmado.");
+    return this.detail(id);
+  }
+
+  /**
+   * Kitchen hours and item availability windows, for both "as soon as
+   * possible" orders and scheduled ones ("Encomendar").
+   */
+  private checkTiming(submission: OrderSubmission, catalogue: Map<number, ProductDto>, settings: AdminSettings): void {
+    const now = this.now();
+    const rules: ScheduleRules = settings;
+    const categoryIds = submission.items.map((i) => catalogue.get(i.productId)?.categoryId).filter((id): id is number => id !== undefined);
+    const windows = this.menu.categoryWindows(categoryIds);
+
+    if (submission.scheduledFor === null) {
+      if (!isKitchenOpen(now, rules)) {
+        throw new AppError(
+          503,
+          "KITCHEN_CLOSED",
+          `A cozinha funciona das ${settings.kitchenOpen} às ${settings.kitchenClose}.${settings.preOrdersEnabled ? " Pode encomendar para mais tarde." : ""}`,
+        );
+      }
+      const minutes = hotelClock(now).minutes;
+      for (const item of submission.items) {
+        const product = catalogue.get(item.productId);
+        const window = product && windows.get(product.categoryId);
+        if (product && window && !inWindow(minutes, window)) {
+          throw conflict("ITEM_NOT_AVAILABLE_NOW", `«${product.name.pt}» só está disponível das ${window.from} às ${window.until}.`, {
+            productId: product.id,
+            window,
+          });
+        }
+      }
+      return;
+    }
+
+    if (!settings.preOrdersEnabled) throw badRequest("PREORDERS_DISABLED", "De momento não aceitamos encomendas para mais tarde.");
+    const error = checkScheduledTime(now, new Date(submission.scheduledFor), rules, [...windows.values()]);
+    if (error) {
+      const messages: Record<ScheduleError, string> = {
+        TOO_SOON: `As encomendas precisam de pelo menos ${settings.minLeadMinutes} minutos de antecedência.`,
+        TOO_FAR: settings.maxDaysAhead === 0 ? "Só aceitamos encomendas para hoje." : `Só aceitamos encomendas até ${settings.maxDaysAhead} dia(s) de antecedência.`,
+        OUTSIDE_KITCHEN_HOURS: `A hora escolhida está fora do horário da cozinha (${settings.kitchenOpen}–${settings.kitchenClose}).`,
+        OUTSIDE_ITEM_HOURS: "Um dos artigos não está disponível à hora escolhida (ex.: pequeno-almoço só de manhã).",
+      };
+      throw badRequest("SCHEDULE_INVALID", messages[error], { reason: error });
+    }
   }
 
   private toGuestView(order: OrderDto, publicToken: string): GuestOrderDto {
@@ -182,6 +263,9 @@ export class OrderService {
       status: order.status,
       locationType: order.locationType,
       locationLabel: order.locationLabel,
+      scheduledFor: order.scheduledFor,
+      depositCents: order.depositCents,
+      depositStatus: order.depositStatus,
       currency: order.currency,
       subtotalCents: order.subtotalCents,
       charges: order.charges,

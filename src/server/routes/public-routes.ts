@@ -30,6 +30,15 @@ export function publicRoutes(s: Services) {
       requireGuestName: settings.requireGuestName,
       requireContactPhone: settings.requireContactPhone,
       charges: settings.charges,
+      preOrdersEnabled: settings.preOrdersEnabled,
+      kitchenOpen: settings.kitchenOpen,
+      kitchenClose: settings.kitchenClose,
+      minLeadMinutes: settings.minLeadMinutes,
+      maxDaysAhead: settings.maxDaysAhead,
+      // Take-away is only offered once the hotel has said how to pay the deposit.
+      takeawayEnabled: settings.takeawayEnabled && settings.paymentInstructions !== null,
+      takeawayDepositPercent: settings.takeawayDepositPercent,
+      paymentInstructions: settings.paymentInstructions,
       whatsappContactNumber: settings.whatsappNumber || null,
       whatsappMode: s.whatsapp.mode,
     };
