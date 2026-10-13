@@ -133,6 +133,8 @@ export const chatMessageSchema = z.object({
   body: requiredText(ORDER_LIMITS.maxChatMessageLength),
 });
 
+export const dailySummarySendSchema = z.object({ day: z.iso.date() });
+
 export const reportQuerySchema = z.object({ from: z.iso.date(), to: z.iso.date() });
 
 export const categoryInputSchema = z
@@ -238,6 +240,13 @@ export const settingsInputSchema = z.object({
   hotelAddress: text(150),
   hotelEmail: text(120).pipe(z.union([z.literal(""), z.email("Email inválido")])),
   hotelWebsite: text(120),
+  dailySummaryEnabled: z.boolean(),
+  managerWhatsapp: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/[\s+()-]/g, ""))
+    .refine((v) => v === "" || /^[1-9][0-9]{7,14}$/.test(v), "Use o formato internacional, ex.: 258XXXXXXXXX"),
+  managerEmail: text(120).pipe(z.union([z.literal(""), z.email("Email inválido")])),
 }).refine((s) => parseHm(s.kitchenOpen) < parseHm(s.kitchenClose), {
   message: "O fecho da cozinha deve ser depois da abertura",
   path: ["kitchenClose"],

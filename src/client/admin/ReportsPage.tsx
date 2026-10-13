@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import type { OrderLocationType } from "../../shared/constants";
 import { formatMoney } from "../../shared/money";
 import { addDays } from "../../shared/schedule";
-import type { ReportDto, ReportKpis } from "../../shared/types";
+import { buildDailySummary } from "../../shared/daily-summary";
+import type { DailySummaryStatusDto, ReportDto, ReportKpis } from "../../shared/types";
+import { buildWhatsAppLink } from "../../shared/whatsapp-message";
+import { useToast } from "../components/Toasts";
+import { ClosingReceipt } from "./ClosingReceipt";
+import { printReceipt } from "./PrintReceipt";
 import { api } from "../lib/api";
 import { cx, hotelToday } from "../lib/util";
 import { useErrorMessage } from "./errors";
@@ -143,6 +148,7 @@ export function ReportsPage() {
           <p className="muted small">
             {longDay(report.from)} – {longDay(report.to)} · comparado com {shortDay(report.previousFrom)}–{shortDay(report.previousTo)}
           </p>
+          <ClosingActions report={report} />
           <Kpis k={report.kpis} prev={report.previous} money={money} />
 
           {report.kpis.ordersReceived === 0 ? (
@@ -191,6 +197,114 @@ export function ReportsPage() {
                     <p className="muted small">Nenhuma opção escolhida neste período.</p>
                   ) : (
                     <RankedBars rows={report.topOptions.map((o) => ({ label: `${o.name}`, sub: o.group, value: o.count, valueLabel: `${o.count}×` }))} />
+                  )}
+                </ChartCard>
+              </div>
+
+              <div className="report-grid">
+                <ChartCard title="Vendas por dia da semana" subtitle="Em que dias se vende mais" table={<WeekdayTable report={report} money={money} />}>
+                  <ColumnChart
+                    data={report.weekday.map((w) => ({ key: String(w.weekday), label: WEEKDAYS[w.weekday]!, value: w.revenueCents, tip: `${WEEKDAYS_LONG[w.weekday]} · ${w.orders} pedido(s)` }))}
+                    format={money}
+                    compact={(v) => compactMoney(v, symbol)}
+                    labelEvery={1}
+                  />
+                </ChartCard>
+                <ChartCard title="Clientes" subtitle="Identificados pelo telefone que indicaram no pedido">
+                  <div className="mini-kpis">
+                    <div>
+                      <strong>{report.customers.withPhone}</strong>
+                      <span>com telefone</span>
+                    </div>
+                    <div>
+                      <strong>{report.customers.returning}</strong>
+                      <span>
+                        voltaram a encomendar
+                        {report.customers.withPhone > 0 && ` (${Math.round((report.customers.returning / report.customers.withPhone) * 100)}%)`}
+                      </span>
+                    </div>
+                  </div>
+                  {report.customers.top.length > 0 ? (
+                    <div className="table-wrap">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Cliente</th>
+                            <th scope="col">Pedidos no período</th>
+                            <th scope="col">Pedidos no total</th>
+                            <th scope="col">Vendas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.customers.top.map((c) => (
+                            <tr key={c.phone}>
+                              <td>
+                                {c.name ?? "—"}
+                                <div className="small muted">{c.phone}</div>
+                              </td>
+                              <td>{c.ordersInPeriod}</td>
+                              <td>
+                                {c.ordersEver}
+                                {c.ordersEver > 1 && <span className="badge badge-success"> volta</span>}
+                              </td>
+                              <td className="nowrap">{money(c.revenueCents)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="muted small">Nenhum pedido com telefone neste período.</p>
+                  )}
+                </ChartCard>
+              </div>
+
+              <div className="report-grid">
+                <ChartCard title="Desempenho da equipa" subtitle="Acções registadas no painel durante o período">
+                  {report.staff.length === 0 ? (
+                    <p className="muted small">Nenhuma acção da equipa neste período.</p>
+                  ) : (
+                    <div className="table-wrap">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Pessoa</th>
+                            <th scope="col">Confirmou</th>
+                            <th scope="col">Concluiu</th>
+                            <th scope="col">Cancelou</th>
+                            <th scope="col">Tempo médio p/ confirmar</th>
+                            <th scope="col">Respostas no chat</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.staff.map((s) => (
+                            <tr key={s.name}>
+                              <td>{s.name}</td>
+                              <td>{s.confirmed}</td>
+                              <td>{s.completed}</td>
+                              <td>{s.cancelled}</td>
+                              <td className="nowrap">{minutes(s.avgMinutesToConfirm)}</td>
+                              <td>{s.replies}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </ChartCard>
+                <ChartCard title="Artigos sem vendas" subtitle={`${report.unsoldItems.length} artigo(s) do menu sem nenhuma venda neste período`}>
+                  {report.unsoldItems.length === 0 ? (
+                    <p className="muted small">Todos os artigos do menu tiveram vendas. 👏</p>
+                  ) : (
+                    <ul className="unsold-list">
+                      {report.unsoldItems.map((u) => (
+                        <li key={`${u.category}-${u.name}`}>
+                          <span>{u.name}</span>
+                          <span className="small muted">{u.category}</span>
+                          {!u.isAvailable && <span className="badge badge-muted">esgotado</span>}
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </ChartCard>
               </div>
@@ -387,7 +501,7 @@ function LocationMix({ report, money }: { report: ReportDto; money: (c: number) 
           .map((r) => {
             const pct = Math.round((r.orders / total) * 100);
             return (
-              <span key={r.type} className={cx("mix-seg", `mix-${r.type}`)} style={{ flexGrow: r.orders, background: LOCATION_COLOR[r.type] }} title={`${LOCATION_LABEL[r.type]}: ${pct}%`}>
+              <span key={r.type} className={cx("mix-seg", `mix-${r.type}`)} style={{ flex: `${r.orders} 1 0`, background: LOCATION_COLOR[r.type] }} title={`${LOCATION_LABEL[r.type]}: ${pct}%`}>
                 {pct >= 12 && <span className="mix-label">{pct}%</span>}
               </span>
             );
@@ -467,3 +581,121 @@ function HourlyTable({ report }: { report: ReportDto }) {
     </table>
   );
 }
+
+const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const WEEKDAYS_LONG = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+
+function WeekdayTable({ report, money }: { report: ReportDto; money: (c: number) => string }) {
+  return (
+    <table className="table">
+      <thead>
+        <tr>
+          <th scope="col">Dia</th>
+          <th scope="col">Pedidos</th>
+          <th scope="col">Vendas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {report.weekday.map((w) => (
+          <tr key={w.weekday}>
+            <td>{WEEKDAYS_LONG[w.weekday]}</td>
+            <td>{w.orders}</td>
+            <td>{money(w.revenueCents)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/** Closing ticket, manual summary (WhatsApp/copy) and the automatic summary status. */
+function ClosingActions({ report }: { report: ReportDto }) {
+  const { settings } = useSession();
+  const toast = useToast();
+  const errorMessage = useErrorMessage();
+  const [status, setStatus] = useState<DailySummaryStatusDto | null>(null);
+  const [sending, setSending] = useState(false);
+  const symbol = settings?.currencySymbol ?? "MT";
+  const hotelName = settings?.hotelName ?? "Nelson's Place";
+  const text = buildDailySummary(report, { hotelName, currencySymbol: symbol });
+  const singleDay = report.from === report.to;
+
+  useEffect(() => {
+    api<DailySummaryStatusDto>("/api/admin/reports/daily-summary").then(setStatus, () => undefined);
+  }, []);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("Resumo copiado.");
+    } catch {
+      toast("O navegador bloqueou a cópia.", "error");
+    }
+  };
+
+  const sendNow = async () => {
+    setSending(true);
+    try {
+      const next = await api<DailySummaryStatusDto>("/api/admin/reports/daily-summary/send", { method: "POST", body: { day: report.from } });
+      setStatus(next);
+      const result = next.recent.find((r) => r.day === report.from);
+      toast(
+        result?.status === "sent" ? `Resumo enviado (${result.channels}).` : result?.lastError ?? "Não foi possível enviar.",
+        result?.status === "sent" ? "info" : "error",
+      );
+    } catch (err) {
+      toast(errorMessage(err), "error");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const channels = status ? [status.channels.email && "email", status.channels.whatsapp && "WhatsApp Business"].filter(Boolean).join(" e ") : "";
+  const last = status?.recent[0];
+
+  return (
+    <section className="card closing">
+      <div className="row-between wrap">
+        <div>
+          <h2 className="card-title">{singleDay ? "Fecho e resumo do dia" : "Fecho e resumo do período"}</h2>
+          <p className="muted small">Talão de 80 mm para a impressora POS e resumo para enviar ao gerente.</p>
+        </div>
+        <div className="row wrap">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => printReceipt("closing-receipt")}>
+            Imprimir fecho (80 mm)
+          </button>
+          <a className="btn btn-whatsapp btn-sm" href={buildWhatsAppLink(settings?.managerWhatsapp || null, text)} target="_blank" rel="noopener noreferrer">
+            Enviar resumo por WhatsApp
+          </a>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => void copy()}>
+            Copiar resumo
+          </button>
+        </div>
+      </div>
+      {status && (
+        <p className="small">
+          <strong>Envio automático:</strong>{" "}
+          {!status.enabled
+            ? "desligado (ligue em Definições → Resumo diário ao gerente)."
+            : channels
+              ? `ligado — todos os dias às ${status.sendsAt}, por ${channels}.`
+              : "ligado, mas o servidor não tem email (SMTP) nem WhatsApp Business configurados — use o botão acima para enviar manualmente."}
+          {last && ` Último: ${last.day.split("-").reverse().join("/")} — ${SUMMARY_STATUS[last.status]}${last.lastError ? ` (${last.lastError})` : ""}.`}
+          {singleDay && status.enabled && channels && (
+            <button type="button" className="btn btn-ghost btn-sm" disabled={sending} onClick={() => void sendNow()}>
+              Enviar agora este dia
+            </button>
+          )}
+        </p>
+      )}
+      <ClosingReceipt report={report} hotelName={hotelName} hotel={settings} currencySymbol={symbol} />
+    </section>
+  );
+}
+
+const SUMMARY_STATUS: Record<DailySummaryStatusDto["recent"][number]["status"], string> = {
+  pending: "a enviar",
+  sent: "enviado",
+  failed: "falhou",
+  skipped: "não enviado (sem canal)",
+};

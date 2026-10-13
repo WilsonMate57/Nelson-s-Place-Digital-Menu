@@ -46,6 +46,10 @@ The password is asked with a hidden prompt (min. 10 characters). Then sign in at
 
 Production starts with an **empty menu**. An administrator creates categories and products in **Painel → Menu**. Use only approved prices and real, authorised photographs. (`db:seed-demo` refuses to run in production unless forced; do not use it on the live database.)
 
+## Daily summary by email (optional)
+
+To email the end-of-day summary to the manager, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` and `SMTP_FROM` (e.g. the hotel's mail account in Plesk → Mail, using port 587 + STARTTLS or 465 + `SMTP_SECURE=true`). Then enable it and set the manager's email in Definições → Resumo diário ao gerente, and use Relatórios → «Enviar agora este dia» to test. The server checks every 5 minutes and sends 15 minutes after the kitchen closes; each attempt is logged.
+
 ## Backups
 
 ```bash

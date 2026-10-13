@@ -88,6 +88,13 @@ Admin-only "Relatórios" screen with one period filter (today, yesterday, 7/30 d
 - CSV export of the period's orders (semicolon-separated, comma decimals, UTF-8 BOM for Excel in Portuguese).
 - "Sales" = orders accepted by staff (confirmed or later, not cancelled). These are operational figures from the menu system, **not fiscal invoicing**.
 
+## Chat, more reports, closing ticket, daily summary (2026-10-13)
+
+- **Chat per order**: the guest writes from the order page (identified by the private order link); staff reply from the order detail with quick replies. Unread badges, toast + chime, read receipts. Staff names are never shown to guests. Closes 24 h after the order ends; anti-abuse limits. Polling every 8 s.
+- **Reports**: staff performance (confirmed/completed/cancelled, average time to confirm, chat replies), menu items without sales, sales per weekday, returning customers (by phone given in orders).
+- **Closing ticket** ("Fecho do dia/período") on the 80 mm POS printer from Relatórios.
+- **Daily summary to the manager**: manual (prefilled WhatsApp link / copy) works now. Automatic sending 15 min after the kitchen closes needs SMTP and/or a WhatsApp Business summary template configured on the server — **not verified with real accounts** (tested with mocks). Off by default.
+
 ## Pending business decisions (blockers for go-live)
 
 1. **Real menu**: partially transcribed (see above); management must confirm prices, resolve the doubts in MENU_REVISAO.md and provide dish photos.

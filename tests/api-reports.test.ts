@@ -77,6 +77,31 @@ describe("admin reports", () => {
     expect(r.categories.map((x) => x.name).sort()).toEqual(["Bebidas", "Pratos principais"]);
     expect(r.byLocation).toEqual([{ type: "room", orders: 3, revenueCents: 101000 }]);
     expect(r.kpis.avgMinutesToConfirm).toBe(0);
+
+    // Staff performance, unsold items and weekday breakdown.
+    expect(r.staff).toEqual([{ name: "Admin", confirmed: 2, completed: 1, cancelled: 1, avgMinutesToConfirm: 0, replies: 0 }]);
+    expect(r.unsoldItems.map((u) => u.name)).toEqual(["Sopa do dia", "Água mineral", "Fatia de bolo"]);
+    expect(r.unsoldItems.find((u) => u.name === "Água mineral")!.isAvailable).toBe(false);
+    expect(r.weekday.map((w) => w.weekday)).toEqual([1, 2, 3, 4, 5, 6, 0]);
+    expect(r.weekday[1]).toEqual({ weekday: 2, orders: 3, revenueCents: 101000 }); // 13/10/2026 is a Tuesday
+  });
+
+  it("recognises returning customers by phone number, whatever the formatting", async () => {
+    const { t, setClock, juice, admin } = await setup();
+    const place = async (phone: string, name: string) =>
+      t.request("/api/orders", {
+        method: "POST",
+        body: JSON.stringify(buildSubmission({ guestName: name, contactPhone: phone, items: [{ productId: juice.id, quantity: 1, optionIds: [] }] })),
+      });
+    setClock(at("2026-10-12", "12:00"));
+    await place("+258 84 111 2222", "Rita");
+    setClock(at("2026-10-13", "12:00"));
+    await place("258841112222", "Rita");
+    await place("+258 82 999 0000", "Novo");
+    const r = (await (await t.request("/api/admin/reports?from=2026-10-13&to=2026-10-13", { cookie: admin })).json()) as ReportDto;
+    expect(r.customers.withPhone).toBe(2);
+    expect(r.customers.returning).toBe(1);
+    expect(r.customers.top.find((c) => c.name === "Rita")).toMatchObject({ ordersInPeriod: 1, ordersEver: 2 });
   });
 
   it("fills every day of the range and compares with the previous period", async () => {

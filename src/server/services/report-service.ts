@@ -38,6 +38,7 @@ export class ReportService {
       return byDay.get(day) ?? { day, orders: 0, revenueCents: 0 };
     });
     const byHour = new Map(this.reports.hourly(range).map((h) => [h.hour, h.orders]));
+    const byWeekday = new Map(this.reports.weekday(range).map((w) => [w.weekday, w]));
 
     return {
       from,
@@ -52,6 +53,10 @@ export class ReportService {
       categories: this.reports.categories(range),
       topOptions: this.reports.topOptions(range, 10),
       byLocation: this.reports.byLocation(range),
+      staff: this.reports.staffPerformance(range),
+      unsoldItems: this.reports.unsoldItems(range),
+      weekday: [1, 2, 3, 4, 5, 6, 0].map((weekday) => byWeekday.get(weekday) ?? { weekday, orders: 0, revenueCents: 0 }),
+      customers: this.reports.customers(range, 10),
     };
   }
 

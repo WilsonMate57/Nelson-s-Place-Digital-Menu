@@ -28,6 +28,7 @@
     "@hono/node-server": "^2.1.4",
     "better-sqlite3": "^13.0.3",
     "hono": "^4.13.13",
+    "nodemailer": "^10.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "zod": "^4.6.5"
@@ -39,6 +40,7 @@
     "@playwright/test": "^1.64.0",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.4",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

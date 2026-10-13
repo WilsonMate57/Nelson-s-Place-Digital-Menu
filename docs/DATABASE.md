@@ -13,6 +13,8 @@ SQLite 3 (via `better-sqlite3`), one file at `DATABASE_PATH` (default `data/nels
 1. Initial schema.
 2. "Encomendar" (2026-10-13): `orders` rebuilt to allow `location_type = 'takeaway'` and to add `scheduled_for`, `deposit_cents`, `deposit_status` (`not_required | pending | confirmed`), `payment_reference`, `deposit_confirmed_at`, `deposit_confirmed_by`; `categories` gained `available_from` / `available_until` (daily window, e.g. breakfast). Existing orders are copied unchanged. Foreign keys are switched off during each migration and checked with `foreign_key_check` before commit.
 
+3. Chat and daily summary (2026-10-13): `order_messages` (one thread per order: `sender` guest/staff, `staff_id`, `body` ≤ 1000 chars, `read_at` = read by the other side) and `daily_summaries` (one row per hotel-local day: `status` pending/sent/failed/skipped, `channels`, `attempts`, `last_error`).
+
 ## Entity overview
 
 ```

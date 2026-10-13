@@ -74,6 +74,10 @@ Meta charges per delivered template message, with rates that vary by country and
 
 The Cloud API sender is covered by **automated tests with a mocked HTTP client only** (success, API error, network error, retry, no double-send). It has **not** been tested against Meta's real API because no credentials exist yet. Do a supervised test with real credentials before relying on it.
 
+## Daily summary to the manager (optional)
+
+In `cloud_api` mode the automatic daily summary can also go by WhatsApp. Create a second **Utility** template, e.g. `resumo_diario`, with two body variables — `{{1}}` the date, `{{2}}` the summary (one line) — and set `WHATSAPP_SUMMARY_TEMPLATE_NAME`. The manager's number is set in Definições → Resumo diário ao gerente. Without this, the summary can still go by email (SMTP), or be sent by hand from Relatórios with «Enviar resumo por WhatsApp» (a prefilled link). Tested only with a mocked API.
+
 ## Troubleshooting
 
 | Symptom | Check |

@@ -20,6 +20,12 @@ const server = serve({ fetch: app.fetch, port: config.port, hostname: config.hos
   }
 });
 
+// Daily summary to the manager: check every 5 minutes whether it is due.
+const summaryTimer = setInterval(() => {
+  services.dailySummary.tick().catch((err: unknown) => console.error("Daily summary check failed", err));
+}, 5 * 60_000);
+summaryTimer.unref();
+
 function shutdown(signal: string) {
   console.log(`${signal} received, shutting down`);
   server.close(() => {

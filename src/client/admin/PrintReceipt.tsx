@@ -129,8 +129,8 @@ export function PrintReceipt({
  * own length so thermal printers cut right after it instead of feeding a
  * full A4-length page.
  */
-export function printReceipt(): void {
-  const receipt = document.getElementById("receipt");
+export function printReceipt(elementId = "receipt"): void {
+  const receipt = document.getElementById(elementId);
   if (!receipt) return;
   const heightMm = Math.ceil((receipt.scrollHeight * 25.4) / 96) + 6;
   const style = document.createElement("style");

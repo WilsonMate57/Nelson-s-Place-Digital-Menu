@@ -97,6 +97,9 @@ export function SettingsPage() {
           hotelAddress: form.hotelAddress,
           hotelEmail: form.hotelEmail,
           hotelWebsite: form.hotelWebsite,
+          dailySummaryEnabled: form.dailySummaryEnabled,
+          managerWhatsapp: form.managerWhatsapp,
+          managerEmail: form.managerEmail,
         },
       });
       setSettings(saved);
@@ -150,6 +153,28 @@ export function SettingsPage() {
           <input id="st-address" className="input" maxLength={150} value={form.hotelAddress} onChange={(e) => set("hotelAddress", e.target.value)} />
         </div>
         <p className="hint">Aparecem no cabeçalho de cada talão. Campos vazios não são impressos.</p>
+      </section>
+
+      <section className="card stack">
+        <h2 className="card-title">Resumo diário ao gerente</h2>
+        <label className="check">
+          <input type="checkbox" checked={form.dailySummaryEnabled} onChange={(e) => set("dailySummaryEnabled", e.target.checked)} />
+          Enviar automaticamente o resumo do dia, 15 minutos depois de a cozinha fechar
+        </label>
+        <div className="grid-2">
+          <div className="field">
+            <label className="label" htmlFor="st-mgr-email">Email do gerente</label>
+            <input id="st-mgr-email" className="input" type="email" maxLength={120} value={form.managerEmail} onChange={(e) => set("managerEmail", e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="st-mgr-wa">WhatsApp do gerente</label>
+            <input id="st-mgr-wa" className="input" inputMode="tel" placeholder="258XXXXXXXXX" value={form.managerWhatsapp} onChange={(e) => set("managerWhatsapp", e.target.value)} />
+          </div>
+        </div>
+        <p className="hint">
+          O envio automático precisa de uma conta de email (SMTP) ou do WhatsApp Business configurados no servidor (ver docs/DEPLOYMENT.md). Sem isso, use
+          «Enviar resumo por WhatsApp» em Relatórios, que abre o WhatsApp com o resumo pronto.
+        </p>
       </section>
 
       <section className="card stack">

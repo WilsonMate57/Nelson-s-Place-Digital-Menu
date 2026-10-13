@@ -35,6 +35,10 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   hotelAddress: "Kumbeza, célula A, no. 281, Q.8",
   hotelEmail: "info@nelsonsplace.co.mz",
   hotelWebsite: "www.nelsonsplace.co.mz",
+  // Daily summary to the manager: off until the hotel sets a recipient.
+  dailySummaryEnabled: false,
+  managerWhatsapp: "",
+  managerEmail: "",
 };
 
 const KEY = "general";

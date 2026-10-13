@@ -325,8 +325,22 @@ test("admin sees reports for the period and can export orders", async ({ page })
   await expect(page.getByRole("heading", { name: "Pedidos por hora do dia" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Artigos mais pedidos" })).toBeVisible();
   await expect(page.locator(".ranked").first()).toContainText(/Frango grelhado|Sumo natural|Sopa do dia/);
+  for (const title of ["Vendas por dia da semana", "Clientes", "Desempenho da equipa", "Artigos sem vendas", "Fecho e resumo do dia"]) {
+    await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
+  }
+  await expect(page.getByRole("link", { name: "Enviar resumo por WhatsApp" })).toHaveAttribute("href", /^https:\/\/wa\.me\/\?text=/);
+
+  // Daily closing on the 80 mm POS printer.
+  await page.emulateMedia({ media: "print" });
+  const closing = page.locator("#closing-receipt");
+  await expect(closing).toBeVisible();
+  await expect(closing).toContainText("FECHO DO DIA");
+  await expect(closing).toContainText("VENDAS");
+  const closingHeight = await closing.evaluate((el) => Math.ceil((el.scrollHeight * 25.4) / 96) + 6);
+  await page.pdf({ path: "test-results/screens/closing-80mm.pdf", width: "80mm", height: `${closingHeight}mm`, printBackground: true });
+  await page.emulateMedia({ media: "screen" });
   await page.getByRole("button", { name: "Últimos 7 dias" }).click();
-  await expect(page.getByRole("heading", { name: "Vendas por dia" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Vendas por dia", exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/screens/admin-reports-desktop.png", fullPage: true });
 
   const href = await page.getByRole("link", { name: /Exportar pedidos/ }).getAttribute("href");

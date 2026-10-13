@@ -32,6 +32,16 @@ const envSchema = z.object({
   WHATSAPP_API_VERSION: z.string().regex(/^v\d+\.\d+$/).default("v21.0"),
   WHATSAPP_TEMPLATE_NAME: z.string().default(""),
   WHATSAPP_TEMPLATE_LANGUAGE: z.string().default("pt_PT"),
+  /** Optional second template for the automatic daily summary (cloud_api mode). */
+  WHATSAPP_SUMMARY_TEMPLATE_NAME: z.string().default(""),
+
+  /** Optional SMTP account for emailing the daily summary to the manager. */
+  SMTP_HOST: z.string().default(""),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: bool,
+  SMTP_USER: z.string().default(""),
+  SMTP_PASS: z.string().default(""),
+  SMTP_FROM: z.string().default(""),
 });
 
 export interface AppConfig {
@@ -52,7 +62,9 @@ export interface AppConfig {
     apiVersion: string;
     templateName: string;
     templateLanguage: string;
+    summaryTemplateName: string;
   };
+  smtp: { host: string; port: number; secure: boolean; user: string; pass: string; from: string };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -80,6 +92,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       apiVersion: e.WHATSAPP_API_VERSION,
       templateName: e.WHATSAPP_TEMPLATE_NAME,
       templateLanguage: e.WHATSAPP_TEMPLATE_LANGUAGE,
+      summaryTemplateName: e.WHATSAPP_SUMMARY_TEMPLATE_NAME,
+    },
+    smtp: {
+      host: e.SMTP_HOST,
+      port: e.SMTP_PORT,
+      secure: e.SMTP_SECURE,
+      user: e.SMTP_USER,
+      pass: e.SMTP_PASS,
+      from: e.SMTP_FROM || e.SMTP_USER,
     },
   };
   if (config.whatsapp.mode === "cloud_api") {

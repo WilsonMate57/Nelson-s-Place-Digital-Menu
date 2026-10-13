@@ -112,6 +112,19 @@ export interface HotelDetails {
 
 export interface AdminSettings extends Omit<PublicSettings, "whatsappContactNumber" | "whatsappMode">, HotelDetails {
   whatsappNumber: string;
+  /** Daily summary to the manager. */
+  dailySummaryEnabled: boolean;
+  managerWhatsapp: string;
+  managerEmail: string;
+}
+
+export interface DailySummaryStatusDto {
+  enabled: boolean;
+  /** Which automatic channels are configured on the server. */
+  channels: { email: boolean; whatsapp: boolean };
+  /** When today's automatic summary is due (hotel time, HH:MM). */
+  sendsAt: string;
+  recent: { day: string; status: "pending" | "sent" | "failed" | "skipped"; channels: string | null; attempts: number; lastError: string | null; updatedAt: string }[];
 }
 
 export interface PublicMenuDto {
@@ -282,6 +295,15 @@ export interface ReportDto {
   categories: { name: string; quantity: number; revenueCents: number }[];
   topOptions: { group: string; name: string; count: number }[];
   byLocation: { type: import("./constants").OrderLocationType; orders: number; revenueCents: number }[];
+  staff: { name: string; confirmed: number; completed: number; cancelled: number; avgMinutesToConfirm: number | null; replies: number }[];
+  unsoldItems: { name: string; category: string; isAvailable: boolean }[];
+  /** 7 entries, Monday first. */
+  weekday: { weekday: number; orders: number; revenueCents: number }[];
+  customers: {
+    withPhone: number;
+    returning: number;
+    top: { name: string | null; phone: string; ordersInPeriod: number; ordersEver: number; revenueCents: number }[];
+  };
 }
 
 // ---------------------------------------------------------------------------

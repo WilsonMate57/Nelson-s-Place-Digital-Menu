@@ -153,6 +153,98 @@ export class ReportRepo {
     return row.minutes === null ? null : Math.round(row.minutes);
   }
 
+  /** What each staff member did in the period (status changes are dated by when they happened). */
+  staffPerformance(r: Range): { name: string; confirmed: number; completed: number; cancelled: number; avgMinutesToConfirm: number | null; replies: number }[] {
+    const rows = this.db
+      .prepare(
+        `SELECT s.id AS id, s.display_name AS name,
+           SUM(h.to_status = 'CONFIRMED') AS confirmed,
+           SUM(h.to_status = 'COMPLETED') AS completed,
+           SUM(h.to_status = 'CANCELLED') AS cancelled,
+           AVG(CASE WHEN h.to_status = 'CONFIRMED' AND o.scheduled_for IS NULL
+                    THEN (julianday(h.created_at) - julianday(o.created_at)) * 1440 END) AS avgMinutesToConfirm
+         FROM order_status_history h
+         JOIN staff s ON s.id = h.staff_id
+         JOIN orders o ON o.id = h.order_id
+         WHERE h.created_at >= ? AND h.created_at <= ?
+         GROUP BY s.id ORDER BY confirmed DESC, completed DESC`,
+      )
+      .all(r.fromIso, r.toIso) as { id: number; name: string; confirmed: number; completed: number; cancelled: number; avgMinutesToConfirm: number | null }[];
+    const replies = new Map(
+      (
+        this.db
+          .prepare(
+            `SELECT staff_id AS id, COUNT(*) AS n FROM order_messages
+             WHERE sender = 'staff' AND staff_id IS NOT NULL AND created_at >= ? AND created_at <= ? GROUP BY staff_id`,
+          )
+          .all(r.fromIso, r.toIso) as { id: number; n: number }[]
+      ).map((x) => [x.id, x.n]),
+    );
+    return rows.map(({ id, ...row }) => ({
+      ...row,
+      avgMinutesToConfirm: row.avgMinutesToConfirm === null ? null : Math.round(row.avgMinutesToConfirm),
+      replies: replies.get(id) ?? 0,
+    }));
+  }
+
+  /** Menu items on sale that nobody ordered in the period. */
+  unsoldItems(r: Range): { name: string; category: string; isAvailable: boolean }[] {
+    return (
+      this.db
+        .prepare(
+          `SELECT json_extract(p.name, '$.pt') AS name, json_extract(c.name, '$.pt') AS category, p.is_available AS available
+           FROM products p JOIN categories c ON c.id = p.category_id
+           WHERE p.is_archived = 0 AND c.is_active = 1 AND NOT EXISTS (
+             SELECT 1 FROM order_items i JOIN orders o ON o.id = i.order_id
+             WHERE i.product_id = p.id AND o.created_at >= ? AND o.created_at <= ? AND o.status IN ${SOLD})
+           ORDER BY c.sort_order, c.id, p.sort_order, p.id`,
+        )
+        .all(r.fromIso, r.toIso) as { name: string; category: string; available: number }[]
+    ).map((x) => ({ name: x.name, category: x.category, isAvailable: x.available === 1 }));
+  }
+
+  /** Orders and sales per local weekday (0 = Sunday … 6 = Saturday). */
+  weekday(r: Range): { weekday: number; orders: number; revenueCents: number }[] {
+    return this.db
+      .prepare(
+        `SELECT CAST(strftime('%w', created_at, ${LOCAL}) AS INTEGER) AS weekday, COUNT(*) AS orders,
+           COALESCE(SUM(CASE WHEN status IN ${SOLD} THEN total_cents END), 0) AS revenueCents
+         FROM orders WHERE created_at >= ? AND created_at <= ? AND status != 'CANCELLED'
+         GROUP BY weekday`,
+      )
+      .all(r.fromIso, r.toIso) as { weekday: number; orders: number; revenueCents: number }[];
+  }
+
+  /**
+   * Customers identified by the phone number they gave (digits only). Only
+   * orders with a phone count; "returning" = more than one order ever, up to
+   * the end of the period.
+   */
+  customers(r: Range, limit: number): {
+    withPhone: number;
+    returning: number;
+    top: { name: string | null; phone: string; ordersInPeriod: number; ordersEver: number; revenueCents: number }[];
+  } {
+    const digits = `replace(replace(replace(replace(replace(contact_phone, ' ', ''), '+', ''), '-', ''), '(', ''), ')', '')`;
+    const rows = this.db
+      .prepare(
+        `WITH everyone AS (
+           SELECT ${digits} AS phone, COUNT(*) AS ordersEver FROM orders
+           WHERE contact_phone IS NOT NULL AND contact_phone != '' AND created_at <= ? AND status != 'CANCELLED' GROUP BY phone
+         ), period AS (
+           SELECT ${digits} AS phone, MAX(guest_name) AS name, MAX(contact_phone) AS display, COUNT(*) AS ordersInPeriod,
+             COALESCE(SUM(CASE WHEN status IN ${SOLD} THEN total_cents END), 0) AS revenueCents
+           FROM orders WHERE contact_phone IS NOT NULL AND contact_phone != '' AND created_at >= ? AND created_at <= ? AND status != 'CANCELLED'
+           GROUP BY phone
+         )
+         SELECT p.name, p.display AS phone, p.ordersInPeriod, e.ordersEver, p.revenueCents
+         FROM period p JOIN everyone e ON e.phone = p.phone
+         ORDER BY p.ordersInPeriod DESC, p.revenueCents DESC`,
+      )
+      .all(r.toIso, r.fromIso, r.toIso) as { name: string | null; phone: string; ordersInPeriod: number; ordersEver: number; revenueCents: number }[];
+    return { withPhone: rows.length, returning: rows.filter((x) => x.ordersEver > 1).length, top: rows.slice(0, limit) };
+  }
+
   /** Orders in the range for CSV export, oldest first. */
   exportRows(r: Range) {
     return this.db

@@ -9,6 +9,7 @@ import {
   ordersEnabledSchema,
   productInputSchema,
   reportQuerySchema,
+  dailySummarySendSchema,
   settingsInputSchema,
   staffCreateSchema,
   staffPasswordResetSchema,
@@ -265,6 +266,16 @@ export function adminRoutes(s: Services) {
   app.get("/reports", adminOnly, (c) => {
     const { from, to } = validate(reportQuerySchema, c.req.query());
     return c.json(s.reports.build(from, to));
+  });
+
+  app.get("/reports/daily-summary", adminOnly, (c) => c.json(s.dailySummary.status()));
+
+  /** Sends the summary for a day now (e.g. to test the configuration). */
+  app.post("/reports/daily-summary/send", adminOnly, async (c) => {
+    const { day } = await readJson(c, dailySummarySendSchema);
+    const status = await s.dailySummary.send(day);
+    s.auditRepo.record(c.get("staff").id, "daily_summary_sent_manually", "report", day, { status });
+    return c.json(s.dailySummary.status());
   });
 
   app.get("/reports/orders.csv", adminOnly, (c) => {

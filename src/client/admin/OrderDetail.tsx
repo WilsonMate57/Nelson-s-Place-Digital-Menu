@@ -249,7 +249,7 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
       </section>
 
       <div className="no-print">
-        <button type="button" className="btn btn-secondary btn-sm" onClick={printReceipt}>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => printReceipt()}>
           Imprimir talão (80 mm)
         </button>
       </div>

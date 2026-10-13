@@ -69,14 +69,14 @@ export class CloudApiSender {
     private readonly timeoutMs = 10_000,
   ) {}
 
-  async send(to: string, parameters: string[]): Promise<SendResult> {
+  async send(to: string, parameters: string[], templateName: string = this.config.templateName): Promise<SendResult> {
     const url = `https://graph.facebook.com/${this.config.apiVersion}/${encodeURIComponent(this.config.phoneNumberId)}/messages`;
     const body = {
       messaging_product: "whatsapp",
       to,
       type: "template",
       template: {
-        name: this.config.templateName,
+        name: templateName,
         language: { code: this.config.templateLanguage },
         components: [{ type: "body", parameters: parameters.map((text) => ({ type: "text", text })) }],
       },

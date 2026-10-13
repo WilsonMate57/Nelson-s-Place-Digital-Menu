@@ -8,6 +8,7 @@ import { openDatabase } from "../src/server/db/connection";
 import { hashPassword } from "../src/server/auth/passwords";
 import { seedDemoMenu } from "../src/server/cli/seed-demo";
 import type { FetchLike } from "../src/server/whatsapp/cloud-api";
+import type { EmailSender } from "../src/server/services/daily-summary-service";
 import type { OrderSubmissionInput } from "../src/shared/schemas";
 import type { PublicMenuDto } from "../src/shared/types";
 
@@ -26,7 +27,7 @@ export interface TestContext {
 export const TEST_NOW = new Date("2026-10-13T10:00:00.000Z");
 
 export async function makeTestContext(
-  options: { env?: Record<string, string>; fetchImpl?: FetchLike; now?: () => Date } = {},
+  options: { env?: Record<string, string>; fetchImpl?: FetchLike; now?: () => Date; emailSender?: EmailSender | null } = {},
 ): Promise<TestContext> {
   const config = loadConfig({
     NODE_ENV: "test",
@@ -37,7 +38,13 @@ export async function makeTestContext(
   });
   const db = openDatabase(":memory:");
   const logs: string[] = [];
-  const deps = { fetchImpl: options.fetchImpl, log: (m: string) => void logs.push(m), now: options.now ?? (() => TEST_NOW) };
+  const deps = {
+    fetchImpl: options.fetchImpl,
+    log: (m: string) => void logs.push(m),
+    now: options.now ?? (() => TEST_NOW),
+    // Never use a real SMTP server in tests.
+    emailSender: options.emailSender ?? null,
+  };
   const services = createServices(config, db, deps);
   const app = createApp(services, deps);
 
