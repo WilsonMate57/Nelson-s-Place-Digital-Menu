@@ -216,6 +216,19 @@ test("take-away asks for the 50% deposit and staff must confirm it before the or
   await expect(confirmOrder).toBeEnabled();
   await confirmOrder.click();
   await expect(staff.locator(".order-detail .badge-lg")).toHaveText("Confirmado");
+
+  // 80 mm POS ticket: in print mode only the ticket is shown, 72 mm wide.
+  await staff.emulateMedia({ media: "print" });
+  const ticket = staff.locator("#receipt");
+  await expect(ticket).toBeVisible();
+  await expect(staff.locator("#root")).toBeHidden();
+  await expect(ticket).toContainText("LEVANTAR NO HOTEL");
+  await expect(ticket).toContainText(reference);
+  await expect(ticket).toContainText("Sinal (recebido)");
+  const widthPx = await ticket.evaluate((el) => el.getBoundingClientRect().width);
+  expect(Math.round((widthPx * 25.4) / 96)).toBe(72);
+  const heightMm = await ticket.evaluate((el) => Math.ceil((el.scrollHeight * 25.4) / 96) + 6);
+  await staff.pdf({ path: "test-results/screens/ticket-80mm.pdf", width: "80mm", height: `${heightMm}mm`, printBackground: true });
   await staffContext.close();
 
   await page.reload();

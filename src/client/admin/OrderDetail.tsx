@@ -9,6 +9,7 @@ import { api } from "../lib/api";
 import { formatDateTime } from "../lib/util";
 import { useErrorMessage } from "./errors";
 import { STATUS_ACTION, STATUS_LABEL, WHATSAPP_STATUS } from "./labels";
+import { PrintReceipt, printReceipt } from "./PrintReceipt";
 import { useSession } from "./session";
 
 interface Props {
@@ -245,10 +246,11 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
       </section>
 
       <div className="no-print">
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-          Imprimir talão
+        <button type="button" className="btn btn-secondary btn-sm" onClick={printReceipt}>
+          Imprimir talão (80 mm)
         </button>
       </div>
+      <PrintReceipt order={order} hotelName={settings?.hotelName ?? "Nelson's Place"} currencySymbol={symbol} />
     </article>
   );
 }
