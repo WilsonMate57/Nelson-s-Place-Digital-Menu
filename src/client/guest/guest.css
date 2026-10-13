@@ -114,14 +114,33 @@
 
 /* ----------------------------------------------------------------- Hero */
 
+/* Photo of the hotel under a dark-green layer so the white text stays readable.
+   The green colour shows while the photo loads or if it fails. */
 .hero {
   background:
-    radial-gradient(circle at 85% 20%, rgb(198 166 106 / 0.16), transparent 45%),
+    linear-gradient(rgb(18 48 42 / 0.5), rgb(18 48 42 / 0.82) 75%),
+    url("../assets/hero/hotel-1200.jpg") 58% 45% / cover no-repeat,
     var(--c-green-800);
   color: #fff;
 }
+@media (min-width: 768px) {
+  .hero {
+    background:
+      linear-gradient(90deg, rgb(18 48 42 / 0.9) 0%, rgb(18 48 42 / 0.68) 55%, rgb(18 48 42 / 0.35) 100%),
+      url("../assets/hero/hotel-1920.jpg") center 45% / cover no-repeat,
+      var(--c-green-800);
+  }
+  .hero-inner {
+    padding-block: var(--sp-12) var(--sp-10);
+  }
+}
 .hero-inner {
   padding-block: var(--sp-10) var(--sp-8);
+}
+.hero-eyebrow,
+.hero-title,
+.hero-text {
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.45);
 }
 .hero-eyebrow {
   color: var(--c-gold-500);

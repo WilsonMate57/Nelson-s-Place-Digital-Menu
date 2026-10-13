@@ -24,3 +24,6 @@ Thumbs.db
 
 # Source photos of the printed menu (reference only, not part of the app)
 assets/images/menu/
+
+# Original photos (full-size sources). Optimised copies used by the site live in src/client/assets/.
+assets/images/banner/
