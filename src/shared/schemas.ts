@@ -227,6 +227,11 @@ export const settingsInputSchema = z.object({
   takeawayEnabled: z.boolean(),
   takeawayDepositPercent: z.number().int().min(0).max(100),
   paymentInstructions: optionalLocalizedText(400),
+  hotelNuit: text(20).pipe(z.string().regex(/^[0-9]*$/, "O NUIT tem apenas algarismos")),
+  hotelPhone: text(30),
+  hotelAddress: text(150),
+  hotelEmail: text(120).pipe(z.union([z.literal(""), z.email("Email inválido")])),
+  hotelWebsite: text(120),
 }).refine((s) => parseHm(s.kitchenOpen) < parseHm(s.kitchenClose), {
   message: "O fecho da cozinha deve ser depois da abertura",
   path: ["kitchenClose"],

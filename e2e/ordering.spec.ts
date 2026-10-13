@@ -225,6 +225,10 @@ test("take-away asks for the 50% deposit and staff must confirm it before the or
   await expect(ticket).toContainText("LEVANTAR NO HOTEL");
   await expect(ticket).toContainText(reference);
   await expect(ticket).toContainText("Sinal (recebido)");
+  await expect(ticket).toContainText("NUIT: 400966079");
+  await expect(ticket).toContainText("Kumbeza, célula A, no. 281, Q.8");
+  await expect(ticket).toContainText("info@nelsonsplace.co.mz");
+  await expect(ticket).toContainText("não serve de factura");
   const widthPx = await ticket.evaluate((el) => el.getBoundingClientRect().width);
   expect(Math.round((widthPx * 25.4) / 96)).toBe(72);
   const heightMm = await ticket.evaluate((el) => Math.ceil((el.scrollHeight * 25.4) / 96) + 6);

@@ -92,6 +92,11 @@ export function SettingsPage() {
           takeawayEnabled: form.takeawayEnabled,
           takeawayDepositPercent: form.takeawayDepositPercent,
           paymentInstructions: payPt.trim() ? { pt: payPt, en: payEn || undefined } : null,
+          hotelNuit: form.hotelNuit,
+          hotelPhone: form.hotelPhone,
+          hotelAddress: form.hotelAddress,
+          hotelEmail: form.hotelEmail,
+          hotelWebsite: form.hotelWebsite,
         },
       });
       setSettings(saved);
@@ -118,6 +123,33 @@ export function SettingsPage() {
           <input id="st-symbol" className="input input-narrow" maxLength={8} value={form.currencySymbol} onChange={(e) => set("currencySymbol", e.target.value)} required />
           <span className="hint">Moeda: {form.currency} (meticais). Os preços são guardados em centavos.</span>
         </div>
+      </section>
+
+      <section className="card stack">
+        <h2 className="card-title">Dados do hotel (talão impresso)</h2>
+        <div className="grid-2">
+          <div className="field">
+            <label className="label" htmlFor="st-nuit">NUIT</label>
+            <input id="st-nuit" className="input" inputMode="numeric" maxLength={20} value={form.hotelNuit} onChange={(e) => set("hotelNuit", e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="st-phone">Telefone</label>
+            <input id="st-phone" className="input" type="tel" maxLength={30} value={form.hotelPhone} onChange={(e) => set("hotelPhone", e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="st-email">Email</label>
+            <input id="st-email" className="input" type="email" maxLength={120} value={form.hotelEmail} onChange={(e) => set("hotelEmail", e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="st-site">Site</label>
+            <input id="st-site" className="input" maxLength={120} value={form.hotelWebsite} onChange={(e) => set("hotelWebsite", e.target.value)} />
+          </div>
+        </div>
+        <div className="field">
+          <label className="label" htmlFor="st-address">Localização</label>
+          <input id="st-address" className="input" maxLength={150} value={form.hotelAddress} onChange={(e) => set("hotelAddress", e.target.value)} />
+        </div>
+        <p className="hint">Aparecem no cabeçalho de cada talão. Campos vazios não são impressos.</p>
       </section>
 
       <section className="card stack">

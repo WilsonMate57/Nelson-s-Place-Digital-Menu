@@ -101,7 +101,16 @@ export interface PublicSettings {
 }
 
 /** Full settings, editable by administrators. */
-export interface AdminSettings extends Omit<PublicSettings, "whatsappContactNumber" | "whatsappMode"> {
+/** Hotel identification printed on order tickets. Empty strings are omitted. */
+export interface HotelDetails {
+  hotelNuit: string;
+  hotelPhone: string;
+  hotelAddress: string;
+  hotelEmail: string;
+  hotelWebsite: string;
+}
+
+export interface AdminSettings extends Omit<PublicSettings, "whatsappContactNumber" | "whatsappMode">, HotelDetails {
   whatsappNumber: string;
 }
 

@@ -29,6 +29,12 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   takeawayDepositPercent: 50,
   // Take-away is only offered once the hotel sets how to pay (e.g. M-Pesa number).
   paymentInstructions: null,
+  // Hotel identification for printed tickets (provided by the hotel, 2026-10-13).
+  hotelNuit: "400966079",
+  hotelPhone: "+258843307644",
+  hotelAddress: "Kumbeza, célula A, no. 281, Q.8",
+  hotelEmail: "info@nelsonsplace.co.mz",
+  hotelWebsite: "www.nelsonsplace.co.mz",
 };
 
 const KEY = "general";

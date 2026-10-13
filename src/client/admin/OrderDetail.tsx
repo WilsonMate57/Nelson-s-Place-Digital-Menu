@@ -250,7 +250,7 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
           Imprimir talão (80 mm)
         </button>
       </div>
-      <PrintReceipt order={order} hotelName={settings?.hotelName ?? "Nelson's Place"} currencySymbol={symbol} />
+      <PrintReceipt order={order} hotelName={settings?.hotelName ?? "Nelson's Place"} hotel={settings} currencySymbol={symbol} />
     </article>
   );
 }

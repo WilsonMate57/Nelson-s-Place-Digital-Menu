@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { formatMoney } from "../../shared/money";
-import type { AdminOrderDetailDto } from "../../shared/types";
+import type { AdminOrderDetailDto, HotelDetails } from "../../shared/types";
 import { LOCATION_LABELS_PT } from "../../shared/whatsapp-message";
 import { formatDateTime } from "../lib/util";
 import { STATUS_LABEL } from "./labels";
@@ -11,14 +11,31 @@ import { STATUS_LABEL } from "./labels";
  * shown (see `.receipt` rules in admin.css). Black only, fixed-width font,
  * 72 mm printable width (the usual area of 80 mm paper).
  */
-export function PrintReceipt({ order, hotelName, currencySymbol }: { order: AdminOrderDetailDto; hotelName: string; currencySymbol: string }) {
+export function PrintReceipt({
+  order,
+  hotelName,
+  hotel,
+  currencySymbol,
+}: {
+  order: AdminOrderDetailDto;
+  hotelName: string;
+  hotel: HotelDetails | null;
+  currencySymbol: string;
+}) {
   const money = (cents: number) => formatMoney(cents, { symbol: currencySymbol });
   const place = order.locationType === "takeaway" ? "LEVANTAR NO HOTEL" : `${LOCATION_LABELS_PT[order.locationType].toUpperCase()} ${order.locationLabel}`;
 
   return createPortal(
     <div className="receipt" id="receipt" aria-hidden="true">
       <div className="r-center r-strong">{hotelName.toUpperCase()}</div>
-      <div className="r-center">Pedido do menu digital</div>
+      {hotel?.hotelAddress && <div className="r-center">{hotel.hotelAddress}</div>}
+      {hotel?.hotelPhone && <div className="r-center">Tel.: {hotel.hotelPhone}</div>}
+      {hotel?.hotelEmail && <div className="r-center">{hotel.hotelEmail}</div>}
+      {hotel?.hotelWebsite && <div className="r-center">{hotel.hotelWebsite}</div>}
+      {hotel?.hotelNuit && <div className="r-center">NUIT: {hotel.hotelNuit}</div>}
+      <div className="r-rule" />
+      <div className="r-center r-strong">TALÃO DE PEDIDO</div>
+      <div className="r-center">Menu digital</div>
       <div className="r-rule" />
       <div className="r-center r-big">{place}</div>
       <div className="r-center r-strong">{order.reference}</div>
@@ -100,6 +117,7 @@ export function PrintReceipt({ order, hotelName, currencySymbol }: { order: Admi
       )}
 
       <div className="r-rule" />
+      <div className="r-center r-small">Talão de pedido — não serve de factura</div>
       <div className="r-center r-small">Impresso {formatDateTime(new Date().toISOString())}</div>
     </div>,
     document.body,

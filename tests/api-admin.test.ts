@@ -233,3 +233,24 @@ describe("menu management", () => {
     expect(((await ok.json()) as AdminProductDto).imageUrl).toMatch(/^\/uploads\/products\/[0-9a-f-]{36}\.png$/);
   });
 });
+
+describe("hotel details for printed tickets", () => {
+  it("come pre-filled and are validated when saved", async () => {
+    const t = await makeTestContext();
+    const cookie = await t.login("admin@test.local");
+    const current = (await (await t.request("/api/admin/settings", { cookie })).json()) as Record<string, unknown>;
+    expect(current).toMatchObject({
+      hotelNuit: "400966079",
+      hotelPhone: "+258843307644",
+      hotelAddress: "Kumbeza, célula A, no. 281, Q.8",
+      hotelEmail: "info@nelsonsplace.co.mz",
+      hotelWebsite: "www.nelsonsplace.co.mz",
+    });
+    const { currency: _c, whatsappMode: _w, ...body } = current;
+    const bad = await t.request("/api/admin/settings", { method: "PUT", cookie, body: JSON.stringify({ ...body, hotelNuit: "40-09", hotelEmail: "x" }) });
+    expect(bad.status).toBe(400);
+    const ok = await t.request("/api/admin/settings", { method: "PUT", cookie, body: JSON.stringify({ ...body, hotelPhone: "+258 84 330 7644" }) });
+    expect(ok.status).toBe(200);
+    expect(t.services.settingsRepo.get().hotelPhone).toBe("+258 84 330 7644");
+  });
+});
