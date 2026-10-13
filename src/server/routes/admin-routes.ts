@@ -7,6 +7,7 @@ import {
   orderStatusUpdateSchema,
   ordersEnabledSchema,
   productInputSchema,
+  reportQuerySchema,
   settingsInputSchema,
   staffCreateSchema,
   staffPasswordResetSchema,
@@ -247,6 +248,22 @@ export function adminRoutes(s: Services) {
   });
 
   app.get("/audit", adminOnly, (c) => c.json(s.auditRepo.recent(200)));
+
+  // --- Reports (admin: they include sales figures) --------------------------
+
+  app.get("/reports", adminOnly, (c) => {
+    const { from, to } = validate(reportQuerySchema, c.req.query());
+    return c.json(s.reports.build(from, to));
+  });
+
+  app.get("/reports/orders.csv", adminOnly, (c) => {
+    const { from, to } = validate(reportQuerySchema, c.req.query());
+    s.auditRepo.record(c.get("staff").id, "report_exported", "report", null, { from, to });
+    return c.body(s.reports.csv(from, to), 200, {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="pedidos-${from}-a-${to}.csv"`,
+    });
+  });
 
   return app;
 }

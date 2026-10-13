@@ -300,3 +300,42 @@ for (const vp of VIEWPORTS) {
     await page.screenshot({ path: `test-results/screens/admin-orders-${vp.name}.png` });
   });
 }
+
+test("admin sees reports for the period and can export orders", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await adminLogin(page);
+  // Make sure today has at least one accepted order.
+  const menu = (await (await page.request.get("/api/menu")).json()) as { products: { id: number; name: { pt: string } }[] };
+  const juice = menu.products.find((p) => p.name.pt === "Sumo natural")!;
+  const placed = await page.request.post("/api/orders", {
+    data: { idempotencyKey: crypto.randomUUID(), language: "pt", location: { type: "table", label: "3" }, items: [{ productId: juice.id, quantity: 2, optionIds: [] }] },
+  });
+  expect(placed.status()).toBe(201);
+  const list = (await (await page.request.get("/api/admin/orders?status=PENDING")).json()) as { orders: { id: number }[] };
+  const confirm = await page.request.post(`/api/admin/orders/${list.orders[0]!.id}/status`, {
+    headers: { "x-np-request": "1" },
+    data: { to: "CONFIRMED", expectedStatus: "PENDING" },
+  });
+  expect(confirm.status()).toBe(200);
+
+  await page.getByRole("link", { name: "Relatórios" }).click();
+  await expect(page.getByRole("heading", { name: "Relatórios" })).toBeVisible();
+  await page.getByRole("button", { name: "Hoje" }).click();
+  await expect(page.locator(".kpi-hero .kpi-label")).toHaveText("Vendas");
+  await expect(page.getByRole("heading", { name: "Pedidos por hora do dia" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Artigos mais pedidos" })).toBeVisible();
+  await expect(page.locator(".ranked").first()).toContainText(/Frango grelhado|Sumo natural|Sopa do dia/);
+  await page.getByRole("button", { name: "Últimos 7 dias" }).click();
+  await expect(page.getByRole("heading", { name: "Vendas por dia" })).toBeVisible();
+  await page.screenshot({ path: "test-results/screens/admin-reports-desktop.png", fullPage: true });
+
+  const href = await page.getByRole("link", { name: /Exportar pedidos/ }).getAttribute("href");
+  const csv = await page.request.get(href!);
+  expect(csv.headers()["content-type"]).toContain("text/csv");
+  expect(await csv.text()).toContain("Referência;Data;Estado");
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: "test-results/screens/admin-reports-mobile.png", fullPage: true });
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});

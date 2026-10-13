@@ -15,7 +15,7 @@ import type {
   SelectedOptionSnapshot,
   StatusHistoryDto,
 } from "../../shared/types";
-import { nowIso, type Db } from "../db/connection";
+import type { Db } from "../db/connection";
 import { ACTIVE_STATUSES } from "../../shared/order-status";
 
 interface OrderRow {
@@ -85,7 +85,15 @@ export interface OrderListFilter {
 }
 
 export class OrdersRepo {
-  constructor(private readonly db: Db) {}
+  constructor(
+    private readonly db: Db,
+    /** Injectable clock (tests); stored timestamps use it. */
+    private readonly clock: () => Date = () => new Date(),
+  ) {}
+
+  private now(): string {
+    return this.clock().toISOString();
+  }
 
   findByIdempotencyKey(key: string): { id: number; requestHash: string } | null {
     const row = this.db.prepare("SELECT id, request_hash FROM orders WHERE idempotency_key = ?").get(key) as
@@ -100,7 +108,7 @@ export class OrdersRepo {
 
   /** Must be called inside a transaction together with the related inserts. */
   insert(order: NewOrder): number {
-    const now = nowIso();
+    const now = this.now();
     const { priced } = order;
     const id = Number(
       this.db
@@ -202,7 +210,7 @@ export class OrdersRepo {
 
   /** Marks a pending deposit as received. Returns false if it was not pending. */
   confirmDeposit(id: number, staffId: number): boolean {
-    const now = nowIso();
+    const now = this.now();
     return (
       this.db
         .prepare(
@@ -216,7 +224,7 @@ export class OrdersRepo {
   /** Atomic compare-and-set; returns false if the order was not in `from`. */
   updateStatus(id: number, from: OrderStatus, to: OrderStatus, staffId: number, note: string | null): boolean {
     return this.db.transaction(() => {
-      const now = nowIso();
+      const now = this.now();
       const result = this.db
         .prepare("UPDATE orders SET status = ?, updated_at = ? WHERE id = ? AND status = ?")
         .run(to, now, id, from);

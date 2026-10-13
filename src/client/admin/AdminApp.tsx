@@ -10,6 +10,7 @@ import { ROLE_LABEL } from "./labels";
 import { LoginPage } from "./LoginPage";
 import { MenuPage } from "./MenuPage";
 import { OrdersPage } from "./OrdersPage";
+import { ReportsPage } from "./ReportsPage";
 import { SessionContext, useSession, type AdminSettingsView, type SessionValue } from "./session";
 import { useErrorMessage } from "./errors";
 import { SettingsPage } from "./SettingsPage";
@@ -66,6 +67,7 @@ export function AdminApp() {
 const NAV: { path: string; label: string; adminOnly?: boolean }[] = [
   { path: "orders", label: "Pedidos" },
   { path: "menu", label: "Menu" },
+  { path: "reports", label: "Relatórios", adminOnly: true },
   { path: "staff", label: "Equipa", adminOnly: true },
   { path: "settings", label: "Definições", adminOnly: true },
   { path: "audit", label: "Registo", adminOnly: true },
@@ -153,6 +155,7 @@ function Shell({ onSignedOut }: { onSignedOut: () => void }) {
       <main id="admin-main" className="admin-main">
         {current === "orders" && <OrdersPage selectedId={route[1] ? Number(route[1]) : null} navigate={navigate} />}
         {current === "menu" && <MenuPage />}
+        {current === "reports" && <ReportsPage />}
         {current === "staff" && <StaffPage />}
         {current === "settings" && <SettingsPage />}
         {current === "audit" && <AuditPage />}

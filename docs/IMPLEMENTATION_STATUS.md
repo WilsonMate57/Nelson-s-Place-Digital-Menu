@@ -80,6 +80,14 @@ Decided by the hotel: anyone may order; kitchen closes at **23:00**; **45 min** 
 - **Provisional values to confirm:** kitchen opening 07:00, breakfast window 07:00–11:00, orders up to the next day. All editable in the dashboard.
 - Not included: delivery to addresses outside the hotel; automatic M-Pesa/e-Mola payment.
 
+## Reports (2026-10-13)
+
+Admin-only "Relatórios" screen with one period filter (today, yesterday, 7/30 days, this/last month, custom) and comparison with the previous period of the same length:
+- KPIs: sales, accepted orders, average order value, items sold, cancellations (rate), scheduled orders, deposits received, average time to confirm / complete.
+- Charts: sales per day, orders per hour (Maputo time), top items, sales per category, how guests receive (table/apartment/take-away), most chosen options. Every chart has a table view.
+- CSV export of the period's orders (semicolon-separated, comma decimals, UTF-8 BOM for Excel in Portuguese).
+- "Sales" = orders accepted by staff (confirmed or later, not cancelled). These are operational figures from the menu system, **not fiscal invoicing**.
+
 ## Pending business decisions (blockers for go-live)
 
 1. **Real menu**: partially transcribed (see above); management must confirm prices, resolve the doubts in MENU_REVISAO.md and provide dish photos.

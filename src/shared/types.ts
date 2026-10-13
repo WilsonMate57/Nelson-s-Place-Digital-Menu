@@ -239,3 +239,43 @@ export interface OrderListResponse {
 export interface ApiErrorBody {
   error: { code: string; message: string; details?: unknown };
 }
+
+// ---------------------------------------------------------------------------
+// Reports (admin)
+// ---------------------------------------------------------------------------
+
+export interface ReportKpis {
+  ordersReceived: number;
+  /** Orders accepted by the hotel (confirmed or later, not cancelled). */
+  ordersSold: number;
+  ordersCompleted: number;
+  ordersCancelled: number;
+  ordersPending: number;
+  /** Sales = total of accepted orders. */
+  revenueCents: number;
+  avgTicketCents: number;
+  itemsSold: number;
+  depositsConfirmedCents: number;
+  scheduledOrders: number;
+  /** Average minutes until staff confirmed / completed an order (immediate orders only). */
+  avgMinutesToConfirm: number | null;
+  avgMinutesToComplete: number | null;
+}
+
+export interface ReportDto {
+  /** Hotel-local dates, inclusive. */
+  from: string;
+  to: string;
+  previousFrom: string;
+  previousTo: string;
+  kpis: ReportKpis;
+  previous: ReportKpis;
+  /** One entry per day in the range (zeros included). */
+  daily: { day: string; orders: number; revenueCents: number }[];
+  /** 24 entries, local hour 0–23. */
+  hourly: { hour: number; orders: number }[];
+  topItems: { name: string; quantity: number; revenueCents: number }[];
+  categories: { name: string; quantity: number; revenueCents: number }[];
+  topOptions: { group: string; name: string; count: number }[];
+  byLocation: { type: import("./constants").OrderLocationType; orders: number; revenueCents: number }[];
+}

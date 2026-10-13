@@ -10,6 +10,7 @@ import { AuditRepo } from "./repositories/audit-repo";
 import { IntegrationRepo } from "./repositories/integration-repo";
 import { MenuRepo } from "./repositories/menu-repo";
 import { OrdersRepo } from "./repositories/orders-repo";
+import { ReportRepo } from "./repositories/report-repo";
 import { SettingsRepo } from "./repositories/settings-repo";
 import { StaffRepo } from "./repositories/staff-repo";
 import { adminRoutes } from "./routes/admin-routes";
@@ -18,6 +19,7 @@ import { publicRoutes } from "./routes/public-routes";
 import { AuthService } from "./services/auth-service";
 import { ImageStore } from "./services/image-store";
 import { OrderService } from "./services/order-service";
+import { ReportService } from "./services/report-service";
 import { CloudApiSender, type FetchLike } from "./whatsapp/cloud-api";
 import { WhatsAppService } from "./whatsapp/whatsapp-service";
 
@@ -32,6 +34,7 @@ export interface Services {
   integrationRepo: IntegrationRepo;
   auth: AuthService;
   orders: OrderService;
+  reports: ReportService;
   whatsapp: WhatsAppService;
   images: ImageStore;
 }
@@ -47,7 +50,7 @@ export interface AppDeps {
 export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): Services {
   const log = deps.log ?? ((message: string, error?: unknown) => console.error(`[${new Date().toISOString()}] ${message}`, error ?? ""));
   const menuRepo = new MenuRepo(db);
-  const ordersRepo = new OrdersRepo(db);
+  const ordersRepo = new OrdersRepo(db, deps.now);
   const settingsRepo = new SettingsRepo(db);
   const staffRepo = new StaffRepo(db);
   const auditRepo = new AuditRepo(db);
@@ -77,6 +80,7 @@ export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): S
     integrationRepo,
     auth: new AuthService(staffRepo, auditRepo, config.sessionTtlHours),
     orders: new OrderService(db, menuRepo, ordersRepo, settingsRepo, whatsapp, log, deps.now),
+    reports: new ReportService(new ReportRepo(db)),
     whatsapp,
     images: new ImageStore(config.uploadsDir),
   };
