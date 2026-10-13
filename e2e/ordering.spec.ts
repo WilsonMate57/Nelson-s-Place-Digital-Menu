@@ -30,21 +30,30 @@ test("guest places an order on a phone and staff processes it", async ({ page, b
   await page.goto("/?t=room&loc=12");
 
   await expect(page.getByRole("heading", { name: "Sabores que fazem parte da sua estadia." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Pratos principais" })).toBeVisible();
+  // Categories are tabs: only the selected category's items are shown.
+  await expect(page.getByRole("heading", { name: /^Entradas/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Frango grelhado/ })).toHaveCount(0);
+  await page.getByRole("tab", { name: "Pratos principais" }).click();
+  await expect(page.getByRole("tab", { name: "Pratos principais" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: /^Entradas/ })).toHaveCount(0);
 
   // Product with a required option: cannot be added until the option is chosen.
   await page.getByRole("button", { name: /Frango grelhado/ }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: /Adicionar ao pedido/ }).click();
   await expect(dialog.getByRole("alert")).toContainText("Complete as opções obrigatórias");
+  // Several sides may be chosen.
   await dialog.getByLabel("Arroz").check();
+  await dialog.getByLabel("Salada").check();
+  await expect(dialog.getByLabel("Arroz")).toBeChecked();
   await dialog.getByLabel("Molho extra").check();
   await dialog.getByRole("button", { name: "Aumentar quantidade" }).click();
   await page.screenshot({ path: "test-results/screens/guest-product-mobile.png" });
   await expect(dialog.getByRole("button", { name: /Adicionar ao pedido · 1400 MT/ })).toBeVisible();
   await dialog.getByRole("button", { name: /Adicionar ao pedido/ }).click();
 
-  // A simple product.
+  // A simple product, in another tab.
+  await page.getByRole("tab", { name: "Bebidas" }).click();
   await page.getByRole("button", { name: /Sumo natural/ }).click();
   await page.getByRole("dialog").getByRole("button", { name: /Adicionar ao pedido/ }).click();
 
@@ -58,7 +67,7 @@ test("guest places an order on a phone and staff processes it", async ({ page, b
 
   await page.getByRole("button", { name: /Ver pedido/ }).click();
   const sheet = page.getByRole("dialog", { name: "O seu pedido" });
-  await expect(sheet.getByText("Acompanhamento: Arroz", { exact: false }).or(sheet.getByText("Arroz · Molho extra"))).toBeVisible();
+  await expect(sheet.getByText("Acompanhamento: Arroz", { exact: false }).or(sheet.getByText("Arroz · Salada · Molho extra"))).toBeVisible();
   await sheet.getByRole("button", { name: "Continuar" }).click();
 
   // Checkout: room pre-filled from the QR code; invalid input rejected client-side.
@@ -117,8 +126,22 @@ test("guest places an order on a phone and staff processes it", async ({ page, b
   await staffContext.close();
 });
 
+test("checkout defaults to Mesa when there is no QR location", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Sopa do dia/ }).click();
+  await page.getByRole("dialog").getByRole("button", { name: /Adicionar ao pedido/ }).click();
+  await page.getByRole("button", { name: /Ver pedido/ }).click();
+  await page.getByRole("dialog", { name: "O seu pedido" }).getByRole("button", { name: "Continuar" }).click();
+  const checkout = page.getByRole("dialog", { name: "Confirmar pedido" });
+  await expect(checkout.getByRole("radio", { name: "Mesa" })).toBeChecked();
+  await expect(checkout.getByLabel("Número da mesa")).toBeVisible();
+  await page.screenshot({ path: "test-results/screens/guest-checkout-table-mobile.png" });
+});
+
 test("sold-out products cannot be ordered", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("tab", { name: "Bebidas" }).click();
   const card = page.getByRole("button", { name: /Água mineral.*Esgotado/ });
   await expect(card).toBeVisible();
   await card.click();
@@ -151,6 +174,7 @@ test("staff marks a product as sold out and guests see it immediately", async ({
 
   const guest = await browser.newPage();
   await guest.goto("/");
+  await guest.getByRole("tab", { name: "Sobremesas" }).click();
   await expect(guest.getByRole("button", { name: /Fatia de bolo.*Esgotado/ })).toBeVisible();
   await guest.close();
 

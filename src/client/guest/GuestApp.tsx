@@ -255,10 +255,20 @@ function Header(props: {
             <small>APART HOTEL</small>
           </span>
         </a>
-        <div className="row header-actions">
+        <div className="header-actions">
           {props.lastOrder && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={props.lastOrder}>
-              {props.lastOrderLabel}
+            <button type="button" className="my-order-btn" onClick={props.lastOrder} aria-label={props.lastOrderLabel} title={props.lastOrderLabel}>
+              <svg className="my-order-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path
+                  d="M6 2.75h12a.75.75 0 0 1 .75.75v17.25l-2.25-1.5-2.25 1.5-2.25-1.5-2.25 1.5-2.25-1.5-2.25 1.5V3.5A.75.75 0 0 1 6 2.75Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+                <path d="M9 8h6M9 11.5h6M9 15h3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+              <span className="my-order-label">{props.lastOrderLabel}</span>
             </button>
           )}
           <label className="visually-hidden" htmlFor="language">
@@ -266,8 +276,8 @@ function Header(props: {
           </label>
           <select id="language" className="select language-select" value={props.language} onChange={(e) => props.onLanguage(e.target.value as Language)}>
             {GUEST_LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
+              <option key={l.code} value={l.code} aria-label={l.label}>
+                {l.code.toUpperCase()}
               </option>
             ))}
           </select>

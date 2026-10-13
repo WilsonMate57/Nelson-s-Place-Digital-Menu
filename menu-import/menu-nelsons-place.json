@@ -3,444 +3,1565 @@
   "categories": [
     {
       "key": "breakfast",
-      "name": { "pt": "Pequeno-almoço", "en": "Breakfast" },
+      "name": {
+        "pt": "Pequeno-almoço",
+        "en": "Breakfast"
+      },
       "products": [
         {
-          "name": { "pt": "Pequeno-almoço completo", "en": "Breakfast" },
+          "name": {
+            "pt": "Pequeno-almoço completo",
+            "en": "Breakfast"
+          },
           "description": {
             "pt": "2 ovos, 2 fatias de bacon, 2 salsichas, queijo, fiambre, 2 torradas, café ou chá e fruta da época.",
             "en": "2 eggs, 2 bacon, 2 sausages, 1 cheese, 1 ham, 2 pieces of toast, coffee or tea and seasonal fruit."
           },
           "price": 500,
           "optionGroups": [
-            { "name": { "pt": "Bebida", "en": "Drink" }, "required": true, "options": [["Café", "Coffee"], ["Chá", "Tea"]] }
+            {
+              "name": {
+                "pt": "Bebida",
+                "en": "Drink"
+              },
+              "required": true,
+              "options": [
+                [
+                  "Café",
+                  "Coffee"
+                ],
+                [
+                  "Chá",
+                  "Tea"
+                ]
+              ]
+            }
           ]
         },
         {
-          "name": { "pt": "Pequeno-almoço Sunrise", "en": "Sunrise Breakfast" },
-          "description": { "pt": "1 ovo, 1 fatia de bacon, tomate e 2 torradas.", "en": "1 egg, 1 bacon, tomato and 2 pieces of toast." },
+          "name": {
+            "pt": "Pequeno-almoço Sunrise",
+            "en": "Sunrise Breakfast"
+          },
+          "description": {
+            "pt": "1 ovo, 1 fatia de bacon, tomate e 2 torradas.",
+            "en": "1 egg, 1 bacon, tomato and 2 pieces of toast."
+          },
           "price": 400
         },
         {
-          "name": { "pt": "Omelete mista", "en": "Mixed Omelette" },
-          "description": { "pt": "Queijo, fiambre, tomate, cebola e batata.", "en": "Cheese, ham, tomato, onion and potato." },
+          "name": {
+            "pt": "Omelete mista",
+            "en": "Mixed Omelette"
+          },
+          "description": {
+            "pt": "Queijo, fiambre, tomate, cebola e batata.",
+            "en": "Cheese, ham, tomato, onion and potato."
+          },
           "price": 350
         }
       ]
     },
     {
       "key": "starters",
-      "name": { "pt": "Entradas e petiscos", "en": "Starters & Light Meals" },
+      "name": {
+        "pt": "Entradas e petiscos",
+        "en": "Starters & Light Meals"
+      },
       "products": [
-        { "name": { "pt": "Pão de alho", "en": "Garlic Bread" }, "price": 150 },
         {
-          "name": { "pt": "Azeitonas", "en": "Olives" },
-          "description": { "pt": "50 g de azeitonas e 100 g de queijo feta.", "en": "50g olives and 100g feta cheese." },
+          "name": {
+            "pt": "Pão de alho",
+            "en": "Garlic Bread"
+          },
+          "price": 150
+        },
+        {
+          "name": {
+            "pt": "Azeitonas",
+            "en": "Olives"
+          },
+          "description": {
+            "pt": "50 g de azeitonas e 100 g de queijo feta.",
+            "en": "50g olives and 100g feta cheese."
+          },
           "price": 300
         },
-        { "name": { "pt": "Pudim de batata", "en": "Potato Pudding" }, "price": 450 },
-        { "name": { "pt": "Asas de frango", "en": "Chicken Wings" }, "price": 280 }
+        {
+          "name": {
+            "pt": "Pudim de batata",
+            "en": "Potato Pudding"
+          },
+          "price": 450
+        },
+        {
+          "name": {
+            "pt": "Asas de frango",
+            "en": "Chicken Wings"
+          },
+          "price": 280
+        }
       ]
     },
     {
       "key": "salads",
-      "name": { "pt": "Saladas", "en": "Salads" },
+      "name": {
+        "pt": "Saladas",
+        "en": "Salads"
+      },
       "products": [
         {
-          "name": { "pt": "Salada de atum", "en": "Tuna Salad" },
-          "description": { "pt": "Alface, tomate, cebola, pimento e atum.", "en": "Lettuce, tomato, onion, pepper and tuna." },
+          "name": {
+            "pt": "Salada de atum",
+            "en": "Tuna Salad"
+          },
+          "description": {
+            "pt": "Alface, tomate, cebola, pimento e atum.",
+            "en": "Lettuce, tomato, onion, pepper and tuna."
+          },
           "price": 350
         },
         {
-          "name": { "pt": "Salada mista", "en": "Mixed Salad" },
-          "description": { "pt": "Alface, tomate, cebola, pepino, pimento e maçã.", "en": "Lettuce, tomato, onion, cucumber, pepper and apple." },
+          "name": {
+            "pt": "Salada mista",
+            "en": "Mixed Salad"
+          },
+          "description": {
+            "pt": "Alface, tomate, cebola, pepino, pimento e maçã.",
+            "en": "Lettuce, tomato, onion, cucumber, pepper and apple."
+          },
           "price": 350
         },
         {
-          "name": { "pt": "Salada de frango", "en": "Chicken Salad" },
-          "description": { "pt": "Alface, tomate, cebola, pimento e frango.", "en": "Lettuce, tomato, onion, pepper and chicken." },
+          "name": {
+            "pt": "Salada de frango",
+            "en": "Chicken Salad"
+          },
+          "description": {
+            "pt": "Alface, tomate, cebola, pimento e frango.",
+            "en": "Lettuce, tomato, onion, pepper and chicken."
+          },
           "price": 350
         },
         {
-          "name": { "pt": "Salada de marisco", "en": "Seafood Salad" },
-          "description": { "pt": "Lulas, camarão, caranguejo e peixe.", "en": "Squid, shrimp, crab and fish." },
+          "name": {
+            "pt": "Salada de marisco",
+            "en": "Seafood Salad"
+          },
+          "description": {
+            "pt": "Lulas, camarão, caranguejo e peixe.",
+            "en": "Squid, shrimp, crab and fish."
+          },
           "price": 450
         }
       ]
     },
     {
       "key": "poultry",
-      "name": { "pt": "Frango", "en": "Poultry" },
+      "name": {
+        "pt": "Frango",
+        "en": "Poultry"
+      },
       "products": [
         {
-          "name": { "pt": "Frango Nelson's Place", "en": "Nelson's Place Chicken" },
+          "name": {
+            "pt": "Frango Nelson's Place",
+            "en": "Nelson's Place Chicken"
+          },
           "description": {
             "pt": "Frango inteiro do chef, do dia, com salada e acompanhamento à escolha.",
             "en": "1 full chef's chicken of the day with salad and a side of your choice."
           },
           "price": 850,
-          "optionGroups": [{ "preset": "side_chips_rice_veg" }]
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice_veg"
+            }
+          ]
         },
         {
-          "name": { "pt": "Frango à Zambeziana", "en": "Zambeziana Chicken" },
+          "name": {
+            "pt": "Frango à Zambeziana",
+            "en": "Zambeziana Chicken"
+          },
           "description": {
             "pt": "Frango inteiro em molho de coco, com salada e acompanhamento à escolha.",
             "en": "Full chicken in coconut sauce with salad and a side of your choice."
           },
           "price": 900,
-          "optionGroups": [{ "preset": "side_chips_rice_veg" }]
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice_veg"
+            }
+          ]
         },
         {
-          "name": { "pt": "Frango piri-piri", "en": "Piri Piri Chicken" },
+          "name": {
+            "pt": "Frango piri-piri",
+            "en": "Piri Piri Chicken"
+          },
           "description": {
             "pt": "Frango inteiro com molho picante, servido com salada e acompanhamento à escolha.",
             "en": "1 full chicken with chilli sauce, served with salad and a side of your choice."
           },
           "price": 900,
-          "optionGroups": [{ "preset": "side_chips_rice_mixedveg" }]
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice_mixedveg"
+            }
+          ]
         },
         {
-          "name": { "pt": "Meio frango", "en": "½ Chicken" },
-          "description": { "pt": "Servido com salada e acompanhamento à escolha.", "en": "Served with salad and a side of your choice." },
+          "name": {
+            "pt": "Meio frango",
+            "en": "½ Chicken"
+          },
+          "description": {
+            "pt": "Servido com salada e acompanhamento à escolha.",
+            "en": "Served with salad and a side of your choice."
+          },
           "price": 500,
-          "optionGroups": [{ "preset": "side_chips_rice_xima" }]
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice_xima"
+            }
+          ]
         },
         {
-          "name": { "pt": "Quarto de frango", "en": "¼ Chicken" },
-          "description": { "pt": "Servido com salada e acompanhamento à escolha.", "en": "Served with salad and a side of your choice." },
+          "name": {
+            "pt": "Quarto de frango",
+            "en": "¼ Chicken"
+          },
+          "description": {
+            "pt": "Servido com salada e acompanhamento à escolha.",
+            "en": "Served with salad and a side of your choice."
+          },
           "price": 350,
-          "optionGroups": [{ "preset": "side_chips_rice_xima" }]
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice_xima"
+            }
+          ]
         }
       ]
     },
     {
       "key": "seafood",
-      "name": { "pt": "Peixe e marisco", "en": "Seafood" },
+      "name": {
+        "pt": "Peixe e marisco",
+        "en": "Seafood"
+      },
       "products": [
         {
-          "name": { "pt": "Filete de peixe", "en": "Fish Fillet" },
-          "description": { "pt": "300 g de filete de peixe com salada e acompanhamento à escolha.", "en": "300g fish fillet with salad and a side of your choice." },
+          "name": {
+            "pt": "Filete de peixe",
+            "en": "Fish Fillet"
+          },
+          "description": {
+            "pt": "300 g de filete de peixe com salada e acompanhamento à escolha.",
+            "en": "300g fish fillet with salad and a side of your choice."
+          },
           "price": 950,
-          "optionGroups": [{ "preset": "side_chips_rice_mixedveg" }]
-        },
-        {
-          "name": { "pt": "Peixe às postas", "en": "Sliced Fish" },
-          "description": { "pt": "300 g de peixe às postas com salada e acompanhamento à escolha.", "en": "300g sliced fish with salad and a side of your choice." },
-          "price": 850,
-          "optionGroups": [{ "preset": "side_chips_rice_mixedveg" }]
-        },
-        {
-          "name": { "pt": "Prato de camarão", "en": "Prawn Dish" },
-          "description": { "pt": "Camarão com salada e acompanhamento à escolha.", "en": "Prawns with salad and a side of your choice." },
-          "price": 850,
           "optionGroups": [
             {
-              "name": { "pt": "Porção", "en": "Portion" },
-              "required": true,
-              "options": [["8 SS", "8 SS", 0], ["6 K", "6 K", 50]]
-            },
-            { "preset": "side_chips_rice_mixedveg" }
+              "preset": "side_chips_rice_mixedveg"
+            }
           ]
         },
         {
-          "name": { "pt": "Lulas", "en": "Calamari Dish" },
-          "description": { "pt": "300 g de lulas com salada e acompanhamento à escolha.", "en": "300g squid with salad and a side of your choice." },
+          "name": {
+            "pt": "Peixe às postas",
+            "en": "Sliced Fish"
+          },
+          "description": {
+            "pt": "300 g de peixe às postas com salada e acompanhamento à escolha.",
+            "en": "300g sliced fish with salad and a side of your choice."
+          },
+          "price": 850,
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice_mixedveg"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Prato de camarão",
+            "en": "Prawn Dish"
+          },
+          "description": {
+            "pt": "Camarão com salada e acompanhamento à escolha.",
+            "en": "Prawns with salad and a side of your choice."
+          },
+          "price": 850,
+          "optionGroups": [
+            {
+              "name": {
+                "pt": "Porção",
+                "en": "Portion"
+              },
+              "required": true,
+              "options": [
+                [
+                  "8 SS",
+                  "8 SS",
+                  0
+                ],
+                [
+                  "6 K",
+                  "6 K",
+                  50
+                ]
+              ]
+            },
+            {
+              "preset": "side_chips_rice_mixedveg"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Lulas",
+            "en": "Calamari Dish"
+          },
+          "description": {
+            "pt": "300 g de lulas com salada e acompanhamento à escolha.",
+            "en": "300g squid with salad and a side of your choice."
+          },
           "price": 900,
-          "optionGroups": [{ "preset": "side_chips_rice_mixedveg" }]
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice_mixedveg"
+            }
+          ]
         }
       ]
     },
     {
       "key": "meat",
-      "name": { "pt": "Carnes", "en": "Meat" },
+      "name": {
+        "pt": "Carnes",
+        "en": "Meat"
+      },
       "products": [
         {
-          "name": { "pt": "Costeletas de porco", "en": "Pork Chops" },
-          "description": { "pt": "Costeletas de porco com salada e batata ou arroz.", "en": "Pork chops with salad and potato or rice." },
+          "name": {
+            "pt": "Costeletas de porco",
+            "en": "Pork Chops"
+          },
+          "description": {
+            "pt": "Costeletas de porco com salada e batata ou arroz.",
+            "en": "Pork chops with salad and potato or rice."
+          },
           "price": 680,
           "optionGroups": [
-            { "name": { "pt": "Tamanho", "en": "Size" }, "required": true, "options": [["200 g", "200g", 0], ["400 g", "400g", 300]] },
-            { "preset": "side_potato_rice" }
+            {
+              "name": {
+                "pt": "Tamanho",
+                "en": "Size"
+              },
+              "required": true,
+              "options": [
+                [
+                  "200 g",
+                  "200g",
+                  0
+                ],
+                [
+                  "400 g",
+                  "400g",
+                  300
+                ]
+              ]
+            },
+            {
+              "preset": "side_potato_rice"
+            }
           ]
         },
         {
-          "name": { "pt": "Prego no pão", "en": "Prego Roll" },
-          "description": { "pt": "100 g de bife batido no pão, com batata frita.", "en": "100g beaten beef in a roll, with chips." },
+          "name": {
+            "pt": "Prego no pão",
+            "en": "Prego Roll"
+          },
+          "description": {
+            "pt": "100 g de bife batido no pão, com batata frita.",
+            "en": "100g beaten beef in a roll, with chips."
+          },
           "price": 480
         },
         {
-          "name": { "pt": "Prego no prato", "en": "Prego on a Plate" },
-          "description": { "pt": "200 g de bife batido, ovo, pão, batata frita e salada.", "en": "200g beaten beef, egg, bread, chips and salad." },
+          "name": {
+            "pt": "Prego no prato",
+            "en": "Prego on a Plate"
+          },
+          "description": {
+            "pt": "200 g de bife batido, ovo, pão, batata frita e salada.",
+            "en": "200g beaten beef, egg, bread, chips and salad."
+          },
           "price": 800
         },
         {
-          "name": { "pt": "Bife à portuguesa", "en": "Portuguese Beef" },
-          "description": { "pt": "300 g de bife com acompanhamento à escolha.", "en": "300g beef with a side of your choice." },
-          "price": 900,
-          "optionGroups": [{ "preset": "side_chips_rice_veg" }]
-        },
-        {
-          "name": { "pt": "Boerewors", "en": "Boerewors" },
-          "description": { "pt": "Com salada e xima ou batata frita.", "en": "With salad and xima or chips." },
+          "name": {
+            "pt": "Bife à portuguesa",
+            "en": "Portuguese Beef"
+          },
+          "description": {
+            "pt": "300 g de bife com acompanhamento à escolha.",
+            "en": "300g beef with a side of your choice."
+          },
           "price": 900,
           "optionGroups": [
-            { "name": { "pt": "Tamanho", "en": "Size" }, "required": true, "options": [["500 g", "500g", 0], ["1000 g", "1000g", 800]] },
-            { "name": { "pt": "Acompanhamento", "en": "Side" }, "required": true, "options": [["Xima", "Xima"], ["Batata frita", "Chips"]] }
+            {
+              "preset": "side_chips_rice_veg"
+            }
           ]
         },
         {
-          "name": { "pt": "T-Bone", "en": "T-Bone" },
-          "description": { "pt": "400 g de T-bone com salada e batata frita ou arroz.", "en": "400g T-bone with salad and chips or rice." },
-          "price": 1080,
-          "optionGroups": [{ "preset": "side_chips_rice" }]
+          "name": {
+            "pt": "Boerewors",
+            "en": "Boerewors"
+          },
+          "description": {
+            "pt": "Com salada e xima ou batata frita.",
+            "en": "With salad and xima or chips."
+          },
+          "price": 900,
+          "optionGroups": [
+            {
+              "name": {
+                "pt": "Tamanho",
+                "en": "Size"
+              },
+              "required": true,
+              "options": [
+                [
+                  "500 g",
+                  "500g",
+                  0
+                ],
+                [
+                  "1000 g",
+                  "1000g",
+                  800
+                ]
+              ]
+            },
+            {
+              "name": {
+                "pt": "Acompanhamento",
+                "en": "Side"
+              },
+              "required": true,
+              "options": [
+                [
+                  "Xima",
+                  "Xima"
+                ],
+                [
+                  "Batata frita",
+                  "Chips"
+                ]
+              ],
+              "maxSelect": 2
+            }
+          ]
         },
         {
-          "name": { "pt": "Rump steak", "en": "Rump Steak" },
-          "description": { "pt": "Rump steak batido, 1 ovo, arroz e salada.", "en": "Rump steak, beaten, 1 egg, rice and salad." },
+          "name": {
+            "pt": "T-Bone",
+            "en": "T-Bone"
+          },
+          "description": {
+            "pt": "400 g de T-bone com salada e batata frita ou arroz.",
+            "en": "400g T-bone with salad and chips or rice."
+          },
+          "price": 1080,
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Rump steak",
+            "en": "Rump Steak"
+          },
+          "description": {
+            "pt": "Rump steak batido, 1 ovo, arroz e salada.",
+            "en": "Rump steak, beaten, 1 egg, rice and salad."
+          },
           "price": 1080
         },
         {
-          "name": { "pt": "Lombo", "en": "Fillet" },
-          "description": { "pt": "400 g de lombo com salada e batata frita ou arroz.", "en": "400g fillet with salad and chips or rice." },
+          "name": {
+            "pt": "Lombo",
+            "en": "Fillet"
+          },
+          "description": {
+            "pt": "400 g de lombo com salada e batata frita ou arroz.",
+            "en": "400g fillet with salad and chips or rice."
+          },
           "price": 1250,
-          "optionGroups": [{ "preset": "side_chips_rice" }]
+          "optionGroups": [
+            {
+              "preset": "side_chips_rice"
+            }
+          ]
         },
         {
-          "name": { "pt": "Grelhado misto", "en": "Mixed Grill" },
-          "description": { "pt": "300 g de rump steak, 1 salsicha, batata frita e ovo.", "en": "300g rump steak, 1 sausage, chips and egg." },
+          "name": {
+            "pt": "Grelhado misto",
+            "en": "Mixed Grill"
+          },
+          "description": {
+            "pt": "300 g de rump steak, 1 salsicha, batata frita e ovo.",
+            "en": "300g rump steak, 1 sausage, chips and egg."
+          },
           "price": 1250
         }
       ]
     },
     {
       "key": "pasta",
-      "name": { "pt": "Massas", "en": "Pasta" },
+      "name": {
+        "pt": "Massas",
+        "en": "Pasta"
+      },
       "products": [
         {
-          "name": { "pt": "Bolonhesa", "en": "Bolognaise" },
-          "description": { "pt": "Massa à escolha com carne picada.", "en": "Pasta of your choice with minced meat." },
+          "name": {
+            "pt": "Bolonhesa",
+            "en": "Bolognaise"
+          },
+          "description": {
+            "pt": "Massa à escolha com carne picada.",
+            "en": "Pasta of your choice with minced meat."
+          },
           "price": 420,
-          "optionGroups": [{ "preset": "pasta_type" }]
-        },
-        {
-          "name": { "pt": "Lasanha tradicional", "en": "Traditional Lasagne" },
-          "description": { "pt": "Com carne de vaca picada ou frango.", "en": "With minced beef or chicken." },
-          "price": 450,
           "optionGroups": [
-            { "name": { "pt": "Recheio", "en": "Filling" }, "required": true, "options": [["Carne de vaca", "Beef"], ["Frango", "Chicken"]] }
+            {
+              "preset": "pasta_type"
+            }
           ]
         },
         {
-          "name": { "pt": "Alfredo", "en": "Alfredo" },
-          "description": { "pt": "Massa à escolha com fiambre, cogumelos e molho de natas.", "en": "Pasta of your choice with ham, mushrooms and cream sauce." },
+          "name": {
+            "pt": "Lasanha tradicional",
+            "en": "Traditional Lasagne"
+          },
+          "description": {
+            "pt": "Com carne de vaca picada ou frango.",
+            "en": "With minced beef or chicken."
+          },
           "price": 450,
-          "optionGroups": [{ "preset": "pasta_type" }]
+          "optionGroups": [
+            {
+              "name": {
+                "pt": "Recheio",
+                "en": "Filling"
+              },
+              "required": true,
+              "options": [
+                [
+                  "Carne de vaca",
+                  "Beef"
+                ],
+                [
+                  "Frango",
+                  "Chicken"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Alfredo",
+            "en": "Alfredo"
+          },
+          "description": {
+            "pt": "Massa à escolha com fiambre, cogumelos e molho de natas.",
+            "en": "Pasta of your choice with ham, mushrooms and cream sauce."
+          },
+          "price": 450,
+          "optionGroups": [
+            {
+              "preset": "pasta_type"
+            }
+          ]
         }
       ]
     },
     {
       "key": "burgers",
-      "name": { "pt": "Hambúrgueres", "en": "Burgers" },
+      "name": {
+        "pt": "Hambúrgueres",
+        "en": "Burgers"
+      },
       "products": [
         {
-          "name": { "pt": "Hambúrguer completo", "en": "Full Burger" },
-          "description": { "pt": "Pão, fiambre, queijo, ovo e batata frita.", "en": "Roll, ham, cheese, egg and chips." },
+          "name": {
+            "pt": "Hambúrguer completo",
+            "en": "Full Burger"
+          },
+          "description": {
+            "pt": "Pão, fiambre, queijo, ovo e batata frita.",
+            "en": "Roll, ham, cheese, egg and chips."
+          },
           "price": 390
         },
         {
-          "name": { "pt": "Hambúrguer de bacon", "en": "Bacon Burger" },
-          "description": { "pt": "Pão, fiambre, bacon e batata frita.", "en": "Roll, ham, bacon and chips." },
+          "name": {
+            "pt": "Hambúrguer de bacon",
+            "en": "Bacon Burger"
+          },
+          "description": {
+            "pt": "Pão, fiambre, bacon e batata frita.",
+            "en": "Roll, ham, bacon and chips."
+          },
           "price": 350
         },
         {
-          "name": { "pt": "Cheeseburger", "en": "Cheese Burger" },
-          "description": { "pt": "Pão, fiambre, queijo e batata frita.", "en": "Roll, ham, cheese and chips." },
+          "name": {
+            "pt": "Cheeseburger",
+            "en": "Cheese Burger"
+          },
+          "description": {
+            "pt": "Pão, fiambre, queijo e batata frita.",
+            "en": "Roll, ham, cheese and chips."
+          },
           "price": 350
         },
         {
-          "name": { "pt": "Hambúrguer simples", "en": "Simple Hamburger" },
-          "description": { "pt": "Pão e batata frita.", "en": "Roll and chips." },
+          "name": {
+            "pt": "Hambúrguer simples",
+            "en": "Simple Hamburger"
+          },
+          "description": {
+            "pt": "Pão e batata frita.",
+            "en": "Roll and chips."
+          },
           "price": 250
         },
         {
-          "name": { "pt": "Hambúrguer de frango", "en": "Chicken Burger" },
-          "description": { "pt": "Peito de frango, completo ou simples, com batata frita.", "en": "Chicken breast, complete or simple, with chips." },
+          "name": {
+            "pt": "Hambúrguer de frango",
+            "en": "Chicken Burger"
+          },
+          "description": {
+            "pt": "Peito de frango, completo ou simples, com batata frita.",
+            "en": "Chicken breast, complete or simple, with chips."
+          },
           "price": 350,
           "optionGroups": [
-            { "name": { "pt": "Versão", "en": "Style" }, "required": true, "options": [["Completo", "Complete"], ["Simples", "Simple"]] }
+            {
+              "name": {
+                "pt": "Versão",
+                "en": "Style"
+              },
+              "required": true,
+              "options": [
+                [
+                  "Completo",
+                  "Complete"
+                ],
+                [
+                  "Simples",
+                  "Simple"
+                ]
+              ]
+            }
           ]
         },
         {
-          "name": { "pt": "Hambúrguer duplo", "en": "Double Burger" },
-          "description": { "pt": "Pão, 2 fatias de fiambre, 2 de queijo, 2 ovos e batata frita.", "en": "Roll, 2 slices of ham, 2 cheese, 2 eggs and chips." },
+          "name": {
+            "pt": "Hambúrguer duplo",
+            "en": "Double Burger"
+          },
+          "description": {
+            "pt": "Pão, 2 fatias de fiambre, 2 de queijo, 2 ovos e batata frita.",
+            "en": "Roll, 2 slices of ham, 2 cheese, 2 eggs and chips."
+          },
           "price": 650
         }
       ]
     },
     {
       "key": "extras",
-      "name": { "pt": "Extras", "en": "Extras" },
+      "name": {
+        "pt": "Extras",
+        "en": "Extras"
+      },
       "products": [
-        { "name": { "pt": "Batata frita", "en": "Potato Chips" }, "price": 100 },
-        { "name": { "pt": "Legumes", "en": "Vegetables" }, "price": 100 },
-        { "name": { "pt": "Xima", "en": "Xima / Pap" }, "price": 100 },
-        { "name": { "pt": "Arroz integral", "en": "Brown Rice" }, "price": 100 },
-        { "name": { "pt": "Legumes mistos", "en": "Mixed Vegetables" }, "price": 120 }
+        {
+          "name": {
+            "pt": "Batata frita",
+            "en": "Potato Chips"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Legumes",
+            "en": "Vegetables"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Xima",
+            "en": "Xima / Pap"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Arroz integral",
+            "en": "Brown Rice"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Legumes mistos",
+            "en": "Mixed Vegetables"
+          },
+          "price": 120
+        }
       ]
     },
     {
       "key": "soft",
-      "name": { "pt": "Águas e refrigerantes", "en": "Water & Soft Drinks" },
+      "name": {
+        "pt": "Águas e refrigerantes",
+        "en": "Water & Soft Drinks"
+      },
       "products": [
-        { "name": { "pt": "Água Vumba 1,5 L", "en": "Vumba Water 1.5L" }, "price": 100 },
-        { "name": { "pt": "Coca-Cola", "en": "Coca-Cola" }, "price": 90 },
-        { "name": { "pt": "Coca-Cola Zero", "en": "Coke Zero" }, "price": 90 },
-        { "name": { "pt": "Fanta Laranja", "en": "Fanta Orange" }, "price": 90 },
-        { "name": { "pt": "Fanta Uva", "en": "Fanta Grape" }, "price": 90 },
-        { "name": { "pt": "Sprite", "en": "Sprite" }, "price": 90 },
-        { "name": { "pt": "Sprite Zero", "en": "Sprite Zero" }, "price": 90 },
-        { "name": { "pt": "Sparletta Morango", "en": "Sparletta Strawberry" }, "price": 90 },
-        { "name": { "pt": "Sparletta Cream Soda", "en": "Sparletta Cream Soda" }, "price": 90 },
-        { "name": { "pt": "Dry Lemon", "en": "Dry Lemon" }, "price": 90 },
-        { "name": { "pt": "Água tónica", "en": "Tonic Water" }, "price": 90 },
-        { "name": { "pt": "Ginger Ale", "en": "Ginger Ale" }, "price": 90 },
-        { "name": { "pt": "Água com gás", "en": "Soda Water" }, "price": 90 },
-        { "name": { "pt": "Cappy 1 L", "en": "Cappy 1L" }, "price": 120 },
-        { "name": { "pt": "Cappy lata", "en": "Cappy Can" }, "price": 100 },
-        { "name": { "pt": "Cappy pequeno", "en": "Cappy Small" }, "price": 90 },
         {
-          "name": { "pt": "Refrigerante 2 L", "en": "Soft Drink 2L" },
-          "description": { "pt": "Coca-Cola, Fanta, Sprite ou Sparletta.", "en": "Coca-Cola, Fanta, Sprite or Sparletta." },
+          "name": {
+            "pt": "Água Vumba 1,5 L",
+            "en": "Vumba Water 1.5L"
+          },
+          "price": 100,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Coca-Cola",
+            "en": "Coca-Cola"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Coca-Cola Zero",
+            "en": "Coke Zero"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Fanta Laranja",
+            "en": "Fanta Orange"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Fanta Uva",
+            "en": "Fanta Grape"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Sprite",
+            "en": "Sprite"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Sprite Zero",
+            "en": "Sprite Zero"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Sparletta Morango",
+            "en": "Sparletta Strawberry"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Sparletta Cream Soda",
+            "en": "Sparletta Cream Soda"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Dry Lemon",
+            "en": "Dry Lemon"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Água tónica",
+            "en": "Tonic Water"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Ginger Ale",
+            "en": "Ginger Ale"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Água com gás",
+            "en": "Soda Water"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Cappy 1 L",
+            "en": "Cappy 1L"
+          },
+          "price": 120,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Cappy lata",
+            "en": "Cappy Can"
+          },
+          "price": 100,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Cappy pequeno",
+            "en": "Cappy Small"
+          },
+          "price": 90,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Refrigerante 2 L",
+            "en": "Soft Drink 2L"
+          },
+          "description": {
+            "pt": "Coca-Cola, Fanta, Sprite ou Sparletta.",
+            "en": "Coca-Cola, Fanta, Sprite or Sparletta."
+          },
           "price": 150,
           "optionGroups": [
-            { "name": { "pt": "Sabor", "en": "Flavour" }, "required": true, "options": [["Coca-Cola", "Coca-Cola"], ["Fanta", "Fanta"], ["Sprite", "Sprite"], ["Sparletta", "Sparletta"]] }
+            {
+              "name": {
+                "pt": "Sabor",
+                "en": "Flavour"
+              },
+              "required": true,
+              "options": [
+                [
+                  "Coca-Cola",
+                  "Coca-Cola"
+                ],
+                [
+                  "Fanta",
+                  "Fanta"
+                ],
+                [
+                  "Sprite",
+                  "Sprite"
+                ],
+                [
+                  "Sparletta",
+                  "Sparletta"
+                ]
+              ]
+            },
+            {
+              "preset": "ice"
+            }
           ]
         }
       ]
     },
     {
       "key": "beer",
-      "name": { "pt": "Cervejas", "en": "Beer" },
+      "name": {
+        "pt": "Cervejas",
+        "en": "Beer"
+      },
       "products": [
-        { "name": { "pt": "2M Flow", "en": "2M Flow" }, "price": 100 },
-        { "name": { "pt": "2M Txoti", "en": "2M Txoti" }, "price": 100 },
-        { "name": { "pt": "2M Lata", "en": "2M Can" }, "price": 100 },
-        { "name": { "pt": "Castle Lite", "en": "Castle Lite" }, "price": 120 },
-        { "name": { "pt": "Castle Lite Mini", "en": "Castle Lite Mini" }, "price": 120 },
-        { "name": { "pt": "Budweiser", "en": "Budweiser" }, "price": 120 },
-        { "name": { "pt": "Heineken Lata", "en": "Heineken Can" }, "price": 120 },
-        { "name": { "pt": "Heineken Mini", "en": "Heineken Mini" }, "price": 120 },
-        { "name": { "pt": "Txilar Lata", "en": "Txilar Can" }, "price": 100 },
-        { "name": { "pt": "Txilar Txoti", "en": "Txilar Txoti" }, "price": 100 },
-        { "name": { "pt": "Laurentina Preta Txoti", "en": "Laurentina Preta Txoti" }, "price": 100 },
-        { "name": { "pt": "Laurentina Preta Lata", "en": "Laurentina Preta Can" }, "price": 100 },
-        { "name": { "pt": "Stella", "en": "Stella" }, "price": 120 },
-        { "name": { "pt": "Corona", "en": "Corona" }, "price": 120 }
+        {
+          "name": {
+            "pt": "2M Flow",
+            "en": "2M Flow"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "2M Txoti",
+            "en": "2M Txoti"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "2M Lata",
+            "en": "2M Can"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Castle Lite",
+            "en": "Castle Lite"
+          },
+          "price": 120
+        },
+        {
+          "name": {
+            "pt": "Castle Lite Mini",
+            "en": "Castle Lite Mini"
+          },
+          "price": 120
+        },
+        {
+          "name": {
+            "pt": "Budweiser",
+            "en": "Budweiser"
+          },
+          "price": 120
+        },
+        {
+          "name": {
+            "pt": "Heineken Lata",
+            "en": "Heineken Can"
+          },
+          "price": 120
+        },
+        {
+          "name": {
+            "pt": "Heineken Mini",
+            "en": "Heineken Mini"
+          },
+          "price": 120
+        },
+        {
+          "name": {
+            "pt": "Txilar Lata",
+            "en": "Txilar Can"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Txilar Txoti",
+            "en": "Txilar Txoti"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Laurentina Preta Txoti",
+            "en": "Laurentina Preta Txoti"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Laurentina Preta Lata",
+            "en": "Laurentina Preta Can"
+          },
+          "price": 100
+        },
+        {
+          "name": {
+            "pt": "Stella",
+            "en": "Stella"
+          },
+          "price": 120
+        },
+        {
+          "name": {
+            "pt": "Corona",
+            "en": "Corona"
+          },
+          "price": 120
+        }
       ]
     },
     {
       "key": "red_wine",
-      "name": { "pt": "Vinho tinto (garrafa)", "en": "Red Wine (bottle)" },
+      "name": {
+        "pt": "Vinho tinto (garrafa)",
+        "en": "Red Wine (bottle)"
+      },
       "products": [
-        { "name": { "pt": "Borba Cellar" }, "price": 1200 },
-        { "name": { "pt": "Borba Cellar Reserva", "en": "Borba Cellar Reserve" }, "price": 2400 },
-        { "name": { "pt": "Alandra" }, "price": 1200 },
-        { "name": { "pt": "Boschendal Shiraz" }, "price": 1100 },
-        { "name": { "pt": "Boschendal Merlot" }, "price": 1100 },
-        { "name": { "pt": "Boschendal Cabernet" }, "price": 1100 },
-        { "name": { "pt": "Boschendal The Pavillion" }, "price": 1100 },
-        { "name": { "pt": "Cadão Douro" }, "price": 950 },
-        { "name": { "pt": "Cabriz" }, "price": 1200 },
-        { "name": { "pt": "Casa da Ínsua" }, "price": 1400 },
-        { "name": { "pt": "Duas Quintas" }, "price": 2500 },
-        { "name": { "pt": "EA" }, "price": 950 },
-        { "name": { "pt": "EA Reserva", "en": "EA Reserve" }, "price": 1700 },
-        { "name": { "pt": "JP Chenet" }, "price": 1100 },
-        { "name": { "pt": "JP Azeitão" }, "price": 1100 },
-        { "name": { "pt": "KWV" }, "price": 1050 },
-        { "name": { "pt": "Monte Velho" }, "price": 1100 },
-        { "name": { "pt": "Periquita" }, "price": 1100 },
-        { "name": { "pt": "Porca de Murça" }, "price": 1350 },
-        { "name": { "pt": "Segredos de São Miguel" }, "price": 1350 },
-        { "name": { "pt": "Porca de Murça Reserva" }, "price": 1750 }
+        {
+          "name": {
+            "pt": "Borba Cellar"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Borba Cellar Reserva",
+            "en": "Borba Cellar Reserve"
+          },
+          "price": 2400
+        },
+        {
+          "name": {
+            "pt": "Alandra"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Boschendal Shiraz"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "Boschendal Merlot"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "Boschendal Cabernet"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "Boschendal The Pavillion"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "Cadão Douro"
+          },
+          "price": 950
+        },
+        {
+          "name": {
+            "pt": "Cabriz"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Casa da Ínsua"
+          },
+          "price": 1400
+        },
+        {
+          "name": {
+            "pt": "Duas Quintas"
+          },
+          "price": 2500
+        },
+        {
+          "name": {
+            "pt": "EA"
+          },
+          "price": 950
+        },
+        {
+          "name": {
+            "pt": "EA Reserva",
+            "en": "EA Reserve"
+          },
+          "price": 1700
+        },
+        {
+          "name": {
+            "pt": "JP Chenet"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "JP Azeitão"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "KWV"
+          },
+          "price": 1050
+        },
+        {
+          "name": {
+            "pt": "Monte Velho"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "Periquita"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "Porca de Murça"
+          },
+          "price": 1350
+        },
+        {
+          "name": {
+            "pt": "Segredos de São Miguel"
+          },
+          "price": 1350
+        },
+        {
+          "name": {
+            "pt": "Porca de Murça Reserva"
+          },
+          "price": 1750
+        }
       ]
     },
     {
       "key": "green_wine",
-      "name": { "pt": "Vinho verde (garrafa)", "en": "Green Wine (bottle)" },
+      "name": {
+        "pt": "Vinho verde (garrafa)",
+        "en": "Green Wine (bottle)"
+      },
       "products": [
-        { "name": { "pt": "Aveleda" }, "price": 1200 },
-        { "name": { "pt": "Casal Garcia" }, "price": 1200 },
-        { "name": { "pt": "Gatão" }, "price": 1200 },
-        { "name": { "pt": "Gazela" }, "price": 1200 }
+        {
+          "name": {
+            "pt": "Aveleda"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Casal Garcia"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Gatão"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Gazela"
+          },
+          "price": 1200
+        }
       ]
     },
     {
       "key": "white_wine",
-      "name": { "pt": "Vinho branco (garrafa)", "en": "White Wine (bottle)" },
+      "name": {
+        "pt": "Vinho branco (garrafa)",
+        "en": "White Wine (bottle)"
+      },
       "products": [
-        { "name": { "pt": "Boschendal Sauvignon Blanc" }, "price": 1100 },
-        { "name": { "pt": "Nederburg Blanc" }, "price": 1300 },
-        { "name": { "pt": "Nederburg Chardonnay" }, "price": 1300 },
-        { "name": { "pt": "Nederburg Chenin" }, "price": 1300 },
-        { "name": { "pt": "Nederburg Muscat" }, "price": 1300 }
+        {
+          "name": {
+            "pt": "Boschendal Sauvignon Blanc"
+          },
+          "price": 1100
+        },
+        {
+          "name": {
+            "pt": "Nederburg Blanc"
+          },
+          "price": 1300
+        },
+        {
+          "name": {
+            "pt": "Nederburg Chardonnay"
+          },
+          "price": 1300
+        },
+        {
+          "name": {
+            "pt": "Nederburg Chenin"
+          },
+          "price": 1300
+        },
+        {
+          "name": {
+            "pt": "Nederburg Muscat"
+          },
+          "price": 1300
+        }
       ]
     },
     {
       "key": "rose_wine",
-      "name": { "pt": "Vinho rosé (garrafa)", "en": "Rosé Wine (bottle)" },
+      "name": {
+        "pt": "Vinho rosé (garrafa)",
+        "en": "Rosé Wine (bottle)"
+      },
       "products": [
-        { "name": { "pt": "Robertson Winery" }, "price": 1200 },
-        { "name": { "pt": "Boschendal Pinot" }, "price": 1200 },
-        { "name": { "pt": "Boschendal Rosé Garden" }, "price": 1200 }
+        {
+          "name": {
+            "pt": "Robertson Winery"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Boschendal Pinot"
+          },
+          "price": 1200
+        },
+        {
+          "name": {
+            "pt": "Boschendal Rosé Garden"
+          },
+          "price": 1200
+        }
       ]
     },
     {
       "key": "spirits",
-      "name": { "pt": "Whisky e brandy", "en": "Whisky & Brandy" },
+      "name": {
+        "pt": "Whisky e brandy",
+        "en": "Whisky & Brandy"
+      },
       "products": [
-        { "name": { "pt": "Johnnie Walker Black Label" }, "price": 180 },
-        { "name": { "pt": "Johnnie Walker Red Label" }, "price": 150 },
-        { "name": { "pt": "Jameson" }, "price": 180 },
-        { "name": { "pt": "Bell's" }, "price": 150 },
-        { "name": { "pt": "Grant's" }, "price": 150 },
-        { "name": { "pt": "Ballantine's" }, "price": 150 },
-        { "name": { "pt": "KlipDrift" }, "price": 150 },
-        { "name": { "pt": "Richelieu" }, "price": 150 },
-        { "name": { "pt": "Spice Gold" }, "price": 150 }
+        {
+          "name": {
+            "pt": "Johnnie Walker Black Label"
+          },
+          "price": 180,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Johnnie Walker Red Label"
+          },
+          "price": 150,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Jameson"
+          },
+          "price": 180,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Bell's"
+          },
+          "price": 150,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Grant's"
+          },
+          "price": 150,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Ballantine's"
+          },
+          "price": 150,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "KlipDrift"
+          },
+          "price": 150,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Richelieu"
+          },
+          "price": 150,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        },
+        {
+          "name": {
+            "pt": "Spice Gold"
+          },
+          "price": 150,
+          "optionGroups": [
+            {
+              "preset": "ice"
+            }
+          ]
+        }
       ]
     }
   ],
   "presets": {
     "side_chips_rice_veg": {
-      "name": { "pt": "Acompanhamento", "en": "Side" },
+      "name": {
+        "pt": "Acompanhamento",
+        "en": "Side"
+      },
       "required": true,
-      "options": [["Batata frita", "Chips"], ["Arroz", "Rice"], ["Legumes", "Vegetables"]]
+      "options": [
+        [
+          "Batata frita",
+          "Chips"
+        ],
+        [
+          "Arroz",
+          "Rice"
+        ],
+        [
+          "Legumes",
+          "Vegetables"
+        ]
+      ],
+      "maxSelect": 3
     },
     "side_chips_rice_mixedveg": {
-      "name": { "pt": "Acompanhamento", "en": "Side" },
+      "name": {
+        "pt": "Acompanhamento",
+        "en": "Side"
+      },
       "required": true,
-      "options": [["Batata frita", "Chips"], ["Arroz", "Rice"], ["Legumes mistos", "Mixed vegetables"]]
+      "options": [
+        [
+          "Batata frita",
+          "Chips"
+        ],
+        [
+          "Arroz",
+          "Rice"
+        ],
+        [
+          "Legumes mistos",
+          "Mixed vegetables"
+        ]
+      ],
+      "maxSelect": 3
     },
     "side_chips_rice_xima": {
-      "name": { "pt": "Acompanhamento", "en": "Side" },
+      "name": {
+        "pt": "Acompanhamento",
+        "en": "Side"
+      },
       "required": true,
-      "options": [["Batata frita", "Chips"], ["Arroz", "Rice"], ["Xima", "Xima"]]
+      "options": [
+        [
+          "Batata frita",
+          "Chips"
+        ],
+        [
+          "Arroz",
+          "Rice"
+        ],
+        [
+          "Xima",
+          "Xima"
+        ]
+      ],
+      "maxSelect": 3
     },
     "side_chips_rice": {
-      "name": { "pt": "Acompanhamento", "en": "Side" },
+      "name": {
+        "pt": "Acompanhamento",
+        "en": "Side"
+      },
       "required": true,
-      "options": [["Batata frita", "Chips"], ["Arroz", "Rice"]]
+      "options": [
+        [
+          "Batata frita",
+          "Chips"
+        ],
+        [
+          "Arroz",
+          "Rice"
+        ]
+      ],
+      "maxSelect": 2
     },
     "side_potato_rice": {
-      "name": { "pt": "Acompanhamento", "en": "Side" },
+      "name": {
+        "pt": "Acompanhamento",
+        "en": "Side"
+      },
       "required": true,
-      "options": [["Batata", "Potato"], ["Arroz", "Rice"]]
+      "options": [
+        [
+          "Batata",
+          "Potato"
+        ],
+        [
+          "Arroz",
+          "Rice"
+        ]
+      ],
+      "maxSelect": 2
     },
     "pasta_type": {
-      "name": { "pt": "Massa", "en": "Pasta" },
+      "name": {
+        "pt": "Massa",
+        "en": "Pasta"
+      },
       "required": true,
-      "options": [["Esparguete", "Spaghetti"], ["Fettuccine", "Fettuccine"], ["Penne", "Penne"]]
+      "options": [
+        [
+          "Esparguete",
+          "Spaghetti"
+        ],
+        [
+          "Fettuccine",
+          "Fettuccine"
+        ],
+        [
+          "Penne",
+          "Penne"
+        ]
+      ]
+    },
+    "ice": {
+      "name": {
+        "pt": "Gelo",
+        "en": "Ice"
+      },
+      "required": false,
+      "options": [
+        [
+          "Com gelo",
+          "With ice"
+        ]
+      ]
     }
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { CategoryDto, ProductDto } from "../../shared/types";
 import { ProductImage } from "../components/ProductImage";
 import { cx } from "../lib/util";
@@ -16,49 +16,82 @@ const normalise = (s: string) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
+const CATEGORY_KEY = "np.category";
+const readSavedCategory = (): number | null => {
+  try {
+    const value = Number(sessionStorage.getItem(CATEGORY_KEY));
+    return Number.isInteger(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Menu with category tabs: tapping a category switches the list to that
+ * category (no long scrolling). A search looks across all categories.
+ */
 export function MenuView({ categories, products, onOpenProduct }: Props) {
   const { t, text, settings } = useGuest();
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<number | null>(categories[0]?.id ?? null);
-  const navRef = useRef<HTMLElement>(null);
+  const [selected, setSelected] = useState<number | null>(readSavedCategory);
+  const navRef = useRef<HTMLDivElement>(null);
+  const searching = query.trim().length > 0;
+
+  // Categories that actually have products to show.
+  const withProducts = useMemo(
+    () => categories.filter((c) => products.some((p) => p.categoryId === c.id)),
+    [categories, products],
+  );
+  const active = withProducts.find((c) => c.id === selected) ?? withProducts[0] ?? null;
 
   const sections = useMemo(() => {
+    if (!searching) {
+      return active ? [{ category: active, products: products.filter((p) => p.categoryId === active.id) }] : [];
+    }
     const q = normalise(query.trim());
-    return categories
+    return withProducts
       .map((category) => ({
         category,
         products: products.filter(
-          (p) =>
-            p.categoryId === category.id &&
-            (!q || normalise(`${text(p.name)} ${text(p.description)} ${text(category.name)}`).includes(q)),
+          (p) => p.categoryId === category.id && normalise(`${text(p.name)} ${text(p.description)} ${text(category.name)}`).includes(q),
         ),
       }))
       .filter((s) => s.products.length > 0);
-  }, [categories, products, query, text]);
+  }, [searching, active, withProducts, products, query, text]);
 
-  // Highlight the category currently in view.
+  // Keep the selected tab visible in the horizontally scrolling bar.
   useEffect(() => {
-    if (query) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) setActiveCategory(Number((visible.target as HTMLElement).dataset.category));
-      },
-      { rootMargin: "-130px 0px -60% 0px" },
-    );
-    document.querySelectorAll<HTMLElement>("[data-category]").forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [sections, query]);
+    navRef.current?.querySelector<HTMLElement>("[aria-selected='true']")?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [active?.id]);
 
-  // Keep the active chip visible in the horizontal nav.
-  useEffect(() => {
-    navRef.current?.querySelector<HTMLElement>(".chip.active")?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [activeCategory]);
-
-  const jumpTo = (id: number) => {
-    setActiveCategory(id);
-    document.getElementById(`category-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const select = (id: number, focus = false) => {
+    setSelected(id);
+    try {
+      sessionStorage.setItem(CATEGORY_KEY, String(id));
+    } catch {
+      /* ignore */
+    }
+    // If the guest has scrolled down, bring the start of the list back into view.
+    const menu = document.getElementById("menu");
+    if (menu && window.scrollY > menu.offsetTop) window.scrollTo({ top: menu.offsetTop });
+    if (focus) requestAnimationFrame(() => document.getElementById(`tab-${id}`)?.focus());
   };
+
+  const onTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const last = withProducts.length - 1;
+    const target =
+      event.key === "ArrowRight" ? (index === last ? 0 : index + 1)
+      : event.key === "ArrowLeft" ? (index === 0 ? last : index - 1)
+      : event.key === "Home" ? 0
+      : event.key === "End" ? last
+      : null;
+    if (target === null) return;
+    event.preventDefault();
+    select(withProducts[target]!.id, true);
+  };
+
+  const activeIndex = active ? withProducts.indexOf(active) : -1;
+  const next = activeIndex >= 0 ? withProducts[activeIndex + 1] : undefined;
 
   return (
     <section id="menu" className="menu" aria-label={t("exploreMenu")}>
@@ -81,27 +114,40 @@ export function MenuView({ categories, products, onOpenProduct }: Props) {
               autoComplete="off"
             />
           </div>
-          {!query && categories.length > 1 && (
-            <nav ref={navRef} className="chips" aria-label={t("categories")}>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={cx("chip", activeCategory === c.id && "active")}
-                  aria-current={activeCategory === c.id ? "true" : undefined}
-                  onClick={() => jumpTo(c.id)}
-                >
-                  {text(c.name)}
-                </button>
-              ))}
-            </nav>
+          {!searching && withProducts.length > 1 && (
+            <div ref={navRef} className="chips" role="tablist" aria-label={t("categories")}>
+              {withProducts.map((c, index) => {
+                const isActive = c.id === active?.id;
+                return (
+                  <button
+                    key={c.id}
+                    id={`tab-${c.id}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls="menu-panel"
+                    tabIndex={isActive ? 0 : -1}
+                    className={cx("chip", isActive && "active")}
+                    onClick={() => select(c.id)}
+                    onKeyDown={(e) => onTabKey(e, index)}
+                  >
+                    {text(c.name)}
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
 
-      <div className="container menu-sections">
+      <div
+        className="container menu-sections"
+        id="menu-panel"
+        role={searching ? undefined : "tabpanel"}
+        aria-labelledby={!searching && active ? `tab-${active.id}` : undefined}
+      >
         {sections.length === 0 &&
-          (query ? (
+          (searching ? (
             <div className="state-block">
               <p>{t("noResults")}</p>
               <button type="button" className="btn btn-secondary" onClick={() => setQuery("")}>
@@ -115,15 +161,10 @@ export function MenuView({ categories, products, onOpenProduct }: Props) {
           ))}
 
         {sections.map(({ category, products: items }) => (
-          <section
-            key={category.id}
-            id={`category-${category.id}`}
-            data-category={category.id}
-            className="menu-category"
-            aria-labelledby={`category-title-${category.id}`}
-          >
+          <section key={category.id} className="menu-category" aria-labelledby={`category-title-${category.id}`}>
             <h2 id={`category-title-${category.id}`} className="category-title">
               {text(category.name)}
+              <span className="category-count">{items.length}</span>
             </h2>
             {category.description && <p className="muted category-description">{text(category.description)}</p>}
             <ul className="product-grid">
@@ -135,6 +176,13 @@ export function MenuView({ categories, products, onOpenProduct }: Props) {
             </ul>
           </section>
         ))}
+
+        {!searching && next && (
+          <button type="button" className="next-category" onClick={() => select(next.id)}>
+            <span className="muted small">{t("nextCategory")}</span>
+            <strong>{text(next.name)} →</strong>
+          </button>
+        )}
       </div>
     </section>
   );

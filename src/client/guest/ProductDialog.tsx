@@ -27,8 +27,12 @@ function ProductTitle({ product }: { product: ProductDto }) {
 }
 
 function groupRule(group: OptionGroupDto, t: ReturnType<typeof useGuest>["t"]): string {
+  const all = group.maxSelect >= group.options.length;
+  if (group.options.length === 1 && group.minSelect === 0) return "";
   if (group.minSelect === 1 && group.maxSelect === 1) return t("chooseOne");
+  if (group.minSelect === 0 && all) return t("chooseAny");
   if (group.minSelect === 0) return t("chooseUpTo", { n: group.maxSelect });
+  if (all && group.options.length > 1) return t("chooseAtLeast", { n: group.minSelect });
   if (group.minSelect === group.maxSelect) return t("chooseExactly", { n: group.minSelect });
   return t("chooseBetween", { min: group.minSelect, max: group.maxSelect });
 }
@@ -78,12 +82,14 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
         const chosen = selected[group.id] ?? [];
         const invalid = showErrors && incompleteGroups.includes(group.id);
         const single = group.maxSelect === 1;
+        // Radio buttons only for a real "pick one of several"; a lone option (e.g. "Com gelo") is a tick box.
+        const radio = single && group.options.length > 1;
         return (
           <fieldset key={group.id} id={`group-${group.id}`} className="option-group" aria-invalid={invalid || undefined}>
             <legend className="row-between option-group-head">
               <span className="label">{text(group.name)}</span>
               <span className={invalid ? "badge badge-danger" : "badge badge-muted"}>
-                {group.minSelect > 0 ? t("required") : t("optional")} · {groupRule(group, t)}
+                {[group.minSelect > 0 ? t("required") : t("optional"), groupRule(group, t)].filter(Boolean).join(" · ")}
               </span>
             </legend>
             {group.options.map((option) => {
@@ -92,14 +98,14 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
               return (
                 <label key={option.id} className="check option-row">
                   <input
-                    type={single ? "radio" : "checkbox"}
+                    type={radio ? "radio" : "checkbox"}
                     name={`group-${group.id}`}
                     checked={checked}
                     disabled={!option.isAvailable || atMax || !canOrder}
                     onChange={() => toggle(group, option.id)}
                     onClick={() => {
                       // Allow un-selecting an optional radio choice.
-                      if (single && checked && group.minSelect === 0) toggle(group, option.id);
+                      if (radio && checked && group.minSelect === 0) toggle(group, option.id);
                     }}
                   />
                   <span className="option-name">

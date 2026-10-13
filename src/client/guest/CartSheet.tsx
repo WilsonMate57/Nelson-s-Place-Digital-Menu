@@ -28,7 +28,8 @@ interface Props {
 
 type Errors = Partial<Record<"location" | "guestName" | "contactPhone" | "form", string>>;
 
-const LOCATION_PATTERN = /^[\p{L}\p{N} ._\-/#]+$/u;
+const LOCATION_DISPLAY_ORDER: LocationType[] = ["table", "room"];
+const LOCATION_PATTERN =/^[\p{L}\p{N} ._\-/#]+$/u;
 const PHONE_PATTERN = /^\+?[0-9 ()-]{6,20}$/;
 
 export function CartSheet(props: Props) {
@@ -148,7 +149,8 @@ function CartStep({ priced, onQuantity, onRemove, onClose, onContinue }: Props &
 
 function CheckoutStep({ lines, priced, qrLocation, onBack, onOrderPlaced, onMenuStale }: Props & { onBack: () => void }) {
   const { t, money, settings, language } = useGuest();
-  const allowedTypes = settings.locationTypes;
+  // "Mesa" first and selected by default; a room QR code (?t=room) still pre-selects the room.
+  const allowedTypes = LOCATION_DISPLAY_ORDER.filter((type) => settings.locationTypes.includes(type));
   const initialType = qrLocation.type && allowedTypes.includes(qrLocation.type) ? qrLocation.type : allowedTypes[0]!;
   const [locationType, setLocationType] = useState<LocationType>(initialType);
   const [locationLabel, setLocationLabel] = useState(qrLocation.label);

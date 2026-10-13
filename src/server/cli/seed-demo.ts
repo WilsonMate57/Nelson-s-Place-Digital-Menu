@@ -43,7 +43,7 @@ export function seedDemoMenu(db: Db): void {
       {
         name: { pt: "Acompanhamento", en: "Side" },
         minSelect: 1,
-        maxSelect: 1,
+        maxSelect: 3,
         options: [
           { name: { pt: "Batata frita", en: "Chips" }, priceDeltaCents: 0 },
           { name: { pt: "Arroz", en: "Rice" }, priceDeltaCents: 0 },

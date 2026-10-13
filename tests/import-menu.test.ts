@@ -33,6 +33,30 @@ describe("real menu import (menu-import/menu-nelsons-place.json)", () => {
     expect(total.totalCents).toBe(98000);
   });
 
+  it("lets guests pick several sides and offers ice on drinks", () => {
+    const db = openDatabase(":memory:");
+    importMenu(db, file);
+    const products = new MenuRepo(db).listProducts({ includeArchived: false, activeCategoriesOnly: true });
+    const chicken = products.find((p) => p.name.pt === "Frango Nelson's Place")!;
+    const sides = chicken.optionGroups.find((g) => g.name.pt === "Acompanhamento")!;
+    expect(sides.minSelect).toBe(1);
+    expect(sides.maxSelect).toBe(sides.options.length);
+    const twoSides = priceOrder(
+      [{ productId: chicken.id, quantity: 1, optionIds: sides.options.slice(0, 2).map((o) => o.id) }],
+      new Map([[chicken.id, chicken]]),
+      [],
+      "pt",
+    );
+    expect(twoSides.totalCents).toBe(85000);
+
+    const coke = products.find((p) => p.name.pt === "Coca-Cola")!;
+    const ice = coke.optionGroups.find((g) => g.name.pt === "Gelo")!;
+    expect(ice).toMatchObject({ minSelect: 0, maxSelect: 1 });
+    expect(ice.options.map((o) => o.name.pt)).toEqual(["Com gelo"]);
+    const beer = products.find((p) => p.name.pt === "Castle Lite")!;
+    expect(beer.optionGroups).toHaveLength(0);
+  });
+
   it("refuses to import into a menu that is not empty", () => {
     const db = openDatabase(":memory:");
     importMenu(db, file);
