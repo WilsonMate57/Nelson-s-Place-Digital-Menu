@@ -11,6 +11,8 @@ import { IntegrationRepo } from "./repositories/integration-repo";
 import { MenuRepo } from "./repositories/menu-repo";
 import { OrdersRepo } from "./repositories/orders-repo";
 import { ReportRepo } from "./repositories/report-repo";
+import { MessagesRepo } from "./repositories/messages-repo";
+import { ChatService } from "./services/chat-service";
 import { SettingsRepo } from "./repositories/settings-repo";
 import { StaffRepo } from "./repositories/staff-repo";
 import { adminRoutes } from "./routes/admin-routes";
@@ -35,6 +37,8 @@ export interface Services {
   auth: AuthService;
   orders: OrderService;
   reports: ReportService;
+  chat: ChatService;
+  messagesRepo: MessagesRepo;
   whatsapp: WhatsAppService;
   images: ImageStore;
 }
@@ -51,6 +55,7 @@ export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): S
   const log = deps.log ?? ((message: string, error?: unknown) => console.error(`[${new Date().toISOString()}] ${message}`, error ?? ""));
   const menuRepo = new MenuRepo(db);
   const ordersRepo = new OrdersRepo(db, deps.now);
+  const messagesRepo = new MessagesRepo(db, deps.now);
   const settingsRepo = new SettingsRepo(db);
   const staffRepo = new StaffRepo(db);
   const auditRepo = new AuditRepo(db);
@@ -81,6 +86,8 @@ export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): S
     auth: new AuthService(staffRepo, auditRepo, config.sessionTtlHours),
     orders: new OrderService(db, menuRepo, ordersRepo, settingsRepo, whatsapp, log, deps.now),
     reports: new ReportService(new ReportRepo(db)),
+    chat: new ChatService(ordersRepo, messagesRepo, auditRepo, deps.now),
+    messagesRepo,
     whatsapp,
     images: new ImageStore(config.uploadsDir),
   };

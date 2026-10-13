@@ -172,6 +172,8 @@ export interface OrderDto {
 export interface OrderSummaryDto extends Omit<OrderDto, "items"> {
   itemCount: number;
   whatsappStatus: IntegrationStatus | null;
+  /** Guest chat messages not yet read by staff. */
+  unreadMessages: number;
 }
 
 export interface StatusHistoryDto {
@@ -233,6 +235,8 @@ export interface OrderListResponse {
   counts: Record<OrderStatus, number>;
   /** Active orders with a requested time ("Encomendas"). */
   scheduledCount: number;
+  /** Unread guest chat messages across all orders. */
+  unreadMessagesTotal: number;
   serverTime: string;
 }
 
@@ -278,4 +282,25 @@ export interface ReportDto {
   categories: { name: string; quantity: number; revenueCents: number }[];
   topOptions: { group: string; name: string; count: number }[];
   byLocation: { type: import("./constants").OrderLocationType; orders: number; revenueCents: number }[];
+}
+
+// ---------------------------------------------------------------------------
+// Chat (per order)
+// ---------------------------------------------------------------------------
+
+export interface ChatMessageDto {
+  id: number;
+  sender: "guest" | "staff";
+  /** Staff name for the dashboard; guests always see "Equipa do hotel". */
+  authorName: string | null;
+  body: string;
+  createdAt: string;
+  /** Read by the other side. */
+  read: boolean;
+}
+
+export interface ChatThreadDto {
+  messages: ChatMessageDto[];
+  /** False once the order is closed for messages (finished more than 24 h ago). */
+  open: boolean;
 }

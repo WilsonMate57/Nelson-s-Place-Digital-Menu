@@ -129,6 +129,10 @@ export const orderListQuerySchema = z.object({
 const hm = z.string().regex(HM_PATTERN, "Hora inválida (HH:MM)");
 const optionalHm = hm.nullish().transform((v) => v ?? null);
 
+export const chatMessageSchema = z.object({
+  body: requiredText(ORDER_LIMITS.maxChatMessageLength),
+});
+
 export const reportQuerySchema = z.object({ from: z.iso.date(), to: z.iso.date() });
 
 export const categoryInputSchema = z

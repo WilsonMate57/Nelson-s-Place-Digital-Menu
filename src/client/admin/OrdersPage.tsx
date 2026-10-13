@@ -58,6 +58,7 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
   const [sound, setSound] = useState<boolean>(() => storage.get<boolean>(SOUND_KEY) ?? false);
   const [freshIds, setFreshIds] = useState<Set<number>>(new Set());
   const knownPending = useRef<Set<number> | null>(null);
+  const lastUnread = useRef<number | null>(null);
   const notifiedDue = useRef<Set<number>>(new Set());
   const [dueIds, setDueIds] = useState<Set<number>>(new Set());
   const symbol = settings?.currencySymbol ?? "MT";
@@ -98,7 +99,15 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
           }
         }
         knownPending.current = ids;
-        document.title = ids.size > 0 ? `(${ids.size}) Pedidos | Nelson's Place` : "Painel | Nelson's Place";
+        const attention = ids.size + pending.unreadMessagesTotal;
+        document.title = attention > 0 ? `(${attention}) Pedidos | Nelson's Place` : "Painel | Nelson's Place";
+
+        // New guest chat messages.
+        if (lastUnread.current !== null && pending.unreadMessagesTotal > lastUnread.current) {
+          toast("💬 Nova mensagem de um cliente");
+          if (storage.get<boolean>(SOUND_KEY)) playChime();
+        }
+        lastUnread.current = pending.unreadMessagesTotal;
 
         // Scheduled orders: alert once when it is time to start preparing them.
         const scheduled = await api<OrderListResponse>("/api/admin/orders?status=SCHEDULED&limit=200");
@@ -251,10 +260,11 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
                       </span>
                       {wa && <span className={`badge badge-${wa.tone}`}>WhatsApp: {wa.label}</span>}
                     </div>
-                    {(o.scheduledFor || o.depositStatus === "pending" || dueIds.has(o.id)) && (
+                    {(o.scheduledFor || o.depositStatus === "pending" || dueIds.has(o.id) || o.unreadMessages > 0) && (
                       <div className="row wrap order-row-flags">
                         {o.scheduledFor && <span className="badge badge-scheduled">🕒 Para {formatDateTime(o.scheduledFor)}</span>}
                         {dueIds.has(o.id) && <span className="badge badge-danger">Começar a preparar</span>}
+                        {o.unreadMessages > 0 && <span className="badge badge-chat">💬 {o.unreadMessages} nova(s)</span>}
                         {o.depositStatus === "pending" && <span className="badge badge-warning">Sinal por verificar</span>}
                       </div>
                     )}

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import {
   availabilitySchema,
+  chatMessageSchema,
   categoryInputSchema,
   orderListQuerySchema,
   orderStatusUpdateSchema,
@@ -56,6 +57,16 @@ export function adminRoutes(s: Services) {
     const staff = c.get("staff");
     const result = s.orders.changeStatus(id, input.expectedStatus, input.to, staff.id, input.note);
     return c.json(result);
+  });
+
+  // --- Chat with the guest (all staff roles) ---------------------------------
+
+  app.get("/orders/:id/messages", (c) => c.json(s.chat.staffThread(parseId(c.req.param("id")))));
+
+  app.post("/orders/:id/messages", async (c) => {
+    const id = parseId(c.req.param("id"));
+    const { body } = await readJson(c, chatMessageSchema);
+    return c.json(s.chat.staffSend(id, c.get("staff").id, body), 201);
   });
 
   /** Staff confirm they received the take-away deposit (checked in M-Pesa, bank, etc.). */

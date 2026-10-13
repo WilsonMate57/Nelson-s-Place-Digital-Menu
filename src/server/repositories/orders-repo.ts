@@ -183,14 +183,15 @@ export class OrdersRepo {
       .prepare(
         `SELECT o.*,
            (SELECT COALESCE(SUM(quantity), 0) FROM order_items i WHERE i.order_id = o.id) AS item_count,
-           (SELECT status FROM integration_events e WHERE e.order_id = o.id AND e.integration = 'whatsapp') AS whatsapp_status
+           (SELECT status FROM integration_events e WHERE e.order_id = o.id AND e.integration = 'whatsapp') AS whatsapp_status,
+           (SELECT COUNT(*) FROM order_messages m WHERE m.order_id = o.id AND m.sender = 'guest' AND m.read_at IS NULL) AS unread_messages
          FROM orders o
          ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
          ORDER BY ${filter.status === "SCHEDULED" ? "o.scheduled_for ASC," : ""} o.created_at DESC, o.id DESC
          LIMIT ?`,
       )
-      .all(...params) as (OrderRow & { item_count: number; whatsapp_status: IntegrationStatus | null })[];
-    return rows.map((r) => ({ ...this.toBase(r), itemCount: r.item_count, whatsappStatus: r.whatsapp_status }));
+      .all(...params) as (OrderRow & { item_count: number; whatsapp_status: IntegrationStatus | null; unread_messages: number })[];
+    return rows.map((r) => ({ ...this.toBase(r), itemCount: r.item_count, whatsappStatus: r.whatsapp_status, unreadMessages: r.unread_messages }));
   }
 
   countByStatus(): Record<OrderStatus, number> {
@@ -198,6 +199,10 @@ export class OrdersRepo {
     const rows = this.db.prepare("SELECT status, COUNT(*) AS n FROM orders GROUP BY status").all() as { status: OrderStatus; n: number }[];
     for (const r of rows) counts[r.status] = r.n;
     return counts;
+  }
+
+  unreadMessagesTotal(): number {
+    return (this.db.prepare("SELECT COUNT(*) AS n FROM order_messages WHERE sender = 'guest' AND read_at IS NULL").get() as { n: number }).n;
   }
 
   countScheduledActive(): number {

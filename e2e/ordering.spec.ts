@@ -339,3 +339,36 @@ test("admin sees reports for the period and can export orders", async ({ page })
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test("guest and staff exchange chat messages about an order", async ({ page, browser }) => {
+  const checkout = await openCheckoutWithSoup(page);
+  await checkout.getByLabel("Número da mesa").fill("9");
+  await checkout.getByRole("button", { name: /Enviar pedido/ }).click();
+  await expect(page.getByRole("heading", { name: "Pedido recebido" })).toBeVisible();
+  const reference = (await page.locator(".order-ref").textContent())!.trim();
+
+  const chat = page.locator(".chat");
+  await chat.getByRole("button", { name: "Quanto tempo falta?" }).click();
+  await expect(chat.locator(".chat-msg.is-mine")).toContainText("Quanto tempo falta?");
+
+  const staffContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const staff = await staffContext.newPage();
+  await adminLogin(staff);
+  const row = staff.getByRole("button", { name: new RegExp(reference) });
+  await expect(row).toContainText("💬 1 nova(s)");
+  await row.click();
+  const staffChat = staff.locator(".staff-chat");
+  await expect(staffChat).toContainText("Quanto tempo falta?");
+  await staffChat.getByRole("button", { name: "O seu pedido estará pronto em cerca de 15 minutos." }).click();
+  await staffChat.getByRole("button", { name: "Enviar" }).click();
+  await expect(staffChat.locator(".staff-chat-msg.is-mine")).toContainText("cerca de 15 minutos");
+  await staff.screenshot({ path: "test-results/screens/admin-chat-desktop.png" });
+
+  // The guest page polls every 8 s.
+  await expect(chat.locator(".chat-msg.is-theirs")).toContainText("cerca de 15 minutos", { timeout: 15_000 });
+  await expect(chat.locator(".chat-msg.is-theirs .chat-author")).toHaveText("Equipa do hotel");
+  await chat.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: "test-results/screens/guest-chat-mobile.png" });
+  await expect(staffChat).toContainText("lida pelo cliente", { timeout: 15_000 });
+  await staffContext.close();
+});

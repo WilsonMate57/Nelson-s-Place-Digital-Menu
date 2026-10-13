@@ -1130,3 +1130,68 @@ body {
   border-radius: 2px;
   vertical-align: baseline;
 }
+
+/* ------------------------------------------------------------ Staff chat */
+
+.badge-chat {
+  background: var(--c-green-800);
+  color: #fff;
+}
+.staff-chat-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--c-cream);
+  border-radius: var(--r-md);
+}
+.staff-chat-msg {
+  max-width: 85%;
+  display: grid;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+}
+.staff-chat-msg p {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.staff-chat-msg.is-theirs {
+  align-self: flex-start;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+}
+.staff-chat-msg.is-mine {
+  align-self: flex-end;
+  background: var(--c-green-800);
+  color: #fff;
+}
+.staff-chat-author {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  opacity: 0.85;
+}
+.staff-chat-meta {
+  font-size: 11px;
+  opacity: 0.75;
+}
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.quick-replies .btn {
+  white-space: normal;
+  text-align: left;
+  min-height: 32px;
+  padding: var(--sp-1) var(--sp-3);
+}
+.staff-chat .row .textarea {
+  flex: 1;
+  min-height: 48px;
+}

@@ -10,6 +10,7 @@ import { formatDateTime } from "../lib/util";
 import { useErrorMessage } from "./errors";
 import { STATUS_ACTION, STATUS_LABEL, WHATSAPP_STATUS } from "./labels";
 import { PrintReceipt, printReceipt } from "./PrintReceipt";
+import { StaffChat } from "./StaffChat";
 import { useSession } from "./session";
 
 interface Props {
@@ -174,6 +175,8 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
           </div>
         </div>
       )}
+
+      <StaffChat orderId={order.id} />
 
       <section className="detail-section">
         <h3 className="detail-heading">Hóspede</h3>

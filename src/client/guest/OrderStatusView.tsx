@@ -5,6 +5,7 @@ import type { GuestOrderDto } from "../../shared/types";
 import { api, ApiError } from "../lib/api";
 import { formatDateTime, formatTime } from "../lib/util";
 import { useGuest } from "./context";
+import { OrderChat } from "./OrderChat";
 import { locationTypeKey, noticeTextKey, noticeTitleKey, statusKey } from "./i18n";
 
 const STEPS: OrderStatus[] = ["PENDING", "CONFIRMED", "PREPARING", "READY", "COMPLETED"];
@@ -220,6 +221,8 @@ export function OrderStatusView({ token, initial, onBackToMenu, onForget }: Prop
         {order.whatsapp.mode === "cloud_api" && order.whatsapp.status === "sent" && (
           <p className="alert alert-success small">{t("whatsappAutoSent")}</p>
         )}
+
+        <OrderChat token={token} />
 
         <div className="order-actions">
           <button type="button" className="btn btn-secondary btn-block" onClick={onBackToMenu}>

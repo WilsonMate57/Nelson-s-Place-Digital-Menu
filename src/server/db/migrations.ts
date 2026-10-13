@@ -202,4 +202,29 @@ export const MIGRATIONS: readonly string[] = [
   ALTER TABLE categories ADD COLUMN available_from TEXT;
   ALTER TABLE categories ADD COLUMN available_until TEXT;
   `,
+
+  /* 3 — chat between guest and staff (per order) and the daily summary log. */ `
+  CREATE TABLE order_messages (
+    id          INTEGER PRIMARY KEY,
+    order_id    INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    sender      TEXT    NOT NULL CHECK (sender IN ('guest','staff')),
+    staff_id    INTEGER REFERENCES staff(id) ON DELETE SET NULL,
+    body        TEXT    NOT NULL CHECK (length(body) BETWEEN 1 AND 1000),
+    created_at  TEXT    NOT NULL DEFAULT ${NOW},
+    -- When the other side read it (staff for guest messages, guest for staff messages).
+    read_at     TEXT
+  );
+  CREATE INDEX idx_messages_order ON order_messages(order_id, id);
+  CREATE INDEX idx_messages_unread ON order_messages(sender, read_at);
+
+  CREATE TABLE daily_summaries (
+    day         TEXT    PRIMARY KEY,
+    status      TEXT    NOT NULL CHECK (status IN ('pending','sent','failed','skipped')),
+    channels    TEXT,
+    attempts    INTEGER NOT NULL DEFAULT 0,
+    last_error  TEXT,
+    created_at  TEXT    NOT NULL DEFAULT ${NOW},
+    updated_at  TEXT    NOT NULL DEFAULT ${NOW}
+  );
+  `,
 ];

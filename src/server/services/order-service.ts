@@ -170,6 +170,7 @@ export class OrderService {
       orders: this.orders.list(filter),
       counts: this.orders.countByStatus(),
       scheduledCount: this.orders.countScheduledActive(),
+      unreadMessagesTotal: this.orders.unreadMessagesTotal(),
       serverTime: this.now().toISOString(),
     };
   }

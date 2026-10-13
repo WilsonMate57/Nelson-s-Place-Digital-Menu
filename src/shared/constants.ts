@@ -56,6 +56,7 @@ export const ORDER_LIMITS = {
   maxLocationLabelLength: 40,
   maxPhoneLength: 20,
   maxPaymentReferenceLength: 60,
+  maxChatMessageLength: 500,
 } as const;
 
 export const HOTEL_TIME_ZONE = "Africa/Maputo";

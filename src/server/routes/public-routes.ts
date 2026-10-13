@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { orderSubmissionSchema } from "../../shared/schemas";
+import { chatMessageSchema, orderSubmissionSchema } from "../../shared/schemas";
 import type { PublicMenuDto, PublicSettings } from "../../shared/types";
 import { AppError, badRequest } from "../http/errors";
 import { RateLimiter, clientIp, rateLimit, readJson } from "../http/middleware";
@@ -69,6 +69,25 @@ export function publicRoutes(s: Services) {
     if (!TOKEN_PATTERN.test(token)) throw new AppError(404, "NOT_FOUND", "Pedido não encontrado");
     return c.json(s.orders.guestStatus(token));
   });
+
+  // Chat with the hotel about this order (the private token identifies the guest).
+  const chatLimiter = new RateLimiter(60, 10 * 60_000);
+  app.get("/orders/track/:token/messages", rateLimit(trackLimiter, (c) => `track:${ip(c)}`), (c) => {
+    const token = c.req.param("token");
+    if (!TOKEN_PATTERN.test(token)) throw new AppError(404, "NOT_FOUND", "Pedido não encontrado");
+    return c.json(s.chat.guestThread(token));
+  });
+  app.post(
+    "/orders/track/:token/messages",
+    bodyLimit({ maxSize: 8 * 1024, onError: () => { throw badRequest("BODY_TOO_LARGE", "Mensagem demasiado grande"); } }),
+    rateLimit(chatLimiter, (c) => `chat:${ip(c)}`),
+    async (c) => {
+      const token = c.req.param("token");
+      if (!TOKEN_PATTERN.test(token)) throw new AppError(404, "NOT_FOUND", "Pedido não encontrado");
+      const { body } = await readJson(c, chatMessageSchema);
+      return c.json(s.chat.guestSend(token, body), 201);
+    },
+  );
 
   app.post("/orders/track/:token/whatsapp-opened", rateLimit(trackLimiter, (c) => `track:${ip(c)}`), (c) => {
     const token = c.req.param("token");
