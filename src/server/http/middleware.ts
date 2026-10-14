@@ -2,7 +2,7 @@ import type { Context, MiddlewareHandler } from "hono";
 import { getCookie } from "hono/cookie";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import type { z } from "zod";
-import type { StaffRole } from "../../shared/constants";
+import { hasAny, type Permission } from "../../shared/permissions";
 import type { StaffDto } from "../../shared/types";
 import type { AuthService } from "../services/auth-service";
 import { AppError, badRequest, forbidden, unauthorized } from "./errors";
@@ -127,9 +127,10 @@ export function requireStaff(auth: AuthService): MiddlewareHandler<AppEnv> {
   };
 }
 
-export function requireRole(...roles: StaffRole[]): MiddlewareHandler<AppEnv> {
+/** Allows the request if the staff member's role has ANY of the given permissions. */
+export function requirePermission(...permissions: Permission[]): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
-    if (!roles.includes(c.get("staff").role)) throw forbidden();
+    if (!hasAny(c.get("staff").permissions, ...permissions)) throw forbidden();
     await next();
   };
 }

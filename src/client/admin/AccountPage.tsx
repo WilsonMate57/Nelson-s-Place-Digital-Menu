@@ -3,7 +3,6 @@ import { PASSWORD_MIN_LENGTH } from "../../shared/constants";
 import { useToast } from "../components/Toasts";
 import { api } from "../lib/api";
 import { useErrorMessage } from "./errors";
-import { ROLE_LABEL } from "./labels";
 import { useSession } from "./session";
 
 export function AccountPage() {
@@ -44,7 +43,7 @@ export function AccountPage() {
         <dt>Email</dt>
         <dd>{staff.email}</dd>
         <dt>Função</dt>
-        <dd>{ROLE_LABEL[staff.role]}</dd>
+        <dd>{staff.roleName}</dd>
       </dl>
       <form className="card stack" onSubmit={submit}>
         <h2 className="card-title">Alterar palavra-passe</h2>

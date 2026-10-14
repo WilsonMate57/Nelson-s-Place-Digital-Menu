@@ -41,7 +41,9 @@ interface Props {
 const newOption = (): OptionDraft => ({ key: uuid(), namePt: "", nameEn: "", price: "0", isAvailable: true });
 
 export function ProductEditor({ open, product, defaultCategoryId, categories, onClose, onSaved }: Props) {
-  const { settings } = useSession();
+  const { settings, can } = useSession();
+  // Without "Alterar preços" the price fields are read-only (also enforced by the server).
+  const priceLocked = !can("menu.prices");
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [categoryId, setCategoryId] = useState<number>(0);
@@ -216,7 +218,8 @@ export function ProductEditor({ open, product, defaultCategoryId, categories, on
           </div>
           <div className="field">
             <label className="label" htmlFor="p-price">Preço ({symbol}) *</label>
-            <input id="p-price" className="input" inputMode="decimal" placeholder="Ex.: 650" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            <input id="p-price" className="input" inputMode="decimal" placeholder="Ex.: 650" value={price} onChange={(e) => setPrice(e.target.value)} required disabled={priceLocked} />
+            {priceLocked && <span className="hint">O seu perfil não permite alterar preços.</span>}
           </div>
           <div className="field">
             <label className="label" htmlFor="p-name-pt">Nome (PT) *</label>
@@ -276,7 +279,7 @@ export function ProductEditor({ open, product, defaultCategoryId, categories, on
                   <li key={o.key} className="grid-option">
                     <input className="input" placeholder="Opção (PT) *" aria-label="Opção (PT)" value={o.namePt} onChange={(e) => updateOption(g.key, o.key, { namePt: e.target.value })} />
                     <input className="input" placeholder="Opção (EN)" aria-label="Opção (EN)" value={o.nameEn} onChange={(e) => updateOption(g.key, o.key, { nameEn: e.target.value })} />
-                    <input className="input" inputMode="decimal" aria-label={`Preço adicional (${symbol})`} title={`Preço adicional (${symbol})`} value={o.price} onChange={(e) => updateOption(g.key, o.key, { price: e.target.value })} />
+                    <input className="input" inputMode="decimal" aria-label={`Preço adicional (${symbol})`} title={`Preço adicional (${symbol})`} value={o.price} onChange={(e) => updateOption(g.key, o.key, { price: e.target.value })} disabled={priceLocked} />
                     <label className="check small" title="Disponível">
                       <input type="checkbox" checked={o.isAvailable} onChange={(e) => updateOption(g.key, o.key, { isAvailable: e.target.checked })} />
                       Disp.

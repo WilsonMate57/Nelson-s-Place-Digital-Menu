@@ -6,8 +6,8 @@ import {
   ORDER_LOCATION_TYPES,
   ORDER_STATUSES,
   PASSWORD_MIN_LENGTH,
-  STAFF_ROLES,
 } from "./constants";
+import { PERMISSIONS } from "./permissions";
 import { HM_PATTERN, parseHm } from "./schedule";
 
 /** Removes control characters (except newlines/tabs) that have no place in user text. */
@@ -194,14 +194,20 @@ export const availabilitySchema = z.object({ isAvailable: z.boolean() });
 export const staffCreateSchema = z.object({
   email: z.email().trim().toLowerCase().max(254),
   displayName: requiredText(80),
-  role: z.enum(STAFF_ROLES),
+  roleId: id,
   password: passwordSchema,
 });
 
 export const staffUpdateSchema = z.object({
   displayName: requiredText(80),
-  role: z.enum(STAFF_ROLES),
+  roleId: id,
   isActive: z.boolean(),
+});
+
+export const roleInputSchema = z.object({
+  name: requiredText(40),
+  description: optionalText(120),
+  permissions: z.array(z.enum(PERMISSIONS)).max(PERMISSIONS.length).transform((p) => [...new Set(p)]),
 });
 
 export const staffPasswordResetSchema = z.object({ password: passwordSchema });

@@ -22,7 +22,7 @@ async function adminLogin(page: Page) {
   await page.getByLabel("Email").fill(ADMIN.email);
   await page.getByLabel("Palavra-passe").fill(ADMIN.password);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page.getByRole("heading", { name: "Pedidos" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pedidos", exact: true })).toBeVisible();
 }
 
 test("guest places an order on a phone and staff processes it", async ({ page, browser }) => {
@@ -385,4 +385,45 @@ test("guest and staff exchange chat messages about an order", async ({ page, bro
   await page.screenshot({ path: "test-results/screens/guest-chat-mobile.png" });
   await expect(staffChat).toContainText("lida pelo cliente", { timeout: 15_000 });
   await staffContext.close();
+});
+
+test("admin creates an access profile and the dashboard adapts to it", async ({ page, browser }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await adminLogin(page);
+  await page.getByRole("link", { name: "Equipa" }).click();
+  await page.getByRole("tab", { name: "Perfis de acesso" }).click();
+  const matrix = page.locator(".roles-matrix");
+  for (const name of ["Administrador", "Gerente", "Recepção", "Cozinha"]) await expect(matrix).toContainText(name);
+
+  await page.getByRole("button", { name: "Novo perfil" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Nome do perfil").fill("Caixa");
+  await dialog.getByLabel("Confirmar sinais (pagamentos)").check();
+  await page.screenshot({ path: "test-results/screens/admin-role-editor.png" });
+  await dialog.getByRole("button", { name: "Guardar" }).click();
+  await expect(matrix).toContainText("Caixa");
+  await page.screenshot({ path: "test-results/screens/admin-roles-matrix.png", fullPage: true });
+
+  await page.getByRole("tab", { name: "Pessoas" }).click();
+  await page.getByRole("button", { name: "Novo utilizador" }).click();
+  const staffDialog = page.getByRole("dialog");
+  await staffDialog.getByLabel("Email").fill("caixa@e2e.local");
+  await staffDialog.getByLabel("Nome").fill("Rosa Caixa");
+  await staffDialog.getByRole("radio", { name: /^Caixa/ }).check();
+  await staffDialog.getByLabel("Palavra-passe inicial").fill("caixa-password-1");
+  await staffDialog.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByRole("cell", { name: /Rosa Caixa/ })).toBeVisible();
+
+  const other = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const cashier = await other.newPage();
+  await cashier.goto("/admin/");
+  await cashier.getByLabel("Email").fill("caixa@e2e.local");
+  await cashier.getByLabel("Palavra-passe").fill("caixa-password-1");
+  await cashier.getByRole("button", { name: "Entrar" }).click();
+  await expect(cashier.getByRole("heading", { name: "Pedidos", exact: true })).toBeVisible();
+  const nav = cashier.getByRole("navigation", { name: "Secções do painel" });
+  await expect(nav.getByRole("link")).toHaveText(["Pedidos", "Conta"]);
+  await expect(cashier.locator(".admin-user-name small")).toHaveText("Caixa");
+  expect((await cashier.request.get("/api/admin/reports?from=2026-10-13&to=2026-10-13")).status()).toBe(403);
+  await other.close();
 });

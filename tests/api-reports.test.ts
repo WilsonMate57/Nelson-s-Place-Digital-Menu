@@ -126,10 +126,11 @@ describe("admin reports", () => {
     expect(lines[1]).toContain(";360,00;");
   });
 
-  it("is restricted to administrators and validates the dates", async () => {
+  it("follows the profile permissions and validates the dates", async () => {
     const { t } = await setup();
+    // Recepção can see reports but not export them.
     const reception = await t.login("reception@test.local");
-    expect((await t.request("/api/admin/reports?from=2026-10-13&to=2026-10-13", { cookie: reception })).status).toBe(403);
+    expect((await t.request("/api/admin/reports?from=2026-10-13&to=2026-10-13", { cookie: reception })).status).toBe(200);
     expect((await t.request("/api/admin/reports/orders.csv?from=2026-10-13&to=2026-10-13", { cookie: reception })).status).toBe(403);
     const admin = await t.login("admin@test.local");
     expect((await t.request("/api/admin/reports?from=2026-10-14&to=2026-10-13", { cookie: admin })).status).toBe(400);

@@ -95,6 +95,10 @@ Admin-only "Relatórios" screen with one period filter (today, yesterday, 7/30 d
 - **Closing ticket** ("Fecho do dia/período") on the 80 mm POS printer from Relatórios.
 - **Daily summary to the manager**: manual (prefilled WhatsApp link / copy) works now. Automatic sending 15 min after the kitchen closes needs SMTP and/or a WhatsApp Business summary template configured on the server — **not verified with real accounts** (tested with mocks). Off by default.
 
+## Access profiles (2026-10-14)
+
+Staff permissions are now granular and grouped into **editable profiles** (Equipa → Perfis de acesso): Administrador (everything, locked), Gerente (all but staff/settings/audit), Recepção and Cozinha (identical, as requested: orders, cancellations, deposits, chat, availability, pause, menu editing, prices, reports — no exports). Admins can create new profiles (e.g. "Caixa") with any combination. Enforced on the server for every route; the dashboard hides what a profile cannot do. Existing users were migrated automatically.
+
 ## Pending business decisions (blockers for go-live)
 
 1. **Real menu**: partially transcribed (see above); management must confirm prices, resolve the doubts in MENU_REVISAO.md and provide dish photos.

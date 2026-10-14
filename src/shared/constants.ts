@@ -18,8 +18,6 @@ export const ORDER_STATUSES = [
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const STAFF_ROLES = ["admin", "reception", "restaurant"] as const;
-export type StaffRole = (typeof STAFF_ROLES)[number];
 
 /** On-site places where an order can be served (configurable in settings). */
 export const LOCATION_TYPES = ["room", "table"] as const;

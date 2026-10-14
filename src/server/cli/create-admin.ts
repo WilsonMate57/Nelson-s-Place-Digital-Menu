@@ -1,19 +1,24 @@
 /**
- * Creates a staff account (an administrator by default).
+ * Creates a staff account (with the Administrador profile by default).
  *
- *   npm run admin:create -- --email gerente@example.com --name "Nome" [--role admin]
+ *   npm run admin:create -- --email gerente@example.com --name "Nome" [--role "Recepção"]
+ *
+ * --role accepts a profile name (Administrador, Gerente, Recepção, Cozinha or
+ * any profile created in the dashboard) or the old codes admin/reception/restaurant.
  *
  * The password is read from a hidden prompt, or from the ADMIN_PASSWORD
  * environment variable when no terminal is attached (e.g. automation).
  */
 import { parseArgs } from "node:util";
-import { STAFF_ROLES, type StaffRole } from "../../shared/constants";
 import { passwordSchema, staffCreateSchema } from "../../shared/schemas";
 import { hashPassword } from "../auth/passwords";
 import { loadConfig } from "../config";
 import { openDatabase } from "../db/connection";
 import { AuditRepo } from "../repositories/audit-repo";
+import { RoleRepo } from "../repositories/role-repo";
 import { StaffRepo } from "../repositories/staff-repo";
+
+const LEGACY_ROLE_NAMES: Record<string, string> = { admin: "Administrador", reception: "Recepção", restaurant: "Cozinha" };
 
 function promptHidden(question: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -49,15 +54,11 @@ async function main() {
     options: {
       email: { type: "string" },
       name: { type: "string" },
-      role: { type: "string", default: "admin" },
+      role: { type: "string", default: "Administrador" },
     },
   });
   if (!values.email || !values.name) {
-    console.error('Usage: npm run admin:create -- --email EMAIL --name "NAME" [--role admin|reception|restaurant]');
-    process.exit(1);
-  }
-  if (!STAFF_ROLES.includes(values.role as StaffRole)) {
-    console.error(`Invalid role. Use one of: ${STAFF_ROLES.join(", ")}`);
+    console.error('Usage: npm run admin:create -- --email EMAIL --name "NAME" [--role "PROFILE NAME"]');
     process.exit(1);
   }
 
@@ -80,9 +81,15 @@ async function main() {
     process.exit(1);
   }
 
-  const input = staffCreateSchema.parse({ email: values.email, displayName: values.name, role: values.role, password });
   const config = loadConfig();
   const db = openDatabase(config.databasePath);
+  const roles = new RoleRepo(db);
+  const role = roles.findByName(LEGACY_ROLE_NAMES[values.role] ?? values.role);
+  if (!role) {
+    console.error(`Unknown profile "${values.role}". Available: ${roles.list().map((r) => r.name).join(", ")}`);
+    process.exit(1);
+  }
+  const input = staffCreateSchema.parse({ email: values.email, displayName: values.name, roleId: role.id, password });
   const staff = new StaffRepo(db);
   if (staff.findByEmail(input.email)) {
     console.error(`A user with email ${input.email} already exists.`);
@@ -91,13 +98,13 @@ async function main() {
   const id = staff.create({
     email: input.email,
     displayName: input.displayName,
-    role: input.role,
+    roleId: role.id,
     passwordHash: await hashPassword(input.password),
     createdBy: null,
   });
-  new AuditRepo(db).record(null, "staff_created_cli", "staff", id, { email: input.email, role: input.role });
+  new AuditRepo(db).record(null, "staff_created_cli", "staff", id, { email: input.email, role: role.name });
   db.close();
-  console.log(`Created ${input.role} account #${id} for ${input.email} in ${config.databasePath}`);
+  console.log(`Created "${role.name}" account #${id} for ${input.email} in ${config.databasePath}`);
 }
 
 main().catch((err: unknown) => {

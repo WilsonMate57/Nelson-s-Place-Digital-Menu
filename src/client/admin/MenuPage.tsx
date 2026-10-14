@@ -16,7 +16,9 @@ interface AdminMenu {
 }
 
 export function MenuPage() {
-  const { isAdmin, settings } = useSession();
+  const { can, settings } = useSession();
+  const isAdmin = can("menu.edit");
+  const canToggle = can("menu.availability", "menu.edit");
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [menu, setMenu] = useState<AdminMenu | null>(null);
@@ -69,7 +71,7 @@ export function MenuPage() {
           <p className="muted small">
             {isAdmin
               ? "Gerir categorias, produtos, preços, opções e disponibilidade."
-              : "Pode marcar artigos como esgotados ou disponíveis. Alterações de preço e conteúdo são feitas por um administrador."}
+              : "Pode marcar artigos como esgotados ou disponíveis. O seu perfil não permite editar o menu."}
           </p>
         </div>
         {isAdmin && (
@@ -103,7 +105,7 @@ export function MenuPage() {
       {menu.categories.length === 0 && (
         <div className="state-block card">
           <h2>O menu está vazio</h2>
-          <p>{isAdmin ? "Comece por criar uma categoria (ex.: Entradas, Bebidas)." : "Um administrador ainda não criou o menu."}</p>
+          <p>{isAdmin ? "Comece por criar uma categoria (ex.: Entradas, Bebidas)." : "O menu ainda não foi criado."}</p>
         </div>
       )}
 
@@ -163,7 +165,7 @@ export function MenuPage() {
                       </span>
                     </div>
                     <div className="admin-product-actions">
-                      {!p.isArchived && (
+                      {!p.isArchived && canToggle && (
                         <label className="switch" title="Disponível para encomenda">
                           <input
                             type="checkbox"

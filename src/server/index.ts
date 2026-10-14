@@ -15,7 +15,7 @@ const server = serve({ fetch: app.fetch, port: config.port, hostname: config.hos
     `Nelson's Place menu server listening on http://${info.address}:${info.port} ` +
       `(env=${config.env}, whatsapp=${config.whatsapp.mode}, db=${config.databasePath})`,
   );
-  if (services.staffRepo.countActiveAdmins() === 0) {
+  if (services.staffRepo.countActiveWith("staff.manage") === 0) {
     console.warn("No active administrator exists yet. Create one with: npm run admin:create");
   }
 });

@@ -21,7 +21,7 @@ Durable instructions for AI-assisted work on this repository. Read README.md and
 
 - The server recalculates every price/total from the database (`priceOrder`); never trust client prices, totals, availability or roles.
 - Orders are idempotent via `idempotencyKey` (unique). Same key + different content → 409.
-- Admin routes require a session (`requireStaff`) and the `x-np-request: 1` header (CSRF defence); menu structure/prices/staff/settings require `admin` role. Enforcement is server-side; hiding UI is not security.
+- Admin routes require a session (`requireStaff`), the `x-np-request: 1` header (CSRF defence) and a **permission** (`requirePermission`, list in `src/shared/permissions.ts`). Staff have one editable role (perfil); the system role Administrador holds `*` and cannot be changed or deleted; changes that would leave nobody able to manage staff are rejected. Price changes need `menu.prices` even inside a product edit. Enforcement is server-side; hiding UI is not security.
 - Secrets only in env vars read by `src/server/config.ts`. Nothing secret in `src/client` or `src/shared`.
 - Uploaded images are validated by magic bytes, stored with random names; SVG is not accepted.
 - Never store more personal data than needed (name/phone are optional by default).

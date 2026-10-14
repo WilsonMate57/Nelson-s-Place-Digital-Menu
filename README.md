@@ -43,7 +43,7 @@ QR codes encode the location, e.g. `https://<domain>/?t=room&loc=12` or `?t=tabl
 | `npm run dev` | API server (auto-reload) + Vite dev server |
 | `npm run build` | Production build → `dist/client` (static) and `dist/server` (server + CLI) |
 | `npm start` | Run the production server (`app.cjs` → `dist/server/index.js`) |
-| `npm run admin:create -- --email E --name "N" [--role admin\|reception\|restaurant]` | Create a staff account (hidden password prompt, or `ADMIN_PASSWORD` env var) |
+| `npm run admin:create -- --email E --name "N" [--role "Recepção"]` | Create a staff account with a profile (default Administrador; hidden password prompt, or `ADMIN_PASSWORD` env var) |
 | `npm run db:seed-demo` | Load demo menu into an **empty** database (refuses in production without `--force-production`) |
 | `npm run db:import-menu -- --file menu-import/menu-nelsons-place.json` | Import the hotel's menu (transcribed from the printed menu) into an **empty** database |
 | `npm run db:backup -- [--dir backups] [--keep 14]` | Consistent online SQLite backup with rotation |

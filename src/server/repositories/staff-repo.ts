@@ -1,4 +1,4 @@
-import type { StaffRole } from "../../shared/constants";
+import { resolvePermissions, type Permission } from "../../shared/permissions";
 import type { StaffDto } from "../../shared/types";
 import { nowIso, type Db } from "../db/connection";
 
@@ -6,7 +6,9 @@ interface StaffRow {
   id: number;
   email: string;
   display_name: string;
-  role: StaffRole;
+  role_id: number;
+  role_name: string;
+  role_permissions: string;
   password_hash: string;
   is_active: number;
   last_login_at: string | null;
@@ -21,7 +23,9 @@ const toDto = (r: StaffRow): StaffWithHash => ({
   id: r.id,
   email: r.email,
   displayName: r.display_name,
-  role: r.role,
+  roleId: r.role_id,
+  roleName: r.role_name,
+  permissions: resolvePermissions(JSON.parse(r.role_permissions) as string[]),
   isActive: r.is_active === 1,
   lastLoginAt: r.last_login_at,
   createdAt: r.created_at,
@@ -30,39 +34,42 @@ const toDto = (r: StaffRow): StaffWithHash => ({
 
 export const withoutHash = ({ passwordHash: _hash, ...staff }: StaffWithHash): StaffDto => staff;
 
+/** Staff columns plus the role's name and permissions. */
+const SELECT_STAFF = `SELECT s.*, r.name AS role_name, r.permissions AS role_permissions FROM staff s JOIN roles r ON r.id = s.role_id`;
+
 export class StaffRepo {
   constructor(private readonly db: Db) {}
 
   findByEmail(email: string): StaffWithHash | null {
-    const row = this.db.prepare("SELECT * FROM staff WHERE email = ?").get(email) as StaffRow | undefined;
+    const row = this.db.prepare(`${SELECT_STAFF} WHERE s.email = ?`).get(email) as StaffRow | undefined;
     return row ? toDto(row) : null;
   }
 
   findById(id: number): StaffWithHash | null {
-    const row = this.db.prepare("SELECT * FROM staff WHERE id = ?").get(id) as StaffRow | undefined;
+    const row = this.db.prepare(`${SELECT_STAFF} WHERE s.id = ?`).get(id) as StaffRow | undefined;
     return row ? toDto(row) : null;
   }
 
   list(): StaffDto[] {
-    return (this.db.prepare("SELECT * FROM staff ORDER BY is_active DESC, display_name").all() as StaffRow[]).map((r) => withoutHash(toDto(r)));
+    return (this.db.prepare(`${SELECT_STAFF} ORDER BY s.is_active DESC, s.display_name`).all() as StaffRow[]).map((r) => withoutHash(toDto(r)));
   }
 
-  create(input: { email: string; displayName: string; role: StaffRole; passwordHash: string; createdBy: number | null }): number {
+  create(input: { email: string; displayName: string; roleId: number; passwordHash: string; createdBy: number | null }): number {
     const now = nowIso();
     return Number(
       this.db
         .prepare(
-          `INSERT INTO staff (email, display_name, role, password_hash, is_active, created_by, created_at, updated_at)
+          `INSERT INTO staff (email, display_name, role_id, password_hash, is_active, created_by, created_at, updated_at)
            VALUES (?, ?, ?, ?, 1, ?, ?, ?)`,
         )
-        .run(input.email, input.displayName, input.role, input.passwordHash, input.createdBy, now, now).lastInsertRowid,
+        .run(input.email, input.displayName, input.roleId, input.passwordHash, input.createdBy, now, now).lastInsertRowid,
     );
   }
 
-  update(id: number, input: { displayName: string; role: StaffRole; isActive: boolean }): void {
+  update(id: number, input: { displayName: string; roleId: number; isActive: boolean }): void {
     this.db
-      .prepare("UPDATE staff SET display_name = ?, role = ?, is_active = ?, updated_at = ? WHERE id = ?")
-      .run(input.displayName, input.role, input.isActive ? 1 : 0, nowIso(), id);
+      .prepare("UPDATE staff SET display_name = ?, role_id = ?, is_active = ?, updated_at = ? WHERE id = ?")
+      .run(input.displayName, input.roleId, input.isActive ? 1 : 0, nowIso(), id);
   }
 
   setPasswordHash(id: number, passwordHash: string): void {
@@ -73,8 +80,9 @@ export class StaffRepo {
     this.db.prepare("UPDATE staff SET last_login_at = ? WHERE id = ?").run(nowIso(), id);
   }
 
-  countActiveAdmins(): number {
-    return (this.db.prepare("SELECT COUNT(*) AS n FROM staff WHERE role = 'admin' AND is_active = 1").get() as { n: number }).n;
+  /** Active staff members holding a permission (used to prevent lock-outs). */
+  countActiveWith(permission: Permission): number {
+    return this.list().filter((s) => s.isActive && s.permissions.includes(permission)).length;
   }
 
   // Sessions ---------------------------------------------------------------
@@ -90,7 +98,8 @@ export class StaffRepo {
   findSessionStaff(tokenHash: string): StaffWithHash | null {
     const row = this.db
       .prepare(
-        `SELECT s.* FROM sessions se JOIN staff s ON s.id = se.staff_id
+        `SELECT s.*, r.name AS role_name, r.permissions AS role_permissions
+         FROM sessions se JOIN staff s ON s.id = se.staff_id JOIN roles r ON r.id = s.role_id
          WHERE se.token_hash = ? AND se.expires_at > ? AND s.is_active = 1`,
       )
       .get(tokenHash, nowIso()) as StaffRow | undefined;

@@ -5,9 +5,9 @@ import type {
   LocationType,
   OrderLocationType,
   OrderStatus,
-  StaffRole,
   WhatsAppMode,
 } from "./constants";
+import type { Permission } from "./permissions";
 
 /** Text stored in several languages. Portuguese is mandatory; others fall back to it. */
 export type LocalizedText = { pt: string } & Partial<Record<Exclude<Language, "pt">, string>>;
@@ -237,7 +237,10 @@ export interface StaffDto {
   id: number;
   email: string;
   displayName: string;
-  role: StaffRole;
+  roleId: number;
+  roleName: string;
+  /** Effective permissions of the staff member's role. */
+  permissions: Permission[];
   isActive: boolean;
   lastLoginAt: string | null;
   createdAt: string;
@@ -325,4 +328,19 @@ export interface ChatThreadDto {
   messages: ChatMessageDto[];
   /** False once the order is closed for messages (finished more than 24 h ago). */
   open: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Access profiles (roles)
+// ---------------------------------------------------------------------------
+
+export interface RoleDto {
+  id: number;
+  name: string;
+  description: string | null;
+  /** Effective permissions ("*" is expanded). */
+  permissions: Permission[];
+  /** Built-in Administrador: always every permission, cannot be changed or deleted. */
+  isSystem: boolean;
+  staffCount: number;
 }

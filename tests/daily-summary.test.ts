@@ -110,7 +110,8 @@ describe("daily summary to the manager", () => {
     expect(res.status).toBe(200);
     expect(((await res.json()) as DailySummaryStatusDto).recent[0]).toMatchObject({ day: "2026-10-12", status: "sent" });
     const reception = await t.login("reception@test.local");
-    expect((await t.request("/api/admin/reports/daily-summary", { cookie: reception })).status).toBe(403);
+    const denied = await t.request("/api/admin/reports/daily-summary/send", { method: "POST", cookie: reception, body: JSON.stringify({ day: "2026-10-12" }) });
+    expect(denied.status).toBe(403);
   });
 
   it("summarises an empty day honestly", () => {

@@ -50,8 +50,8 @@ export async function makeTestContext(
 
   seedDemoMenu(db);
   const hash = await hashPassword(PASSWORD);
-  services.staffRepo.create({ email: "admin@test.local", displayName: "Admin", role: "admin", passwordHash: hash, createdBy: null });
-  services.staffRepo.create({ email: "reception@test.local", displayName: "Recepção", role: "reception", passwordHash: hash, createdBy: null });
+  services.staffRepo.create({ email: "admin@test.local", displayName: "Admin", roleId: 1, passwordHash: hash, createdBy: null });
+  services.staffRepo.create({ email: "reception@test.local", displayName: "Recepção", roleId: 3, passwordHash: hash, createdBy: null });
 
   const request = (path: string, init: RequestInit & { cookie?: string } = {}) => {
     const headers = new Headers(init.headers);

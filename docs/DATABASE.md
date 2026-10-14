@@ -15,6 +15,8 @@ SQLite 3 (via `better-sqlite3`), one file at `DATABASE_PATH` (default `data/nels
 
 3. Chat and daily summary (2026-10-13): `order_messages` (one thread per order: `sender` guest/staff, `staff_id`, `body` ≤ 1000 chars, `read_at` = read by the other side) and `daily_summaries` (one row per hotel-local day: `status` pending/sent/failed/skipped, `channels`, `attempts`, `last_error`).
 
+4. Access profiles (2026-10-14): `roles` (name, description, `permissions` JSON array, `is_system`) with Administrador (`["*"]`), Gerente, Recepção and Cozinha; `staff` rebuilt with `role_id` (FK → roles, RESTRICT) instead of the fixed `role` column (admin → Administrador, reception → Recepção, restaurant → Cozinha).
+
 ## Entity overview
 
 ```

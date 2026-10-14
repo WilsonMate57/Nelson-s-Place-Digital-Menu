@@ -1239,3 +1239,46 @@ body {
 .mix-seg {
   overflow: hidden;
 }
+
+/* ------------------------------------------------------ Perfis de acesso */
+
+.roles-matrix th,
+.roles-matrix td {
+  padding: var(--sp-2) var(--sp-3);
+}
+.roles-col {
+  text-align: center;
+  white-space: nowrap;
+}
+.roles-cell {
+  text-align: center;
+  font-weight: 700;
+  color: var(--c-success);
+}
+.roles-perm {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-ink);
+}
+.roles-group th {
+  background: var(--c-cream);
+  color: var(--c-green-800);
+}
+.perm-group {
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--c-line);
+}
+.roles-matrix th.roles-perm {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-ink);
+}
+.roles-matrix .roles-col .small {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}

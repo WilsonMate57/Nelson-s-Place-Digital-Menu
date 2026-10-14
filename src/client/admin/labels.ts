@@ -1,4 +1,4 @@
-import type { IntegrationStatus, OrderStatus, StaffRole } from "../../shared/constants";
+import type { IntegrationStatus, OrderStatus } from "../../shared/constants";
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING: "Pendente",
@@ -17,12 +17,6 @@ export const STATUS_ACTION: Record<OrderStatus, string> = {
   READY: "Marcar como pronto",
   COMPLETED: "Marcar como entregue",
   CANCELLED: "Cancelar pedido",
-};
-
-export const ROLE_LABEL: Record<StaffRole, string> = {
-  admin: "Administrador",
-  reception: "Recepção",
-  restaurant: "Restaurante",
 };
 
 export const WHATSAPP_STATUS: Record<IntegrationStatus, { label: string; tone: "success" | "warning" | "danger" | "muted"; help: string }> = {

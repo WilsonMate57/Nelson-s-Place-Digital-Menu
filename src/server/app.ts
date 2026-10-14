@@ -17,6 +17,7 @@ import { DailySummaryRepo } from "./repositories/daily-summary-repo";
 import { createEmailSender, DailySummaryService, type EmailSender } from "./services/daily-summary-service";
 import { SettingsRepo } from "./repositories/settings-repo";
 import { StaffRepo } from "./repositories/staff-repo";
+import { RoleRepo } from "./repositories/role-repo";
 import { adminRoutes } from "./routes/admin-routes";
 import { authRoutes } from "./routes/auth-routes";
 import { publicRoutes } from "./routes/public-routes";
@@ -34,6 +35,7 @@ export interface Services {
   ordersRepo: OrdersRepo;
   settingsRepo: SettingsRepo;
   staffRepo: StaffRepo;
+  roleRepo: RoleRepo;
   auditRepo: AuditRepo;
   integrationRepo: IntegrationRepo;
   auth: AuthService;
@@ -87,6 +89,7 @@ export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): S
     ordersRepo,
     settingsRepo,
     staffRepo,
+    roleRepo: new RoleRepo(db),
     auditRepo,
     integrationRepo,
     auth: new AuthService(staffRepo, auditRepo, config.sessionTtlHours),

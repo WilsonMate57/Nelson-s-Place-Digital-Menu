@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function OrderDetail({ id, version, onBack, onChanged }: Props) {
-  const { settings } = useSession();
+  const { settings, can } = useSession();
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [order, setOrder] = useState<AdminOrderDetailDto | null>(null);
@@ -95,8 +95,8 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
     );
   }
 
-  const next = allowedTransitions(order.status).filter((s) => s !== "CANCELLED");
-  const canCancel = allowedTransitions(order.status).includes("CANCELLED");
+  const next = can("orders.status") ? allowedTransitions(order.status).filter((s) => s !== "CANCELLED") : [];
+  const canCancel = can("orders.cancel") && allowedTransitions(order.status).includes("CANCELLED");
 
   return (
     <article className="order-detail" aria-labelledby="order-detail-title">
@@ -127,7 +127,7 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
           <p className="small">
             Referência indicada pelo cliente: <strong>{order.paymentReference ?? "—"}</strong>
           </p>
-          {order.depositStatus === "pending" && (
+          {order.depositStatus === "pending" && can("orders.deposit") && (
             <>
               <p className="small muted">Verifique o pagamento (M-Pesa, banco, etc.) antes de confirmar. O pedido só pode ser confirmado depois do sinal.</p>
               <button type="button" className="btn btn-primary btn-sm no-print" disabled={busy} onClick={() => void confirmDeposit()}>
@@ -176,7 +176,7 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
         </div>
       )}
 
-      <StaffChat orderId={order.id} />
+      <StaffChat orderId={order.id} canReply={can("chat.reply")} />
 
       <section className="detail-section">
         <h3 className="detail-heading">Hóspede</h3>

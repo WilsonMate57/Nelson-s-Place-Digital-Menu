@@ -54,7 +54,7 @@ const longDay = (day: string) =>
   new Intl.DateTimeFormat("pt-PT", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`));
 
 export function ReportsPage() {
-  const { settings } = useSession();
+  const { settings, can } = useSession();
   const errorMessage = useErrorMessage();
   const [preset, setPreset] = useState<Preset>("7d");
   const [range, setRange] = useState(() => presetRange("7d"));
@@ -96,9 +96,11 @@ export function ReportsPage() {
             «Vendas» = pedidos aceites pela equipa (confirmados, em preparação, prontos ou concluídos). Pedidos pendentes e cancelados não contam.
           </p>
         </div>
-        <a className="btn btn-secondary" href={`/api/admin/reports/orders.csv?from=${range.from}&to=${range.to}`} download>
-          Exportar pedidos (Excel/CSV)
-        </a>
+        {can("reports.export") && (
+          <a className="btn btn-secondary" href={`/api/admin/reports/orders.csv?from=${range.from}&to=${range.to}`} download>
+            Exportar pedidos (Excel/CSV)
+          </a>
+        )}
       </div>
 
       {/* One filter row scopes every figure below. */}
@@ -610,7 +612,8 @@ function WeekdayTable({ report, money }: { report: ReportDto; money: (c: number)
 
 /** Closing ticket, manual summary (WhatsApp/copy) and the automatic summary status. */
 function ClosingActions({ report }: { report: ReportDto }) {
-  const { settings } = useSession();
+  const { settings, can } = useSession();
+  const canExport = can("reports.export");
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [status, setStatus] = useState<DailySummaryStatusDto | null>(null);
@@ -664,12 +667,16 @@ function ClosingActions({ report }: { report: ReportDto }) {
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => printReceipt("closing-receipt")}>
             Imprimir fecho (80 mm)
           </button>
-          <a className="btn btn-whatsapp btn-sm" href={buildWhatsAppLink(settings?.managerWhatsapp || null, text)} target="_blank" rel="noopener noreferrer">
-            Enviar resumo por WhatsApp
-          </a>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => void copy()}>
-            Copiar resumo
-          </button>
+          {canExport && (
+            <>
+              <a className="btn btn-whatsapp btn-sm" href={buildWhatsAppLink(settings?.managerWhatsapp || null, text)} target="_blank" rel="noopener noreferrer">
+                Enviar resumo por WhatsApp
+              </a>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => void copy()}>
+                Copiar resumo
+              </button>
+            </>
+          )}
         </div>
       </div>
       {status && (
@@ -681,7 +688,7 @@ function ClosingActions({ report }: { report: ReportDto }) {
               ? `ligado — todos os dias às ${status.sendsAt}, por ${channels}.`
               : "ligado, mas o servidor não tem email (SMTP) nem WhatsApp Business configurados — use o botão acima para enviar manualmente."}
           {last && ` Último: ${last.day.split("-").reverse().join("/")} — ${SUMMARY_STATUS[last.status]}${last.lastError ? ` (${last.lastError})` : ""}.`}
-          {singleDay && status.enabled && channels && (
+          {singleDay && status.enabled && channels && canExport && (
             <button type="button" className="btn btn-ghost btn-sm" disabled={sending} onClick={() => void sendNow()}>
               Enviar agora este dia
             </button>

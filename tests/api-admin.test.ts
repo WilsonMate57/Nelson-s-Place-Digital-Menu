@@ -64,22 +64,21 @@ describe("authentication and authorization", () => {
     expect(res.status).toBe(403);
   });
 
-  it("prevents non-admin staff from changing prices, menu structure, staff or settings", async () => {
+  it("keeps staff, profiles, settings, audit and exports for those allowed (Recepção cannot)", async () => {
     const cookie = await t.login("reception@test.local");
-    const juice = productByName(await t.menu(), "Sumo natural");
     const attempts: [string, string, unknown][] = [
-      ["PUT", `/api/admin/products/${juice.id}`, { categoryId: juice.categoryId, name: { pt: "x" }, priceCents: 1 }],
-      ["POST", "/api/admin/products", { categoryId: juice.categoryId, name: { pt: "x" }, priceCents: 1 }],
-      ["POST", `/api/admin/products/${juice.id}/archive`, {}],
-      ["POST", "/api/admin/categories", { name: { pt: "x" } }],
       ["GET", "/api/admin/staff", undefined],
-      ["POST", "/api/admin/staff", { email: "x@y.z", displayName: "x", role: "admin", password: "0123456789" }],
+      ["POST", "/api/admin/staff", { email: "x@y.z", displayName: "x", roleId: 1, password: "0123456789" }],
+      ["GET", "/api/admin/roles", undefined],
+      ["POST", "/api/admin/roles", { name: "Super", permissions: ["staff.manage"] }],
+      ["PUT", "/api/admin/settings", {}],
+      ["GET", "/api/admin/audit", undefined],
+      ["GET", "/api/admin/reports/orders.csv?from=2026-10-13&to=2026-10-13", undefined],
     ];
     for (const [method, path, body] of attempts) {
       const res = await t.request(path, { method, cookie, body: body === undefined ? undefined : JSON.stringify(body) });
       expect(res.status, `${method} ${path}`).toBe(403);
     }
-    expect(productByName(await t.menu(), "Sumo natural").priceCents).toBe(18000);
   });
 
   it("lets any staff member toggle availability and pause ordering", async () => {
@@ -108,7 +107,7 @@ describe("authentication and authorization", () => {
     await t.request(`/api/admin/staff/${reception.id}`, {
       method: "PUT",
       cookie: admin,
-      body: JSON.stringify({ displayName: "Recepção", role: "reception", isActive: false }),
+      body: JSON.stringify({ displayName: "Recepção", roleId: 3, isActive: false }),
     });
     expect((await t.request("/api/admin/orders", { cookie: again })).status).toBe(401);
   });
@@ -119,7 +118,7 @@ describe("authentication and authorization", () => {
     const res = await t.request(`/api/admin/staff/${self.id}`, {
       method: "PUT",
       cookie: admin,
-      body: JSON.stringify({ displayName: "Admin", role: "reception", isActive: true }),
+      body: JSON.stringify({ displayName: "Admin", roleId: 3, isActive: true }),
     });
     expect(res.status).toBe(409);
   });

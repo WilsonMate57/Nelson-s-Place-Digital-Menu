@@ -227,4 +227,45 @@ export const MIGRATIONS: readonly string[] = [
     updated_at  TEXT    NOT NULL DEFAULT ${NOW}
   );
   `,
+
+  /* 4 — access profiles (roles with editable permissions). Staff are moved
+     from the fixed admin/reception/restaurant roles to role rows. */ `
+  CREATE TABLE roles (
+    id           INTEGER PRIMARY KEY,
+    name         TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    description  TEXT,
+    permissions  TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(permissions)),
+    is_system    INTEGER NOT NULL DEFAULT 0 CHECK (is_system IN (0,1)),
+    created_at   TEXT    NOT NULL DEFAULT ${NOW},
+    updated_at   TEXT    NOT NULL DEFAULT ${NOW}
+  );
+  INSERT INTO roles (id, name, description, permissions, is_system) VALUES
+    (1, 'Administrador', 'Acesso total ao sistema', '["*"]', 1),
+    (2, 'Gerente', 'Tudo excepto equipa, definições e registo',
+      '["orders.view","orders.status","orders.cancel","orders.deposit","chat.reply","orders.pause","menu.availability","menu.edit","menu.prices","reports.view","reports.export"]', 0),
+    (3, 'Recepção', 'Pedidos, chat, menu, preços e relatórios',
+      '["orders.view","orders.status","orders.cancel","orders.deposit","chat.reply","orders.pause","menu.availability","menu.edit","menu.prices","reports.view"]', 0),
+    (4, 'Cozinha', 'Igual à recepção',
+      '["orders.view","orders.status","orders.cancel","orders.deposit","chat.reply","orders.pause","menu.availability","menu.edit","menu.prices","reports.view"]', 0);
+
+  CREATE TABLE staff_v2 (
+    id             INTEGER PRIMARY KEY,
+    email          TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    display_name   TEXT    NOT NULL,
+    role_id        INTEGER NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    password_hash  TEXT    NOT NULL,
+    is_active      INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0,1)),
+    last_login_at  TEXT,
+    created_by     INTEGER REFERENCES staff(id) ON DELETE SET NULL,
+    created_at     TEXT    NOT NULL DEFAULT ${NOW},
+    updated_at     TEXT    NOT NULL DEFAULT ${NOW}
+  );
+  INSERT INTO staff_v2 (id, email, display_name, role_id, password_hash, is_active, last_login_at, created_by, created_at, updated_at)
+  SELECT id, email, display_name, CASE role WHEN 'admin' THEN 1 WHEN 'reception' THEN 3 ELSE 4 END,
+    password_hash, is_active, last_login_at, created_by, created_at, updated_at
+  FROM staff;
+  DROP TABLE staff;
+  ALTER TABLE staff_v2 RENAME TO staff;
+  CREATE INDEX idx_staff_role ON staff(role_id);
+  `,
 ];

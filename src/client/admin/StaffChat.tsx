@@ -18,7 +18,7 @@ const QUICK_REPLIES = [
 ];
 
 /** Conversation with the guest about this order (dashboard side). */
-export function StaffChat({ orderId }: { orderId: number }) {
+export function StaffChat({ orderId, canReply }: { orderId: number; canReply: boolean }) {
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [thread, setThread] = useState<ChatThreadDto | null>(null);
@@ -82,7 +82,9 @@ export function StaffChat({ orderId }: { orderId: number }) {
           </li>
         ))}
       </ol>
-      {thread.open ? (
+      {!canReply ? (
+        <p className="small muted">O seu perfil não permite responder no chat.</p>
+      ) : thread.open ? (
         <form
           className="stack"
           onSubmit={(e) => {

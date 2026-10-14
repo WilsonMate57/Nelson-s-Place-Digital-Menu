@@ -6,12 +6,12 @@ import { cx } from "../lib/util";
 import { AccountPage } from "./AccountPage";
 import { AuditPage } from "./AuditPage";
 import { useHashRoute } from "./hooks";
-import { ROLE_LABEL } from "./labels";
 import { LoginPage } from "./LoginPage";
 import { MenuPage } from "./MenuPage";
 import { OrdersPage } from "./OrdersPage";
 import { ReportsPage } from "./ReportsPage";
-import { SessionContext, useSession, type AdminSettingsView, type SessionValue } from "./session";
+import { makeCan, SessionContext, useSession, type AdminSettingsView, type SessionValue } from "./session";
+import type { Permission } from "../../shared/permissions";
 import { useErrorMessage } from "./errors";
 import { SettingsPage } from "./SettingsPage";
 import { StaffPage } from "./StaffPage";
@@ -40,7 +40,7 @@ export function AdminApp() {
     () =>
       signedInStaff && {
         staff: signedInStaff,
-        isAdmin: signedInStaff.role === "admin",
+        can: makeCan(signedInStaff),
         settings,
         setSettings,
         onUnauthorized: () => setAuth({ status: "anonymous" }),
@@ -64,25 +64,26 @@ export function AdminApp() {
   );
 }
 
-const NAV: { path: string; label: string; adminOnly?: boolean }[] = [
-  { path: "orders", label: "Pedidos" },
-  { path: "menu", label: "Menu" },
-  { path: "reports", label: "Relatórios", adminOnly: true },
-  { path: "staff", label: "Equipa", adminOnly: true },
-  { path: "settings", label: "Definições", adminOnly: true },
-  { path: "audit", label: "Registo", adminOnly: true },
+/** Each section is shown to profiles holding any of its permissions (none = everyone). */
+const NAV: { path: string; label: string; needs?: Permission[] }[] = [
+  { path: "orders", label: "Pedidos", needs: ["orders.view"] },
+  { path: "menu", label: "Menu", needs: ["menu.availability", "menu.edit"] },
+  { path: "reports", label: "Relatórios", needs: ["reports.view"] },
+  { path: "staff", label: "Equipa", needs: ["staff.manage"] },
+  { path: "settings", label: "Definições", needs: ["settings.manage"] },
+  { path: "audit", label: "Registo", needs: ["audit.view"] },
   { path: "account", label: "Conta" },
 ];
 
 function Shell({ onSignedOut }: { onSignedOut: () => void }) {
-  const { staff, isAdmin, settings, setSettings } = useSession();
+  const { staff, can, settings, setSettings } = useSession();
   const [route, navigate] = useHashRoute();
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [toggling, setToggling] = useState(false);
   const section = route[0] ?? "orders";
-  const nav = NAV.filter((n) => !n.adminOnly || isAdmin);
-  const current = nav.some((n) => n.path === section) ? section : "orders";
+  const nav = NAV.filter((n) => !n.needs || can(...n.needs));
+  const current = nav.some((n) => n.path === section) ? section : (nav[0]?.path ?? "account");
 
   const signOut = async () => {
     await api("/api/auth/logout", { method: "POST" }).catch(() => undefined);
@@ -120,7 +121,7 @@ function Shell({ onSignedOut }: { onSignedOut: () => void }) {
               <small>Painel interno</small>
             </span>
           </a>
-          {settings && (
+          {settings && can("orders.pause") && (
             <button
               type="button"
               className={cx("orders-toggle", settings.ordersEnabled ? "is-on" : "is-off")}
@@ -137,7 +138,7 @@ function Shell({ onSignedOut }: { onSignedOut: () => void }) {
           <div className="admin-user">
             <span className="admin-user-name">
               {staff.displayName}
-              <small>{ROLE_LABEL[staff.role]}</small>
+              <small>{staff.roleName}</small>
             </span>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => void signOut()}>
               Sair
