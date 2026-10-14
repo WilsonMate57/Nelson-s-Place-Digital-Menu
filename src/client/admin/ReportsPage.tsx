@@ -665,7 +665,7 @@ function ClosingActions({ report }: { report: ReportDto }) {
           <p className="muted small">Talão de 80 mm para a impressora POS e resumo para enviar ao gerente.</p>
         </div>
         <div className="row wrap">
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => printReceipt("closing-receipt")}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => printReceipt("closing-receipt", singleDay ? `Fecho_${report.from}` : `Fecho_${report.from}_a_${report.to}`)}>
             Imprimir fecho (80 mm)
           </button>
           {canExport && (

@@ -127,9 +127,10 @@ export function PrintReceipt({
 /**
  * Prints the ticket on 80 mm paper. The page height is set to the ticket's
  * own length so thermal printers cut right after it instead of feeding a
- * full A4-length page.
+ * full A4-length page. `fileName` becomes the page title for the duration of
+ * printing, which browsers use as the suggested name when saving as PDF.
  */
-export function printReceipt(elementId = "receipt"): void {
+export function printReceipt(elementId = "receipt", fileName?: string): void {
   const receipt = document.getElementById(elementId);
   if (!receipt) return;
   const heightMm = Math.ceil((receipt.scrollHeight * 25.4) / 96) + 6;
@@ -138,8 +139,11 @@ export function printReceipt(elementId = "receipt"): void {
   style.textContent = `@page { size: 80mm ${heightMm}mm; margin: 0; }`;
   document.getElementById("receipt-page-size")?.remove();
   document.head.appendChild(style);
+  const previousTitle = document.title;
+  if (fileName) document.title = fileName.replace(/[^\w.-]+/g, "_");
   const cleanup = () => {
     style.remove();
+    document.title = previousTitle;
     window.removeEventListener("afterprint", cleanup);
   };
   window.addEventListener("afterprint", cleanup);

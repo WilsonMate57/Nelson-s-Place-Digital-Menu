@@ -217,6 +217,13 @@ test("take-away asks for the 50% deposit and staff must confirm it before the or
   await confirmOrder.click();
   await expect(staff.locator(".order-detail .badge-lg")).toHaveText("Confirmado");
 
+  // The saved PDF is named after the order (the page title while printing).
+  await staff.evaluate(() => {
+    window.print = () => void ((window as unknown as { printedAs: string }).printedAs = document.title);
+  });
+  await staff.getByRole("button", { name: "Imprimir talão (80 mm)" }).click();
+  expect(await staff.evaluate(() => (window as unknown as { printedAs: string }).printedAs)).toBe(`Talao_${reference}`);
+
   // 80 mm POS ticket: in print mode only the ticket is shown, 72 mm wide.
   await staff.emulateMedia({ media: "print" });
   const ticket = staff.locator("#receipt");
