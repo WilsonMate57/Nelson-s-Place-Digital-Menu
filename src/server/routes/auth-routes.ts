@@ -35,7 +35,7 @@ export function authRoutes(s: Services) {
       httpOnly: true,
       secure: s.config.cookieSecure,
       sameSite: "Strict",
-      path: "/api",
+      path: `${s.config.basePath}/api`,
       expires: result.expiresAt,
     });
     return c.json({ staff: result.staff });
@@ -44,7 +44,7 @@ export function authRoutes(s: Services) {
   app.post("/logout", (c) => {
     const token = getCookie(c, SESSION_COOKIE);
     if (token) s.auth.logout(token);
-    deleteCookie(c, SESSION_COOKIE, { path: "/api", secure: s.config.cookieSecure });
+    deleteCookie(c, SESSION_COOKIE, { path: `${s.config.basePath}/api`, secure: s.config.cookieSecure });
     return c.body(null, 204);
   });
 

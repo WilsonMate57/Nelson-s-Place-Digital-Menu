@@ -126,6 +126,46 @@ Type a password of at least 10 characters (hidden). Then sign in at `https://men
 
 (Without SSH: you can put the same commands in a one-off Git deployment action, using `ADMIN_PASSWORD=...` instead of the prompt — then **remove that action immediately** so the password is not stored.)
 
+## 7b. Alternative: the menu in a sub-folder of the main site (e.g. `example.co.mz/menu`)
+
+Use this instead of steps 1 and 4 when the menu lives at `https://example.co.mz/menu/` and the hotel's existing site stays in `httpdocs`. **Do not enable Node.js on the main domain's Node.js page** — that would hand the whole domain to the app.
+
+1. Steps 2 and 3 as above: code in `/menu-app` (next to `httpdocs`, **not** inside it), data in `nelsons-menu/` next to it.
+2. Create `/menu-app/.env` (File Manager → New file) — it is read by `app.cjs` and is not web-accessible:
+   ```ini
+   NODE_ENV=production
+   BASE_PATH=/menu
+   PUBLIC_BASE_URL=https://example.co.mz/menu
+   TRUST_PROXY=true
+   WHATSAPP_MODE=link
+   DATABASE_PATH=/var/www/vhosts/example.co.mz/nelsons-menu/data/nelsons-place.db
+   UPLOADS_DIR=/var/www/vhosts/example.co.mz/nelsons-menu/uploads
+   STATIC_DIR=/var/www/vhosts/example.co.mz/menu-app/dist/client
+   ```
+3. Step 5 (install and build) as above.
+4. Main domain → **Apache & nginx Settings → Additional nginx directives**:
+   ```nginx
+   location = /menu { return 301 /menu/; }
+   location ^~ /menu/ {
+       alias /var/www/vhosts/example.co.mz/menu-app/plesk-public/;
+       passenger_enabled on;
+       passenger_app_type node;
+       passenger_startup_file app.cjs;
+       passenger_app_root /var/www/vhosts/example.co.mz/menu-app;
+       passenger_base_uri /menu;
+       passenger_nodejs /opt/plesk/node/22/bin/node;
+       client_max_body_size 5m;
+   }
+   ```
+   `^~` stops Plesk's "serve static files directly" rules from looking for `/menu/assets/…` in `httpdocs`. Adjust the Node path to the installed version.
+5. Open `https://example.co.mz/menu/api/health` → `{"ok":true}`; then `/menu/` and `/menu/admin/`. To restart the app after an update: `touch /var/www/vhosts/example.co.mz/menu-app/tmp/restart.txt`.
+6. CLI commands (`admin:create`, `db:import-menu`, `db:backup`) read the same `.env`, so over SSH only `cd menu-app` and the `PATH` export are needed.
+7. QR codes point to `https://example.co.mz/menu/?t=room&loc=<n>` / `?t=table&loc=<n>`.
+
+If Plesk rejects the directives (e.g. `unknown directive "passenger_enabled"`), the server's nginx has no Passenger module; send the exact message to the developer — the fallback is a reverse proxy to the app running on a separate (sub)domain.
+
+**Not verified** on a real Plesk server: the app side was tested locally under `/menu` (pages, API, photos, admin login cookie path, 404 page), the nginx block above was not.
+
 ## 8. Daily backups
 
 Tools & Settings (or the subscription) → **Scheduled Tasks** → Add Task → *Run a command*, daily at e.g. 03:00:

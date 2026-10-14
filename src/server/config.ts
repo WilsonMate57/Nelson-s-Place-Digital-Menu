@@ -18,6 +18,11 @@ const envSchema = z.object({
   DATABASE_PATH: z.string().default("data/nelsons-place.db"),
   UPLOADS_DIR: z.string().default("uploads"),
   STATIC_DIR: z.string().default("dist/client"),
+  /** Sub-path the site is served under, e.g. /menu (empty = domain root). */
+  BASE_PATH: z
+    .string()
+    .regex(/^(\/[A-Za-z0-9._-]+)*\/?$/, "must look like /menu")
+    .default(""),
   /** Public URL of the site, e.g. https://menu.example.co.mz — used for dashboard links in messages. */
   PUBLIC_BASE_URL: z.union([z.url(), z.literal("")]).default(""),
   /** Set to true when running behind Plesk/nginx/Passenger so X-Forwarded-For is trusted. */
@@ -51,6 +56,8 @@ export interface AppConfig {
   databasePath: string;
   uploadsDir: string;
   staticDir: string;
+  /** "" (domain root) or e.g. "/menu", without trailing slash. */
+  basePath: string;
   publicBaseUrl: string;
   trustProxy: boolean;
   cookieSecure: boolean;
@@ -81,6 +88,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     databasePath: e.DATABASE_PATH,
     uploadsDir: e.UPLOADS_DIR,
     staticDir: e.STATIC_DIR,
+    basePath: e.BASE_PATH.replace(/\/$/, ""),
     publicBaseUrl: e.PUBLIC_BASE_URL.replace(/\/$/, ""),
     trustProxy: e.TRUST_PROXY,
     cookieSecure: e.COOKIE_SECURE ? e.COOKIE_SECURE === "true" : e.NODE_ENV === "production",

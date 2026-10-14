@@ -6,6 +6,8 @@ const apiTarget = process.env.VITE_DEV_API_TARGET ?? "http://localhost:3000";
 
 export default defineConfig({
   plugins: [react()],
+  // Relative asset URLs: the same build works at the domain root or under a sub-path (e.g. /menu/).
+  base: "./",
   publicDir: "public",
   build: {
     outDir: "dist/client",

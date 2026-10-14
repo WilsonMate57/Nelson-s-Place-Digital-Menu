@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { withBase } from "../lib/base";
 import { cx } from "../lib/util";
 
 /**
@@ -17,7 +18,7 @@ export function ProductImage({ src, alt, className, eager = false }: { src: stri
   return (
     <img
       className={className}
-      src={src}
+      src={withBase(src)}
       alt={alt}
       loading={eager ? "eager" : "lazy"}
       decoding="async"

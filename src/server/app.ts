@@ -114,9 +114,26 @@ export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): S
 export function createApp(services: Services, deps: AppDeps = {}) {
   const { config } = services;
   const log = deps.log ?? ((message: string, error?: unknown) => console.error(`[${new Date().toISOString()}] ${message}`, error ?? ""));
-  const app = new Hono();
+  const base = config.basePath;
+  // Under a sub-path (e.g. /menu) the proxy may or may not strip the prefix: route
+  // on the path without it, so both forms reach the same handlers.
+  const app = new Hono({
+    getPath: (req) => {
+      const path = new URL(req.url).pathname;
+      if (!base) return path;
+      if (path === base) return "/";
+      return path.startsWith(base + "/") ? path.slice(base.length) : path;
+    },
+  });
 
   app.use("*", securityHeaders(config.env === "production"));
+  if (base) {
+    // Pages use relative asset URLs, so "/menu" must become "/menu/".
+    app.use("*", async (c, next) => {
+      if (new URL(c.req.url).pathname === base) return c.redirect(`${base}/`, 301);
+      await next();
+    });
+  }
 
   app.route("/api", publicRoutes(services));
   app.route("/api/auth", authRoutes(services));
@@ -148,7 +165,7 @@ export function createApp(services: Services, deps: AppDeps = {}) {
         },
       }),
     );
-    app.get("/admin", (c) => c.redirect("/admin/", 301));
+    app.get("/admin", (c) => c.redirect(`${base}/admin/`, 301));
     app.use(
       "*",
       serveStatic({
@@ -162,7 +179,11 @@ export function createApp(services: Services, deps: AppDeps = {}) {
 
   const notFoundPage = join(config.staticDir, "404.html");
   app.notFound((c) => {
-    if (existsSync(notFoundPage)) return c.html(readFileSync(notFoundPage, "utf8"), 404);
+    // The page uses relative asset URLs and can be served at any depth, so pin its base.
+    if (existsSync(notFoundPage)) {
+      const html = readFileSync(notFoundPage, "utf8").replace("<head>", `<head><base href="${base}/">`);
+      return c.html(html, 404);
+    }
     return c.text("404 — Página não encontrada", 404);
   });
 

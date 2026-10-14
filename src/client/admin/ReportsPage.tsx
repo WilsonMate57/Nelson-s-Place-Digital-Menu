@@ -9,6 +9,7 @@ import { useToast } from "../components/Toasts";
 import { ClosingReceipt } from "./ClosingReceipt";
 import { printReceipt } from "./PrintReceipt";
 import { api } from "../lib/api";
+import { withBase } from "../lib/base";
 import { cx, hotelToday } from "../lib/util";
 import { useErrorMessage } from "./errors";
 import { useSession } from "./session";
@@ -97,7 +98,7 @@ export function ReportsPage() {
           </p>
         </div>
         {can("reports.export") && (
-          <a className="btn btn-secondary" href={`/api/admin/reports/orders.csv?from=${range.from}&to=${range.to}`} download>
+          <a className="btn btn-secondary" href={withBase(`/api/admin/reports/orders.csv?from=${range.from}&to=${range.to}`)} download>
             Exportar pedidos (Excel/CSV)
           </a>
         )}

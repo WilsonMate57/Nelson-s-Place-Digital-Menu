@@ -1,4 +1,5 @@
 import type { ApiErrorBody } from "../../shared/types";
+import { withBase } from "./base";
 
 /** Error returned by the API (or a network/timeout failure, with status 0). */
 export class ApiError extends Error {
@@ -33,7 +34,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(withBase(path), {
       method: options.method ?? "GET",
       credentials: "same-origin",
       headers: {

@@ -3,6 +3,7 @@ import type { OrderListResponse } from "../../shared/types";
 import { describeLocation } from "../../shared/whatsapp-message";
 import { useToast } from "../components/Toasts";
 import { api } from "../lib/api";
+import { withBase } from "../lib/base";
 import { formatTime, storage } from "../lib/util";
 import { useSession } from "./session";
 
@@ -73,7 +74,7 @@ function systemNotify(title: string, body: string) {
   // Only when the dashboard is not in front: otherwise the in-app toast is enough.
   if (!document.hidden || typeof Notification === "undefined" || Notification.permission !== "granted") return;
   try {
-    const n = new Notification(title, { body, tag: "nelsons-place-orders", icon: "/favicon.svg" });
+    const n = new Notification(title, { body, tag: "nelsons-place-orders", icon: withBase("/favicon.svg") });
     n.onclick = () => {
       window.focus();
       location.hash = "#/orders";
