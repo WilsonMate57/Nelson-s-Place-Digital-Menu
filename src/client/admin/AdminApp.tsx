@@ -9,6 +9,7 @@ import { useHashRoute } from "./hooks";
 import { LoginPage } from "./LoginPage";
 import { MenuPage } from "./MenuPage";
 import { OrdersPage } from "./OrdersPage";
+import { OrderAlertsProvider, useOrderAlerts } from "./order-alerts";
 import { ReportsPage } from "./ReportsPage";
 import { makeCan, SessionContext, useSession, type AdminSettingsView, type SessionValue } from "./session";
 import type { Permission } from "../../shared/permissions";
@@ -59,7 +60,9 @@ export function AdminApp() {
 
   return (
     <SessionContext.Provider value={session}>
-      <Shell onSignedOut={() => setAuth({ status: "anonymous" })} />
+      <OrderAlertsProvider>
+        <Shell onSignedOut={() => setAuth({ status: "anonymous" })} />
+      </OrderAlertsProvider>
     </SessionContext.Provider>
   );
 }
@@ -77,6 +80,7 @@ const NAV: { path: string; label: string; needs?: Permission[] }[] = [
 
 function Shell({ onSignedOut }: { onSignedOut: () => void }) {
   const { staff, can, settings, setSettings } = useSession();
+  const alerts = useOrderAlerts();
   const [route, navigate] = useHashRoute();
   const toast = useToast();
   const errorMessage = useErrorMessage();
@@ -135,6 +139,18 @@ function Shell({ onSignedOut }: { onSignedOut: () => void }) {
               <span className="toggle-short">{settings.ordersEnabled ? "Aberto" : "Pausado"}</span>
             </button>
           )}
+          {alerts && can("orders.view") && (
+            <button
+              type="button"
+              className={cx("alerts-toggle", alerts.alertsOn && "is-on")}
+              onClick={alerts.toggleAlerts}
+              aria-pressed={alerts.alertsOn}
+              title={alerts.alertsOn ? "Som e notificações ligados" : "Ligar som e notificações de novos pedidos"}
+            >
+              {alerts.alertsOn ? "🔔" : "🔕"}
+              <span className="alerts-label">{alerts.alertsOn ? "Alertas ligados" : "Alertas desligados"}</span>
+            </button>
+          )}
           <div className="admin-user">
             <span className="admin-user-name">
               {staff.displayName}
@@ -149,6 +165,11 @@ function Shell({ onSignedOut }: { onSignedOut: () => void }) {
           {nav.map((n) => (
             <a key={n.path} href={`#/${n.path}`} className={cx("admin-nav-link", current === n.path && "active")} aria-current={current === n.path ? "page" : undefined}>
               {n.label}
+              {n.path === "orders" && alerts && alerts.attention > 0 && (
+                <span className="nav-count" aria-label={`${alerts.attention} por tratar`}>
+                  {alerts.attention > 99 ? "99+" : alerts.attention}
+                </span>
+              )}
             </a>
           ))}
         </nav>

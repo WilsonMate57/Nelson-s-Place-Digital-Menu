@@ -422,8 +422,37 @@ test("admin creates an access profile and the dashboard adapts to it", async ({ 
   await cashier.getByRole("button", { name: "Entrar" }).click();
   await expect(cashier.getByRole("heading", { name: "Pedidos", exact: true })).toBeVisible();
   const nav = cashier.getByRole("navigation", { name: "Secções do painel" });
-  await expect(nav.getByRole("link")).toHaveText(["Pedidos", "Conta"]);
+  await expect(nav.getByRole("link")).toHaveText([/^Pedidos/, "Conta"]); // "Pedidos" may carry the pending counter
   await expect(cashier.locator(".admin-user-name small")).toHaveText("Caixa");
   expect((await cashier.request.get("/api/admin/reports?from=2026-10-13&to=2026-10-13")).status()).toBe(403);
   await other.close();
+});
+
+test("new orders are signalled on any dashboard section, even with the tab in the background", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await adminLogin(page);
+  await page.getByRole("link", { name: /^Menu/ }).click();
+  await expect(page.getByRole("heading", { name: "Menu", exact: true })).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Secções do painel" });
+  const before = Number((await nav.locator(".nav-count").textContent().catch(() => "0")) || 0);
+
+  // Simulate the browser tab being in the background.
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+  });
+
+  const menu = (await (await page.request.get("/api/menu")).json()) as { products: { id: number; name: { pt: string } }[] };
+  const soup = menu.products.find((p) => p.name.pt === "Sopa do dia")!;
+  const placed = await page.request.post("/api/orders", {
+    data: { idempotencyKey: crypto.randomUUID(), language: "pt", location: { type: "table", label: "11" }, items: [{ productId: soup.id, quantity: 1, optionIds: [] }] },
+  });
+  expect(placed.status()).toBe(201);
+  const { reference } = (await placed.json()) as { reference: string };
+
+  await expect(nav.locator(".nav-count")).toHaveText(String(before + 1), { timeout: 15_000 });
+  await expect(page).toHaveTitle(`(${before + 1}) Pedidos | Nelson's Place`);
+  await expect(page.locator(".toast-region")).toContainText(reference);
+  await expect(page.locator("link[rel='icon']")).toHaveAttribute("href", /^data:image\/svg\+xml/);
+  await page.screenshot({ path: "test-results/screens/admin-alert-other-section.png" });
 });

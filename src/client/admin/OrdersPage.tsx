@@ -1,19 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ORDER_STATUSES, type OrderStatus } from "../../shared/constants";
 import { formatMoney } from "../../shared/money";
 import type { OrderListResponse, OrderSummaryDto } from "../../shared/types";
 import { describeLocation } from "../../shared/whatsapp-message";
-import { useToast } from "../components/Toasts";
 import { api } from "../lib/api";
-import { cx, formatDateTime, formatTime, storage, timeAgo } from "../lib/util";
+import { cx, formatDateTime, formatTime, timeAgo } from "../lib/util";
 import { useErrorMessage } from "./errors";
 import { useNow, usePolling } from "./hooks";
 import { STATUS_LABEL, WHATSAPP_STATUS } from "./labels";
 import { OrderDetail } from "./OrderDetail";
+import { useOrderAlerts } from "./order-alerts";
 import { useSession } from "./session";
 
 const POLL_MS = 10_000;
-const SOUND_KEY = "np.admin.sound";
 
 type Filter = OrderStatus | "ACTIVE" | "ALL" | "SCHEDULED";
 const FILTERS: { value: Filter; label: string }[] = [
@@ -23,30 +22,8 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: "ALL", label: "Todos" },
 ];
 
-/** Short two-tone chime generated with Web Audio (no audio file needed). */
-function playChime() {
-  try {
-    const ctx = new AudioContext();
-    [880, 1175].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.18);
-      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + i * 0.18 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.18 + 0.3);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.18);
-      osc.stop(ctx.currentTime + i * 0.18 + 0.32);
-    });
-    setTimeout(() => void ctx.close(), 1000);
-  } catch {
-    /* audio unavailable */
-  }
-}
-
 export function OrdersPage({ selectedId, navigate }: { selectedId: number | null; navigate: (path: string) => void }) {
   const { settings } = useSession();
-  const toast = useToast();
   const errorMessage = useErrorMessage();
   const now = useNow();
   const [filter, setFilter] = useState<Filter>("ACTIVE");
@@ -55,12 +32,9 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
   const [to, setTo] = useState("");
   const [data, setData] = useState<OrderListResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [sound, setSound] = useState<boolean>(() => storage.get<boolean>(SOUND_KEY) ?? false);
-  const [freshIds, setFreshIds] = useState<Set<number>>(new Set());
-  const knownPending = useRef<Set<number> | null>(null);
-  const lastUnread = useRef<number | null>(null);
-  const notifiedDue = useRef<Set<number>>(new Set());
-  const [dueIds, setDueIds] = useState<Set<number>>(new Set());
+  const alerts = useOrderAlerts();
+  const freshIds = alerts?.freshIds ?? new Set<number>();
+  const dueIds = alerts?.dueIds ?? new Set<number>();
   const symbol = settings?.currencySymbol ?? "MT";
 
   const load = async () => {
@@ -79,77 +53,9 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
 
   usePolling(load, POLL_MS, [filter, query, from, to]);
 
-  // Detect newly arrived orders independently of the current filter.
-  usePolling(
-    async () => {
-      try {
-        const pending = await api<OrderListResponse>("/api/admin/orders?status=PENDING&limit=200");
-        const ids = new Set(pending.orders.map((o) => o.id));
-        const known = knownPending.current;
-        if (known) {
-          const arrived = pending.orders.filter((o) => !known.has(o.id));
-          if (arrived.length) {
-            setFreshIds((s) => new Set([...s, ...arrived.map((o) => o.id)]));
-            toast(
-              arrived.length === 1
-                ? `${arrived[0]!.scheduledFor ? "Nova encomenda" : "Novo pedido"} ${arrived[0]!.reference} — ${describeLocation(arrived[0]!.locationType, arrived[0]!.locationLabel)}`
-                : `${arrived.length} novos pedidos`,
-            );
-            if (storage.get<boolean>(SOUND_KEY)) playChime();
-          }
-        }
-        knownPending.current = ids;
-        const attention = ids.size + pending.unreadMessagesTotal;
-        document.title = attention > 0 ? `(${attention}) Pedidos | Nelson's Place` : "Painel | Nelson's Place";
-
-        // New guest chat messages.
-        if (lastUnread.current !== null && pending.unreadMessagesTotal > lastUnread.current) {
-          toast("💬 Nova mensagem de um cliente");
-          if (storage.get<boolean>(SOUND_KEY)) playChime();
-        }
-        lastUnread.current = pending.unreadMessagesTotal;
-
-        // Scheduled orders: alert once when it is time to start preparing them.
-        const scheduled = await api<OrderListResponse>("/api/admin/orders?status=SCHEDULED&limit=200");
-        const leadMs = (settings?.minLeadMinutes ?? 45) * 60_000;
-        const due = scheduled.orders.filter(
-          (o) => o.scheduledFor && (o.status === "PENDING" || o.status === "CONFIRMED") && new Date(o.scheduledFor).getTime() - leadMs <= Date.now(),
-        );
-        setDueIds(new Set(due.map((o) => o.id)));
-        const newlyDue = due.filter((o) => !notifiedDue.current.has(o.id));
-        for (const o of newlyDue) notifiedDue.current.add(o.id);
-        if (newlyDue.length) {
-          const o = newlyDue[0]!;
-          toast(
-            newlyDue.length === 1
-              ? `Começar a preparar: ${describeLocation(o.locationType, o.locationLabel)} — para as ${formatTime(o.scheduledFor!)}`
-              : `${newlyDue.length} encomendas para começar a preparar`,
-          );
-          if (storage.get<boolean>(SOUND_KEY)) playChime();
-        }
-      } catch {
-        /* the main list shows connection errors */
-      }
-    },
-    POLL_MS,
-    [],
-  );
-
-  useEffect(() => () => void (document.title = "Painel | Nelson's Place"), []);
-
-  const toggleSound = () => {
-    const next = !sound;
-    setSound(next);
-    storage.set(SOUND_KEY, next);
-    if (next) playChime(); // also unlocks audio after a user gesture
-  };
 
   const open = (order: OrderSummaryDto) => {
-    setFreshIds((s) => {
-      const n = new Set(s);
-      n.delete(order.id);
-      return n;
-    });
+    alerts?.markSeen(order.id);
     navigate(`orders/${order.id}`);
   };
 
@@ -161,9 +67,6 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
         <div className="orders-toolbar">
           <div className="row-between">
             <h1 className="admin-title">Pedidos</h1>
-            <button type="button" className={cx("btn btn-sm", sound ? "btn-primary" : "btn-secondary")} onClick={toggleSound} aria-pressed={sound}>
-              {sound ? "🔔 Som ligado" : "🔕 Som desligado"}
-            </button>
           </div>
           <div className="filter-tabs" role="tablist" aria-label="Filtrar por estado">
             {FILTERS.map((f) => {

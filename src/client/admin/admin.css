@@ -1282,3 +1282,50 @@ body {
   letter-spacing: 0;
   font-weight: 400;
 }
+
+/* ------------------------------------------- Dashboard-wide order alerts */
+
+.nav-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: #d93025;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: 1px;
+  animation: count-pop 0.25s var(--ease);
+}
+@keyframes count-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+.alerts-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: #fff;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+.alerts-toggle.is-on {
+  background: rgb(255 255 255 / 0.12);
+  border-color: var(--c-gold-500);
+}
+@media (max-width: 560px) {
+  .alerts-label {
+    display: none;
+  }
+}
