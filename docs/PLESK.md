@@ -128,10 +128,11 @@ Type a password of at least 10 characters (hidden). Then sign in at `https://men
 
 ## 7b. Alternative: the menu in a sub-folder of the main site (e.g. `example.co.mz/menu`)
 
-Use this instead of steps 1 and 4 when the menu lives at `https://example.co.mz/menu/` and the hotel's existing site stays in `httpdocs`. **Do not enable Node.js on the main domain's Node.js page** — that would hand the whole domain to the app.
+Used in production for `https://nelsonsplace.co.mz/menu/` (Plesk on Ubuntu 24.04, Apache + nginx proxy mode, Passenger in Apache). The hotel's existing site stays in `httpdocs`. **Do not enable Node.js on the main domain's Node.js page** — that would hand the whole domain to the app.
 
-1. Steps 2 and 3 as above: code in `/menu-app` (next to `httpdocs`, **not** inside it), data in `nelsons-menu/` next to it.
-2. Create `/menu-app/.env` (File Manager → New file) — it is read by `app.cjs` and is not web-accessible:
+1. Steps 2 and 3 as above, but the data folder is `nelsons-menu/` in the subscription's home (next to `httpdocs`): code in `~/menu-app`, data in `~/nelsons-menu/{data,uploads,backups}`.
+2. SSH: Hosting → SSH access = `/bin/bash`. The server only accepts **key** login: create a key on the PC (`ssh-keygen -t ed25519`) and paste the `.pub` line into `~/.ssh/authorized_keys` (File Manager), then `ssh <system user>@<server IP>`.
+3. Create `~/menu-app/.env` (read by `app.cjs` and by the CLI commands; not web-accessible):
    ```ini
    NODE_ENV=production
    BASE_PATH=/menu
@@ -142,29 +143,39 @@ Use this instead of steps 1 and 4 when the menu lives at `https://example.co.mz/
    UPLOADS_DIR=/var/www/vhosts/example.co.mz/nelsons-menu/uploads
    STATIC_DIR=/var/www/vhosts/example.co.mz/menu-app/dist/client
    ```
-3. Step 5 (install and build) as above.
-4. Main domain → **Apache & nginx Settings → Additional nginx directives**:
-   ```nginx
-   location = /menu { return 301 /menu/; }
-   location ^~ /menu/ {
-       alias /var/www/vhosts/example.co.mz/menu-app/plesk-public/;
-       passenger_enabled on;
-       passenger_app_type node;
-       passenger_startup_file app.cjs;
-       passenger_app_root /var/www/vhosts/example.co.mz/menu-app;
-       passenger_base_uri /menu;
-       passenger_nodejs /opt/plesk/node/22/bin/node;
-       client_max_body_size 5m;
-   }
+   (Vite prints a harmless warning about `NODE_ENV=production` in `.env` during the build.)
+4. Install and build. **`--ignore-scripts` is required**: npm otherwise tries to compile better-sqlite3 with node-gyp (the server has no `make`), although the package ships prebuilt binaries. No dependency needs install scripts.
+   ```bash
+   cd ~/menu-app
+   export PATH=/opt/plesk/node/24/bin:$PATH
+   npm ci --ignore-scripts && npm run build && npm prune --omit=dev --ignore-scripts
+   node -e "new (require('better-sqlite3'))(':memory:'); console.log('SQLITE OK')"
+   chmod 700 ~/nelsons-menu && chmod 600 ~/menu-app/.env
    ```
-   `^~` stops Plesk's "serve static files directly" rules from looking for `/menu/assets/…` in `httpdocs`. Adjust the Node path to the installed version.
-5. Open `https://example.co.mz/menu/api/health` → `{"ok":true}`; then `/menu/` and `/menu/admin/`. To restart the app after an update: `touch /var/www/vhosts/example.co.mz/menu-app/tmp/restart.txt`.
-6. CLI commands (`admin:create`, `db:import-menu`, `db:backup`) read the same `.env`, so over SSH only `cd menu-app` and the `PATH` export are needed.
-7. QR codes point to `https://example.co.mz/menu/?t=room&loc=<n>` / `?t=table&loc=<n>`.
+5. Main domain → **Apache & nginx Settings → Additional directives for HTTP** and **for HTTPS** (same block in both). Plesk sets `PassengerEnabled off` on domains without Node.js, hence the explicit `on`:
+   ```apache
+   Alias /menu /var/www/vhosts/example.co.mz/menu-app/plesk-public
+   <Location /menu>
+       PassengerEnabled on
+       PassengerBaseURI /menu
+       PassengerAppRoot /var/www/vhosts/example.co.mz/menu-app
+       PassengerAppType node
+       PassengerStartupFile app.cjs
+       PassengerNodejs /opt/plesk/node/24/bin/node
+   </Location>
+   <Directory /var/www/vhosts/example.co.mz/menu-app/plesk-public>
+       PassengerEnabled on
+       Require all granted
+       Options -MultiViews
+       AllowOverride None
+   </Directory>
+   ```
+6. Check `https://example.co.mz/menu/api/health` → `{"ok":true}`, then `/menu/` and `/menu/admin/`, and that the main site still works.
+7. Restart after an update: `mkdir -p ~/menu-app/tmp && touch ~/menu-app/tmp/restart.txt`.
+8. CLI commands (`npm run admin:create`, `db:import-menu`, `db:backup`) read the same `.env`: `cd ~/menu-app`, export the `PATH` above, run them.
+9. QR codes point to `https://example.co.mz/menu/?t=room&loc=<n>` / `?t=table&loc=<n>`.
 
-If Plesk rejects the directives (e.g. `unknown directive "passenger_enabled"`), the server's nginx has no Passenger module; send the exact message to the developer — the fallback is a reverse proxy to the app running on a separate (sub)domain.
-
-**Not verified** on a real Plesk server: the app side was tested locally under `/menu` (pages, API, photos, admin login cookie path, 404 page), the nginx block above was not.
+Updating: `cd ~/menu-app && git pull` (or Git → Pull now), back up the database if the release has a migration, repeat step 4, then step 7.
 
 ## 8. Daily backups
 

@@ -64,7 +64,7 @@ Coverage of the required verification list:
 | 17 | Mobile/tablet/desktop | e2e at 375/768/1280 px: no horizontal overflow; screenshots reviewed |
 | 18 | No secrets in client bundle | bundle scan |
 
-**Sub-path hosting** (`BASE_PATH`, e.g. `nelsonsplace.co.mz/menu`): one build works at the root or under a sub-path (relative asset URLs, runtime base detection, cookie path scoped to `<base>/api`); verified locally in Edge under `/menu` and by `tests/base-path.test.ts`. The Passenger sub-URI nginx configuration in docs/PLESK.md has not been verified on the real server.
+**Sub-path hosting** (`BASE_PATH`, e.g. `nelsonsplace.co.mz/menu`): one build works at the root or under a sub-path (relative asset URLs, runtime base detection, cookie path scoped to `<base>/api`); verified locally in Edge under `/menu` and by `tests/base-path.test.ts`. Deployed on 2026-10-14 to the hotel Plesk server at `https://nelsonsplace.co.mz/menu/` (Apache Passenger sub-URI, docs/PLESK.md §7b); `/menu/api/health` and the menu page confirmed working by the owner.
 
 **Not tested** (cannot be from this environment): real WhatsApp delivery (link or Cloud API), deployment on Plesk/Passenger, HTTPS/cookie `Secure` behaviour behind the proxy, Safari/iOS and low-end Android devices, real QR codes, backup restore on the server, behaviour under real network loss on phones.
 
