@@ -84,6 +84,13 @@ export interface OrderListFilter {
   limit: number;
 }
 
+export interface PurgeFilter {
+  /** Inclusive UTC ISO bounds on the order date. */
+  fromIso: string;
+  toIso: string;
+  scope: "all" | "cancelled";
+}
+
 export class OrdersRepo {
   constructor(
     private readonly db: Db,
@@ -239,6 +246,33 @@ export class OrdersRepo {
         .run(id, from, to, staffId, note, now);
       return true;
     })();
+  }
+
+  private purgeWhere(filter: PurgeFilter): { sql: string; params: unknown[] } {
+    const clauses = ["created_at >= ?", "created_at <= ?"];
+    const params: unknown[] = [filter.fromIso, filter.toIso];
+    if (filter.scope === "cancelled") clauses.push("status = 'CANCELLED'");
+    return { sql: clauses.join(" AND "), params };
+  }
+
+  /** What a purge would delete (orders, of which still active, and chat messages). */
+  purgePreview(filter: PurgeFilter): { orders: number; active: number; messages: number } {
+    const { sql, params } = this.purgeWhere(filter);
+    const row = this.db
+      .prepare(
+        `SELECT COUNT(*) AS orders,
+           COALESCE(SUM(status IN (${ACTIVE_STATUSES.map(() => "?").join(",")})), 0) AS active,
+           COALESCE(SUM((SELECT COUNT(*) FROM order_messages m WHERE m.order_id = orders.id)), 0) AS messages
+         FROM orders WHERE ${sql}`,
+      )
+      .get(...ACTIVE_STATUSES, ...params) as { orders: number; active: number; messages: number };
+    return row;
+  }
+
+  /** Deletes orders permanently; items, history, chat and WhatsApp records cascade. */
+  purge(filter: PurgeFilter): number {
+    const { sql, params } = this.purgeWhere(filter);
+    return this.db.prepare(`DELETE FROM orders WHERE ${sql}`).run(...params).changes;
   }
 
   history(orderId: number): StatusHistoryDto[] {

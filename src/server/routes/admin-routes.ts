@@ -1,3 +1,4 @@
+import { basename } from "node:path";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import {
@@ -15,6 +16,8 @@ import {
   staffPasswordResetSchema,
   staffUpdateSchema,
   roleInputSchema,
+  purgeQuerySchema,
+  purgeSchema,
 } from "../../shared/schemas";
 import type { Permission } from "../../shared/permissions";
 import type { ProductInput } from "../../shared/schemas";
@@ -287,6 +290,26 @@ export function adminRoutes(s: Services) {
   });
 
   app.get("/audit", can("audit.view"), (c) => c.json(s.auditRepo.recent(200)));
+
+  // --- Data clean-up (e.g. test orders before opening) ----------------------
+
+  app.get("/maintenance/orders", can("settings.manage"), (c) => {
+    const { from, to, scope } = validate(purgeQuerySchema, c.req.query());
+    return c.json(s.maintenance.previewPurge(from, to, scope));
+  });
+
+  app.post("/maintenance/orders/delete", can("settings.manage"), async (c) => {
+    const { from, to, scope } = await readJson(c, purgeSchema);
+    const result = await s.maintenance.purge(from, to, scope);
+    s.auditRepo.record(c.get("staff").id, "orders_deleted", "order", null, {
+      from,
+      to,
+      scope,
+      deleted: result.deleted,
+      backup: result.backupFile ? basename(result.backupFile) : null,
+    });
+    return c.json(result);
+  });
 
   // --- Access profiles (perfis) ---------------------------------------------
 

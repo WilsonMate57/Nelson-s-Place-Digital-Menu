@@ -1329,3 +1329,12 @@ body {
     display: none;
   }
 }
+
+/* Irreversible actions (e.g. deleting orders) */
+.danger-zone {
+  border-color: var(--c-danger);
+  margin-top: var(--sp-8);
+}
+.danger-zone .card-title {
+  color: var(--c-danger);
+}

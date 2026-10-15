@@ -1,3 +1,4 @@
+import { dirname, join, resolve } from "node:path";
 import { z } from "zod";
 import { WHATSAPP_MODES } from "../shared/constants";
 
@@ -17,6 +18,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   DATABASE_PATH: z.string().default("data/nelsons-place.db"),
   UPLOADS_DIR: z.string().default("uploads"),
+  /** Where automatic safety copies are written (e.g. before deleting orders). Default: "backups" next to the database folder. */
+  BACKUP_DIR: z.string().default(""),
   STATIC_DIR: z.string().default("dist/client"),
   /** Sub-path the site is served under, e.g. /menu (empty = domain root). */
   BASE_PATH: z
@@ -55,6 +58,8 @@ export interface AppConfig {
   port: number;
   databasePath: string;
   uploadsDir: string;
+  /** Null when the database is in memory (tests). */
+  backupDir: string | null;
   staticDir: string;
   /** "" (domain root) or e.g. "/menu", without trailing slash. */
   basePath: string;
@@ -87,6 +92,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     port: e.PORT,
     databasePath: e.DATABASE_PATH,
     uploadsDir: e.UPLOADS_DIR,
+    backupDir: e.BACKUP_DIR || (e.DATABASE_PATH === ":memory:" ? null : join(dirname(dirname(resolve(e.DATABASE_PATH))), "backups")),
     staticDir: e.STATIC_DIR,
     basePath: e.BASE_PATH.replace(/\/$/, ""),
     publicBaseUrl: e.PUBLIC_BASE_URL.replace(/\/$/, ""),

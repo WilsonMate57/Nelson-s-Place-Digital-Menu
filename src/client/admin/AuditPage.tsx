@@ -34,6 +34,13 @@ const ACTION_LABEL: Record<string, string> = {
   orders_paused: "Pausou pedidos",
   orders_resumed: "Retomou pedidos",
   whatsapp_retry: "Reenviou WhatsApp",
+  deposit_confirmed: "Confirmou sinal recebido",
+  role_created: "Criou perfil de acesso",
+  role_updated: "Editou perfil de acesso",
+  role_deleted: "Eliminou perfil de acesso",
+  report_exported: "Exportou pedidos (CSV)",
+  daily_summary_sent_manually: "Enviou resumo do dia",
+  orders_deleted: "Apagou pedidos",
 };
 
 export function AuditPage() {

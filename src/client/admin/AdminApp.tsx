@@ -5,6 +5,7 @@ import { ApiError, api } from "../lib/api";
 import { cx } from "../lib/util";
 import { AccountPage } from "./AccountPage";
 import { AuditPage } from "./AuditPage";
+import { DataCleanup } from "./DataCleanup";
 import { useHashRoute } from "./hooks";
 import { LoginPage } from "./LoginPage";
 import { MenuPage } from "./MenuPage";
@@ -179,7 +180,12 @@ function Shell({ onSignedOut }: { onSignedOut: () => void }) {
         {current === "menu" && <MenuPage />}
         {current === "reports" && <ReportsPage />}
         {current === "staff" && <StaffPage />}
-        {current === "settings" && <SettingsPage />}
+        {current === "settings" && (
+          <>
+            <SettingsPage />
+            <DataCleanup />
+          </>
+        )}
         {current === "audit" && <AuditPage />}
         {current === "account" && <AccountPage />}
       </main>

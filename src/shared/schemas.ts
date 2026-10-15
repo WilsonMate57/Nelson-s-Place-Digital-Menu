@@ -137,6 +137,11 @@ export const dailySummarySendSchema = z.object({ day: z.iso.date() });
 
 export const reportQuerySchema = z.object({ from: z.iso.date(), to: z.iso.date() });
 
+export const purgeQuerySchema = reportQuerySchema.extend({ scope: z.enum(["all", "cancelled"]) });
+
+/** Deleting orders is irreversible: the client must send the confirmation word typed by the person. */
+export const purgeSchema = purgeQuerySchema.extend({ confirm: z.literal("APAGAR", "Escreva APAGAR para confirmar") });
+
 export const categoryInputSchema = z
   .object({
     name: localizedTextSchema(80),
