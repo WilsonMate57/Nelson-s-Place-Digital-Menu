@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { isOrderable } from "../../shared/pricing";
+import { effectivePriceCents, isOrderable } from "../../shared/pricing";
 import type { CategoryDto, ProductDto } from "../../shared/types";
 import { ProductImage } from "../components/ProductImage";
 import { cx } from "../lib/util";
 import { useGuest } from "./context";
+import { PriceTag } from "./PriceTag";
 
 /** Show "only N left" from this many units down. */
 const LOW_STOCK = 3;
@@ -94,6 +95,9 @@ export function MenuView({ categories, products, onOpenProduct }: Props) {
     select(withProducts[target]!.id, true);
   };
 
+  // Highlights ("Prato do dia", promotions) shown above the categories.
+  const featured = useMemo(() => products.filter((p) => p.isFeatured && isOrderable(p)), [products]);
+
   const activeIndex = active ? withProducts.indexOf(active) : -1;
   const next = activeIndex >= 0 ? withProducts[activeIndex + 1] : undefined;
 
@@ -150,6 +154,21 @@ export function MenuView({ categories, products, onOpenProduct }: Props) {
         role={searching ? undefined : "tabpanel"}
         aria-labelledby={!searching && active ? `tab-${active.id}` : undefined}
       >
+        {!searching && featured.length > 0 && (
+          <section className="menu-category featured" aria-labelledby="featured-title">
+            <h2 id="featured-title" className="category-title">
+              ★ {t("featured")}
+            </h2>
+            <ul className="product-grid">
+              {featured.map((product) => (
+                <li key={product.id}>
+                  <ProductCard product={product} canOrder={settings.ordersEnabled} onOpen={() => onOpenProduct(product)} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {sections.length === 0 &&
           (searching ? (
             <div className="state-block">
@@ -199,16 +218,28 @@ function ProductCard({ product, canOrder, onOpen }: { product: ProductDto; canOr
   const { t, text, money } = useGuest();
   const name = text(product.name);
   const available = isOrderable(product);
+  const promoNow = effectivePriceCents(product, new Date()) !== product.priceCents;
   const lowStock = available && product.stockQty !== null && product.stockQty <= LOW_STOCK;
   return (
     <article className={cx("product-card", !available && "is-unavailable")}>
-      <button type="button" className="product-card-hit" onClick={onOpen} aria-label={`${name}, ${money(product.priceCents)}${available ? "" : `, ${t("unavailable")}`}`} />
+      <button
+        type="button"
+        className="product-card-hit"
+        onClick={onOpen}
+        aria-label={`${name}, ${money(effectivePriceCents(product, new Date()))}${available ? "" : `, ${t("unavailable")}`}`}
+      />
       <ProductImage src={product.imageUrl} alt="" className="product-card-image" />
       <div className="product-card-body">
+        {(product.isFeatured || promoNow) && (
+          <span className="product-card-flags">
+            {product.isFeatured && <span className="badge badge-featured">{product.featuredLabel ? text(product.featuredLabel) : t("featuredDefault")}</span>}
+            {promoNow && <span className="badge badge-promo">{t("promo")}</span>}
+          </span>
+        )}
         <h3 className="product-card-title">{name}</h3>
         {product.description && <p className="product-card-description">{text(product.description)}</p>}
         <div className="product-card-footer">
-          <span className="price">{money(product.priceCents)}</span>
+          <PriceTag product={product} />
           {!available ? (
             <span className="badge badge-muted">{t("unavailable")}</span>
           ) : lowStock ? (

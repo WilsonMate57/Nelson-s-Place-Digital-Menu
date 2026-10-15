@@ -105,7 +105,7 @@ export class OrderService {
       let priced;
       try {
         // Snapshots are stored in Portuguese because they are read by staff.
-        priced = priceOrder(submission.items, catalogue, settings.charges, "pt");
+        priced = priceOrder(submission.items, catalogue, settings.charges, "pt", this.now());
       } catch (err) {
         if (err instanceof PricingError) {
           throw conflict("MENU_CHANGED", PRICING_MESSAGES[err.code], {

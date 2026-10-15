@@ -300,4 +300,10 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX idx_order_reviews_created ON order_reviews(created_at);
   `,
+
+  /* 8 — featured items ("Prato do dia") and promotional prices with optional dates / daily hours. */ `
+  ALTER TABLE products ADD COLUMN is_featured INTEGER NOT NULL DEFAULT 0 CHECK (is_featured IN (0,1));
+  ALTER TABLE products ADD COLUMN featured_label TEXT CHECK (featured_label IS NULL OR json_valid(featured_label));
+  ALTER TABLE products ADD COLUMN promo_json TEXT CHECK (promo_json IS NULL OR json_valid(promo_json));
+  `,
 ];

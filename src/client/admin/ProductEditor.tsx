@@ -55,6 +55,15 @@ export function ProductEditor({ open, product, defaultCategoryId, categories, on
   const [sortOrder, setSortOrder] = useState("0");
   const [isAvailable, setIsAvailable] = useState(true);
   const [groups, setGroups] = useState<GroupDraft[]>([]);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [featuredPt, setFeaturedPt] = useState("");
+  const [featuredEn, setFeaturedEn] = useState("");
+  const [promoOn, setPromoOn] = useState(false);
+  const [promoPrice, setPromoPrice] = useState("");
+  const [promoFromDate, setPromoFromDate] = useState("");
+  const [promoUntilDate, setPromoUntilDate] = useState("");
+  const [promoFromTime, setPromoFromTime] = useState("");
+  const [promoUntilTime, setPromoUntilTime] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -71,6 +80,15 @@ export function ProductEditor({ open, product, defaultCategoryId, categories, on
     setPrice(product ? centsToInput(product.priceCents) : "");
     setSortOrder(String(product?.sortOrder ?? 0));
     setIsAvailable(product?.isAvailable ?? true);
+    setIsFeatured(product?.isFeatured ?? false);
+    setFeaturedPt(product?.featuredLabel?.pt ?? "");
+    setFeaturedEn(product?.featuredLabel?.en ?? "");
+    setPromoOn(!!product?.promo);
+    setPromoPrice(product?.promo ? centsToInput(product.promo.priceCents) : "");
+    setPromoFromDate(product?.promo?.fromDate ?? "");
+    setPromoUntilDate(product?.promo?.untilDate ?? "");
+    setPromoFromTime(product?.promo?.fromTime ?? "");
+    setPromoUntilTime(product?.promo?.untilTime ?? "");
     setGroups(
       (product?.optionGroups ?? []).map((g) => ({
         key: String(g.id),
@@ -119,9 +137,26 @@ export function ProductEditor({ open, product, defaultCategoryId, categories, on
         }),
       };
     });
+    let promo = null;
+    if (promoOn) {
+      const promoCents = parseAmountToCents(promoPrice);
+      if (promoCents === null) throw new Error("Preço promocional inválido.");
+      if (promoCents >= priceCents) throw new Error("O preço promocional deve ser inferior ao preço normal.");
+      if (!promoFromTime !== !promoUntilTime) throw new Error("No horário da promoção, indique as duas horas ou nenhuma.");
+      promo = {
+        priceCents: promoCents,
+        fromDate: promoFromDate || null,
+        untilDate: promoUntilDate || null,
+        fromTime: promoFromTime || null,
+        untilTime: promoUntilTime || null,
+      };
+    }
     return {
       categoryId,
       name: { pt: namePt, en: nameEn || undefined },
+      promo,
+      isFeatured,
+      featuredLabel: isFeatured && featuredPt.trim() ? { pt: featuredPt, en: featuredEn || undefined } : null,
       description: descPt.trim() ? { pt: descPt, en: descEn || undefined } : null,
       priceCents,
       isAvailable,
@@ -246,6 +281,63 @@ export function ProductEditor({ open, product, defaultCategoryId, categories, on
             Disponível para encomenda
           </label>
         </div>
+
+        <section className="editor-section" aria-labelledby="promo-title">
+          <h3 id="promo-title" className="label">
+            Destaque e promoção
+          </h3>
+          <label className="check">
+            <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
+            Destacar no topo do menu (ex.: prato do dia)
+          </label>
+          {isFeatured && (
+            <div className="grid-2">
+              <div className="field">
+                <label className="label" htmlFor="p-feat-pt">Etiqueta (PT)</label>
+                <input id="p-feat-pt" className="input" maxLength={40} placeholder="Ex.: Prato do dia" value={featuredPt} onChange={(e) => setFeaturedPt(e.target.value)} />
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="p-feat-en">Etiqueta (EN)</label>
+                <input id="p-feat-en" className="input" maxLength={40} placeholder="Ex.: Dish of the day" value={featuredEn} onChange={(e) => setFeaturedEn(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <label className="check">
+            <input type="checkbox" checked={promoOn} onChange={(e) => setPromoOn(e.target.checked)} disabled={priceLocked} />
+            Preço promocional
+          </label>
+          {promoOn && (
+            <>
+              <div className="grid-2">
+                <div className="field">
+                  <label className="label" htmlFor="p-promo-price">Preço promocional ({symbol})</label>
+                  <input id="p-promo-price" className="input" inputMode="decimal" value={promoPrice} onChange={(e) => setPromoPrice(e.target.value)} disabled={priceLocked} />
+                </div>
+                <div />
+                <div className="field">
+                  <label className="label" htmlFor="p-promo-from">De (data, opcional)</label>
+                  <input id="p-promo-from" className="input" type="date" value={promoFromDate} onChange={(e) => setPromoFromDate(e.target.value)} disabled={priceLocked} />
+                </div>
+                <div className="field">
+                  <label className="label" htmlFor="p-promo-until">Até (data, opcional)</label>
+                  <input id="p-promo-until" className="input" type="date" value={promoUntilDate} min={promoFromDate || undefined} onChange={(e) => setPromoUntilDate(e.target.value)} disabled={priceLocked} />
+                </div>
+                <div className="field">
+                  <label className="label" htmlFor="p-promo-ft">Todos os dias das (opcional)</label>
+                  <input id="p-promo-ft" className="input" type="time" value={promoFromTime} onChange={(e) => setPromoFromTime(e.target.value)} disabled={priceLocked} />
+                </div>
+                <div className="field">
+                  <label className="label" htmlFor="p-promo-ut">às</label>
+                  <input id="p-promo-ut" className="input" type="time" value={promoUntilTime} onChange={(e) => setPromoUntilTime(e.target.value)} disabled={priceLocked} />
+                </div>
+              </div>
+              <p className="hint">
+                Sem datas, a promoção não tem fim. Com horas, só se aplica nesse horário (ex.: happy hour das 17:00 às 19:00). O preço é calculado pelo servidor à hora do
+                pedido.
+              </p>
+            </>
+          )}
+        </section>
 
         <section className="editor-section" aria-labelledby="opt-title">
           <div className="row-between">

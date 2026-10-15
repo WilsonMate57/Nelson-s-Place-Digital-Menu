@@ -5,6 +5,7 @@ import type {
   LocalizedText,
   OptionGroupDto,
   ProductDto,
+  ProductPromo,
 } from "../../shared/types";
 import type { TimeWindow } from "../../shared/schedule";
 import { nowIso, type Db } from "../db/connection";
@@ -34,6 +35,9 @@ interface ProductRow {
   is_available: number;
   is_archived: number;
   stock_qty: number | null;
+  is_featured: number;
+  featured_label: string | null;
+  promo_json: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -60,6 +64,13 @@ interface OptionRow {
 const parseText = (json: string) => JSON.parse(json) as LocalizedText;
 const parseOptionalText = (json: string | null) => (json ? parseText(json) : null);
 export const imageUrl = (path: string | null) => (path ? `/uploads/${path}` : null);
+
+/** promo_json, is_featured, featured_label */
+const promoColumns = (input: ProductInput): [string | null, number, string | null] => [
+  input.promo ? JSON.stringify(input.promo) : null,
+  input.isFeatured ? 1 : 0,
+  input.featuredLabel ? JSON.stringify(input.featuredLabel) : null,
+];
 
 export interface ProductFilter {
   includeArchived: boolean;
@@ -170,6 +181,9 @@ export class MenuRepo {
       description: parseOptionalText(r.description),
       imageUrl: imageUrl(r.image_path),
       priceCents: r.price_cents,
+      promo: r.promo_json ? (JSON.parse(r.promo_json) as ProductPromo) : null,
+      isFeatured: r.is_featured === 1,
+      featuredLabel: parseOptionalText(r.featured_label),
       currency: r.currency,
       isAvailable: r.is_available === 1,
       isArchived: r.is_archived === 1,
@@ -208,10 +222,10 @@ export class MenuRepo {
       const now = nowIso();
       const result = this.db
         .prepare(
-          `INSERT INTO products (category_id, name, description, price_cents, is_available, sort_order, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO products (category_id, name, description, price_cents, promo_json, is_featured, featured_label, is_available, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
-        .run(input.categoryId, JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.priceCents, input.isAvailable ? 1 : 0, input.sortOrder, now, now);
+        .run(input.categoryId, JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.priceCents, ...promoColumns(input), input.isAvailable ? 1 : 0, input.sortOrder, now, now);
       const id = Number(result.lastInsertRowid);
       this.syncOptionGroups(id, input.optionGroups);
       return id;
@@ -223,10 +237,11 @@ export class MenuRepo {
       this.assertCategory(input.categoryId);
       const result = this.db
         .prepare(
-          `UPDATE products SET category_id = ?, name = ?, description = ?, price_cents = ?, is_available = ?, sort_order = ?, updated_at = ?
+          `UPDATE products SET category_id = ?, name = ?, description = ?, price_cents = ?, promo_json = ?, is_featured = ?, featured_label = ?,
+             is_available = ?, sort_order = ?, updated_at = ?
            WHERE id = ?`,
         )
-        .run(input.categoryId, JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.priceCents, input.isAvailable ? 1 : 0, input.sortOrder, nowIso(), id);
+        .run(input.categoryId, JSON.stringify(input.name), input.description ? JSON.stringify(input.description) : null, input.priceCents, ...promoColumns(input), input.isAvailable ? 1 : 0, input.sortOrder, nowIso(), id);
       if (result.changes === 0) throw notFound("Produto não encontrado");
       this.syncOptionGroups(id, input.optionGroups);
     })();

@@ -25,6 +25,8 @@ SQLite 3 (via `better-sqlite3`), one file at `DATABASE_PATH` (default `data/nels
 
 7. Ratings (2026-10-15): `order_reviews` — one row per delivered order (`order_id` PK, cascades), `rating` 1–5, optional `comment` (≤ 500). Guests rate from their order page once the order is COMPLETED.
 
+8. Highlights and promotions (2026-10-15): `products.is_featured`, `featured_label` (localised JSON, e.g. "Prato do dia") and `promo_json` (`{priceCents, fromDate, untilDate, fromTime, untilTime}`; dates inclusive, daily hours from-inclusive/until-exclusive, hotel time). `priceOrder` charges the promotional price when it applies at the server time of the order; changing a promotion needs `menu.prices`.
+
 ## Entity overview
 
 ```

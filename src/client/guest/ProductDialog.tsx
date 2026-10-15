@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { ORDER_LIMITS } from "../../shared/constants";
-import { isOrderable } from "../../shared/pricing";
+import { effectivePriceCents, isOrderable } from "../../shared/pricing";
 import type { OptionGroupDto, ProductDto } from "../../shared/types";
 import { Dialog } from "../components/Dialog";
 import { ProductImage } from "../components/ProductImage";
 import { useGuest } from "./context";
+import { PriceTag } from "./PriceTag";
 
 interface Props {
   product: ProductDto | null;
@@ -51,7 +52,7 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
   const optionIds = useMemo(() => Object.values(selected).flat(), [selected]);
   const unitPrice = useMemo(() => {
     const deltas = product.optionGroups.flatMap((g) => g.options).filter((o) => optionIds.includes(o.id));
-    return product.priceCents + deltas.reduce((sum, o) => sum + o.priceDeltaCents, 0);
+    return effectivePriceCents(product, new Date()) + deltas.reduce((sum, o) => sum + o.priceDeltaCents, 0);
   }, [product, optionIds]);
   const incompleteGroups = product.optionGroups.filter((g) => (selected[g.id]?.length ?? 0) < g.minSelect).map((g) => g.id);
 
@@ -78,7 +79,7 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
     <div className="product-form">
       <ProductImage src={product.imageUrl} alt={text(product.name)} className="product-dialog-image" eager />
       {product.description && <p className="muted">{text(product.description)}</p>}
-      <p className="price product-dialog-price">{money(product.priceCents)}</p>
+      <PriceTag product={product} className="price product-dialog-price" />
 
       {product.optionGroups.map((group) => {
         const chosen = selected[group.id] ?? [];

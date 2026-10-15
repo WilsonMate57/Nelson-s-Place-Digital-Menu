@@ -32,10 +32,15 @@ import { HOTEL_UTC_OFFSET } from "../services/order-service";
 import { MAX_IMAGE_BYTES } from "../services/image-store";
 import type { Services } from "../app";
 
-/** True if the edit changes the base price or any option surcharge. */
+const normalisePromo = (p: AdminProductDto["promo"]) =>
+  p && { priceCents: p.priceCents, fromDate: p.fromDate, untilDate: p.untilDate, fromTime: p.fromTime, untilTime: p.untilTime };
+
+/** True if the edit changes the base price, the promotion or any option surcharge. */
 function changesPrices(before: AdminProductDto | null, input: ProductInput): boolean {
   if (!before) return true;
   if (before.priceCents !== input.priceCents) return true;
+  // A promotion is a price too (its amount, dates and hours).
+  if (JSON.stringify(normalisePromo(before.promo)) !== JSON.stringify(normalisePromo(input.promo))) return true;
   const deltas = new Map(before.optionGroups.flatMap((g) => g.options).map((o) => [o.id, o.priceDeltaCents]));
   return input.optionGroups.some((g) => g.options.some((o) => (o.id === undefined ? o.priceDeltaCents > 0 : deltas.get(o.id) !== o.priceDeltaCents)));
 }

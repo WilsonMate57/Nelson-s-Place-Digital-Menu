@@ -176,7 +176,7 @@ export const categoryInputSchema = z
     message: "Indique as duas horas ou nenhuma",
     path: ["availableUntil"],
   })
-  .refine((c) => c.availableFrom === null || parseHm(c.availableFrom) < parseHm(c.availableUntil!), {
+  .refine((c) => c.availableFrom === null || c.availableUntil === null || parseHm(c.availableFrom) < parseHm(c.availableUntil), {
     message: "A hora final deve ser depois da inicial",
     path: ["availableUntil"],
   });
@@ -202,11 +202,29 @@ export const optionGroupInputSchema = z
     path: ["minSelect"],
   });
 
+export const promoSchema = z
+  .object({
+    priceCents: z.number().int().min(0).max(100_000_000),
+    fromDate: z.iso.date().nullish().transform((v) => v ?? null),
+    untilDate: z.iso.date().nullish().transform((v) => v ?? null),
+    fromTime: optionalHm,
+    untilTime: optionalHm,
+  })
+  .refine((p) => (p.fromTime === null) === (p.untilTime === null), { message: "Indique as duas horas ou nenhuma", path: ["untilTime"] })
+  .refine((p) => p.fromTime === null || p.untilTime === null || parseHm(p.fromTime) < parseHm(p.untilTime), {
+    message: "A hora final deve ser depois da inicial",
+    path: ["untilTime"],
+  })
+  .refine((p) => !p.fromDate || !p.untilDate || p.fromDate <= p.untilDate, { message: "A data final deve ser igual ou posterior à inicial", path: ["untilDate"] });
+
 export const productInputSchema = z.object({
   categoryId: id,
   name: localizedTextSchema(100),
   description: optionalLocalizedText(500),
   priceCents: z.number().int().min(0).max(100_000_000),
+  promo: promoSchema.nullish().transform((v) => v ?? null),
+  isFeatured: z.boolean().default(false),
+  featuredLabel: optionalLocalizedText(40),
   isAvailable: z.boolean().default(true),
   sortOrder: z.number().int().min(0).max(9999).default(0),
   optionGroups: z.array(optionGroupInputSchema).max(10).default([]),

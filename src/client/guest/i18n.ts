@@ -187,6 +187,9 @@ const pt = {
   orderAgain: "Pedir outra vez",
   orderAgainSkipped: "Alguns artigos já não estão disponíveis e não foram adicionados.",
   orderAgainNone: "Os artigos deste pedido já não estão disponíveis.",
+  featured: "Destaques",
+  featuredDefault: "Destaque",
+  promo: "Promoção",
 };
 
 export type MessageKey = keyof typeof pt;
@@ -373,6 +376,9 @@ const en: Dictionary = {
   orderAgain: "Order again",
   orderAgainSkipped: "Some items are no longer available and were not added.",
   orderAgainNone: "The items of this order are no longer available.",
+  featured: "Highlights",
+  featuredDefault: "Featured",
+  promo: "Special offer",
 };
 
 const DICTIONARIES: Partial<Record<Language, Dictionary>> = { pt, en };

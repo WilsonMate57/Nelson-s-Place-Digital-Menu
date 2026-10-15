@@ -958,3 +958,31 @@
 .call-option-icon {
   font-size: 1.75rem;
 }
+
+/* Highlights ("Prato do dia") and promotions */
+.menu-category.featured {
+  background: var(--c-gold-100);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.product-card-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.badge-featured {
+  background: var(--c-green-800);
+  color: var(--c-paper);
+}
+.badge-promo {
+  background: var(--c-danger);
+  color: var(--c-paper);
+}
+.price-promo {
+  color: var(--c-danger);
+}
+.price-was {
+  color: var(--c-muted);
+  font-weight: 400;
+  font-size: 0.85em;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PricingError, priceOrder } from "../src/shared/pricing";
+import { PricingError, effectivePriceCents, priceOrder } from "../src/shared/pricing";
 import type { ProductDto } from "../src/shared/types";
 import { formatMoney, parseAmountToCents } from "../src/shared/money";
 
@@ -10,6 +10,9 @@ const chicken: ProductDto = {
   description: null,
   imageUrl: null,
   priceCents: 65000,
+  promo: null,
+  isFeatured: false,
+  featuredLabel: null,
   currency: "MZN",
   isAvailable: true,
   stockQty: null,
@@ -86,6 +89,27 @@ describe("priceOrder", () => {
     expect(() => priceOrder([...lines].map((l) => ({ ...l, optionIds: [...l.optionIds] })), catalogue, [], "pt")).toThrowError(
       expect.objectContaining({ code }) as unknown as PricingError,
     );
+  });
+});
+
+describe("promotional prices", () => {
+  // 2026-10-13 17:30 in Maputo (UTC+2).
+  const at = (iso: string) => new Date(iso);
+  const happyHour: ProductDto = {
+    ...juice,
+    id: 4,
+    promo: { priceCents: 12000, fromDate: "2026-10-01", untilDate: "2026-10-31", fromTime: "17:00", untilTime: "19:00" },
+  };
+  const promoCatalogue = new Map([[4, happyHour]]);
+  const unitAt = (iso: string) => priceOrder([{ productId: 4, quantity: 1, optionIds: [] }], promoCatalogue, [], "pt", at(iso)).lines[0]!.unitPriceCents;
+
+  it("charges the promotional price only within its dates and daily hours (hotel time)", () => {
+    expect(unitAt("2026-10-13T15:30:00Z")).toBe(12000); // 17:30 local
+    expect(unitAt("2026-10-13T14:59:00Z")).toBe(18000); // 16:59 local
+    expect(unitAt("2026-10-13T17:00:00Z")).toBe(18000); // 19:00 local: window has ended
+    expect(unitAt("2026-11-01T15:30:00Z")).toBe(18000); // after the last day
+    expect(effectivePriceCents({ priceCents: 18000, promo: { ...happyHour.promo!, fromTime: null, untilTime: null } }, at("2026-10-13T08:00:00Z"))).toBe(12000);
+    expect(effectivePriceCents({ priceCents: 18000, promo: null }, at("2026-10-13T08:00:00Z"))).toBe(18000);
   });
 });
 

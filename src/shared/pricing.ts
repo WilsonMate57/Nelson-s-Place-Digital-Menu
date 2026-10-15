@@ -1,10 +1,11 @@
 import type { Language } from "./constants";
 import { localize } from "./localize";
-import type { AppliedCharge, ChargeRule, ProductDto, SelectedOptionSnapshot } from "./types";
+import { hotelClock, parseHm } from "./schedule";
+import type { AppliedCharge, ChargeRule, ProductDto, ProductPromo, SelectedOptionSnapshot } from "./types";
 
 /**
  * Price calculation used by the server (authoritative) and by the cart (estimate only).
- * Pure function: no I/O, no clock, so it can be unit-tested exhaustively.
+ * Pure function: no I/O; the time (for promotions) is passed in, so it can be unit-tested exhaustively.
  */
 
 export interface PricingLineInput {
@@ -51,6 +52,20 @@ export class PricingError extends Error {
   }
 }
 
+/** True while a promotion applies: within its dates and, if set, its daily hours (hotel time). */
+export function promoActive(promo: ProductPromo, now: Date): boolean {
+  const { day, minutes } = hotelClock(now);
+  if (promo.fromDate && day < promo.fromDate) return false;
+  if (promo.untilDate && day > promo.untilDate) return false;
+  if (promo.fromTime && promo.untilTime) return minutes >= parseHm(promo.fromTime) && minutes < parseHm(promo.untilTime);
+  return true;
+}
+
+/** The base price charged now: the promotional price while it applies. */
+export function effectivePriceCents(product: Pick<ProductDto, "priceCents" | "promo">, now: Date): number {
+  return product.promo && promoActive(product.promo, now) ? product.promo.priceCents : product.priceCents;
+}
+
 /** Sold out: switched off by staff, or tracked stock reached zero. */
 export const isOrderable = (product: Pick<ProductDto, "isAvailable" | "stockQty">) => product.isAvailable && product.stockQty !== 0;
 
@@ -60,8 +75,10 @@ export function priceOrder(
   catalogue: ReadonlyMap<number, ProductDto>,
   chargeRules: ChargeRule[],
   language: Language,
+  /** Decides whether promotional prices apply. The server passes its own clock. */
+  now: Date = new Date(),
 ): PricedOrder {
-  const priced = lines.map((line, index) => priceLine(line, index, catalogue, language));
+  const priced = lines.map((line, index) => priceLine(line, index, catalogue, language, now));
   const subtotalCents = priced.reduce((sum, l) => sum + l.lineTotalCents, 0);
   const charges = chargeRules.map((rule) => ({
     id: rule.id,
@@ -77,6 +94,7 @@ function priceLine(
   index: number,
   catalogue: ReadonlyMap<number, ProductDto>,
   language: Language,
+  now: Date,
 ): PricedLine {
   const product = catalogue.get(line.productId);
   if (!product) throw new PricingError("PRODUCT_NOT_FOUND", index, line.productId);
@@ -108,7 +126,7 @@ function priceLine(
   // Any id left over does not belong to this product.
   if (remaining.size > 0) throw new PricingError("OPTION_INVALID", index, line.productId);
 
-  const unitPriceCents = product.priceCents + selected.reduce((sum, o) => sum + o.priceDeltaCents, 0);
+  const unitPriceCents = effectivePriceCents(product, now) + selected.reduce((sum, o) => sum + o.priceDeltaCents, 0);
   return {
     productId: product.id,
     productName: localize(product.name, language),

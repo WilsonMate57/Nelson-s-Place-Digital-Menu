@@ -42,13 +42,29 @@ export interface CategoryDto {
   availableUntil: string | null;
 }
 
+/** Promotional price, optionally limited to dates and/or daily hours (hotel time). */
+export interface ProductPromo {
+  priceCents: number;
+  /** Inclusive hotel-local dates "YYYY-MM-DD"; null = open-ended. */
+  fromDate: string | null;
+  untilDate: string | null;
+  /** Daily window "HH:MM" (from inclusive, until exclusive); both null = all day. */
+  fromTime: string | null;
+  untilTime: string | null;
+}
+
 export interface ProductDto {
   id: number;
   categoryId: number;
   name: LocalizedText;
   description: LocalizedText | null;
   imageUrl: string | null;
+  /** Regular price; the price charged may be the promotion's (see effectivePriceCents). */
   priceCents: number;
+  promo: ProductPromo | null;
+  /** Shown in the highlights at the top of the menu (e.g. "Prato do dia"). */
+  isFeatured: boolean;
+  featuredLabel: LocalizedText | null;
   currency: string;
   isAvailable: boolean;
   /** Units left when stock is tracked; null = not tracked. 0 = sold out. */

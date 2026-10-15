@@ -191,6 +191,14 @@ Deixe vazio para não controlar o stock deste artigo.`,
                       <span className="row wrap">
                         {p.isArchived && <span className="badge badge-muted">Arquivado</span>}
                         {!p.isArchived && !p.isAvailable && <span className="badge badge-danger">Esgotado</span>}
+                        {p.isFeatured && <span className="badge badge-scheduled">★ {p.featuredLabel?.pt ?? "Destaque"}</span>}
+                        {p.promo && (
+                          <span className="badge badge-warning">
+                            Promoção: {formatMoney(p.promo.priceCents, { symbol })}
+                            {p.promo.fromTime && ` (${p.promo.fromTime}–${p.promo.untilTime})`}
+                            {p.promo.untilDate && ` até ${p.promo.untilDate.split("-").reverse().join("/")}`}
+                          </span>
+                        )}
                         {!p.isArchived && p.stockQty !== null && (
                           <span className={cx("badge", p.stockQty === 0 ? "badge-danger" : p.stockQty <= LOW_STOCK ? "badge-warning" : "badge-muted")}>
                             {p.stockQty === 0 ? "Sem stock" : `Stock: ${p.stockQty}`}
