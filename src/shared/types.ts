@@ -214,9 +214,16 @@ export interface IntegrationEventDto {
   updatedAt: string;
 }
 
+export interface OrderReviewDto {
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
 export interface AdminOrderDetailDto extends OrderDto {
   history: StatusHistoryDto[];
   integrations: IntegrationEventDto[];
+  review: OrderReviewDto | null;
 }
 
 /** What a guest sees after submitting, and when checking status later. */
@@ -235,8 +242,11 @@ export interface GuestOrderDto {
   totalCents: number;
   createdAt: string;
   updatedAt: string;
-  items: Pick<OrderItemDto, "productName" | "quantity" | "options" | "lineTotalCents" | "notes">[];
+  /** productId and the options' optionId let the guest order the same again. */
+  items: Pick<OrderItemDto, "productId" | "productName" | "quantity" | "options" | "lineTotalCents" | "notes">[];
   whatsapp: { mode: WhatsAppMode; status: IntegrationStatus | null; url: string | null };
+  /** The guest's rating, once the order was delivered and rated. */
+  review: OrderReviewDto | null;
 }
 
 export interface StaffDto {
@@ -318,6 +328,9 @@ export interface ReportKpis {
   /** Average minutes until staff confirmed / completed an order (immediate orders only). */
   avgMinutesToConfirm: number | null;
   avgMinutesToComplete: number | null;
+  /** Guest ratings of the period's delivered orders. */
+  avgRating: number | null;
+  reviewCount: number;
 }
 
 export interface ReportDto {
@@ -340,6 +353,8 @@ export interface ReportDto {
   unsoldItems: { name: string; category: string; isAvailable: boolean }[];
   /** 7 entries, Monday first. */
   weekday: { weekday: number; orders: number; revenueCents: number }[];
+  /** Latest ratings with a comment (newest first). */
+  reviews: { reference: string; locationType: OrderLocationType; locationLabel: string; rating: number; comment: string; createdAt: string }[];
   customers: {
     withPhone: number;
     returning: number;

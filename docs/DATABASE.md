@@ -23,6 +23,8 @@ SQLite 3 (via `better-sqlite3`), one file at `DATABASE_PATH` (default `data/nels
 
 6. Guest calls (2026-10-15): `service_requests` — `kind` waiter/bill, `location_type`/`location_label`, optional `payment_method` (cash/card/mpesa, bill only), `status` open/done, `handled_by`/`handled_at`, random `public_token` for the guest's status view. A repeated open call from the same place within 10 minutes is returned instead of duplicated.
 
+7. Ratings (2026-10-15): `order_reviews` — one row per delivered order (`order_id` PK, cascades), `rating` 1–5, optional `comment` (≤ 500). Guests rate from their order page once the order is COMPLETED.
+
 ## Entity overview
 
 ```

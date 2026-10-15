@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { chatMessageSchema, orderSubmissionSchema, serviceRequestSchema } from "../../shared/schemas";
+import { chatMessageSchema, orderSubmissionSchema, reviewSchema, serviceRequestSchema } from "../../shared/schemas";
 import type { PublicMenuDto, PublicSettings } from "../../shared/types";
 import { AppError, badRequest } from "../http/errors";
 import { RateLimiter, clientIp, rateLimit, readJson } from "../http/middleware";
@@ -87,6 +87,18 @@ export function publicRoutes(s: Services) {
       if (!TOKEN_PATTERN.test(token)) throw new AppError(404, "NOT_FOUND", "Pedido não encontrado");
       const { body } = await readJson(c, chatMessageSchema);
       return c.json(s.chat.guestSend(token, body), 201);
+    },
+  );
+
+  app.post(
+    "/orders/track/:token/review",
+    bodyLimit({ maxSize: 4 * 1024, onError: () => { throw badRequest("BODY_TOO_LARGE", "Comentário demasiado grande"); } }),
+    rateLimit(chatLimiter, (c) => `chat:${ip(c)}`),
+    async (c) => {
+      const token = c.req.param("token");
+      if (!TOKEN_PATTERN.test(token)) throw new AppError(404, "NOT_FOUND", "Pedido não encontrado");
+      const { rating, comment } = await readJson(c, reviewSchema);
+      return c.json(s.orders.review(token, rating, comment), 201);
     },
   );
 

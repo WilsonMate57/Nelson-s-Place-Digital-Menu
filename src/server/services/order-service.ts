@@ -162,6 +162,15 @@ export class OrderService {
     return this.toGuestView(order, order.publicToken);
   }
 
+  /** The guest rates a delivered order, once. */
+  review(publicToken: string, rating: number, comment: string | null): GuestOrderDto {
+    const order = this.orders.getByPublicToken(publicToken);
+    if (!order) throw notFound("Pedido não encontrado");
+    if (order.status !== "COMPLETED") throw conflict("NOT_DELIVERED", "Só pode avaliar depois de o pedido ser entregue.");
+    if (!this.orders.addReview(order.id, rating, comment)) throw conflict("ALREADY_REVIEWED", "Este pedido já foi avaliado.");
+    return this.toGuestView(order, order.publicToken);
+  }
+
   recordWhatsAppLinkOpened(publicToken: string): void {
     const order = this.orders.getByPublicToken(publicToken);
     if (!order) throw notFound("Pedido não encontrado");
@@ -190,7 +199,7 @@ export class OrderService {
   detail(id: number): AdminOrderDetailDto {
     const order = this.orders.get(id);
     if (!order) throw notFound("Pedido não encontrado");
-    return { ...order, history: this.orders.history(id), integrations: this.orders.integrations(id) };
+    return { ...order, history: this.orders.history(id), integrations: this.orders.integrations(id), review: this.orders.getReview(id) };
   }
 
   changeStatus(id: number, expected: OrderDto["status"], to: OrderDto["status"], staffId: number, note: string | null): AdminOrderDetailDto {
@@ -313,6 +322,7 @@ export class OrderService {
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
       items: order.items.map((i) => ({
+        productId: i.productId,
         productName: i.productName,
         quantity: i.quantity,
         options: i.options,
@@ -324,6 +334,7 @@ export class OrderService {
         status: this.whatsapp.status(order.id),
         url: this.whatsapp.guestLink(order),
       },
+      review: this.orders.getReview(order.id),
     };
   }
 }

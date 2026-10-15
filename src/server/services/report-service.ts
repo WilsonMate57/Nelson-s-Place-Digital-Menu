@@ -56,6 +56,7 @@ export class ReportService {
       staff: this.reports.staffPerformance(range),
       unsoldItems: this.reports.unsoldItems(range),
       weekday: [1, 2, 3, 4, 5, 6, 0].map((weekday) => byWeekday.get(weekday) ?? { weekday, orders: 0, revenueCents: 0 }),
+      reviews: this.reports.reviews(range, 20),
       customers: this.reports.customers(range, 10),
     };
   }
@@ -101,6 +102,7 @@ export class ReportService {
       avgTicketCents: t.ordersCompleted > 0 ? Math.round(t.revenueCents / t.ordersCompleted) : 0,
       avgMinutesToConfirm: this.reports.averageMinutesTo(range, "CONFIRMED"),
       avgMinutesToComplete: this.reports.averageMinutesTo(range, "COMPLETED"),
+      ...this.reports.ratings(range),
     };
   }
 }

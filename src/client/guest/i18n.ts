@@ -176,6 +176,17 @@ const pt = {
   callDone: "Atendido. Obrigado!",
   callAgain: "Fazer outro pedido",
   callError: "Não foi possível enviar. Tente novamente ou contacte a recepção.",
+  rateTitle: "Como correu?",
+  rateIntro: "Avalie o seu pedido — ajuda-nos a melhorar.",
+  rateStar: "{n} de 5 estrelas",
+  rateComment: "Comentário (opcional)",
+  rateCommentPlaceholder: "O que gostou ou o que podemos melhorar?",
+  rateSend: "Enviar avaliação",
+  rateThanks: "Obrigado pela sua avaliação!",
+  rateError: "Não foi possível enviar a avaliação. Tente novamente.",
+  orderAgain: "Pedir outra vez",
+  orderAgainSkipped: "Alguns artigos já não estão disponíveis e não foram adicionados.",
+  orderAgainNone: "Os artigos deste pedido já não estão disponíveis.",
 };
 
 export type MessageKey = keyof typeof pt;
@@ -351,6 +362,17 @@ const en: Dictionary = {
   callDone: "Done. Thank you!",
   callAgain: "Make another request",
   callError: "Could not send. Please try again or contact reception.",
+  rateTitle: "How was it?",
+  rateIntro: "Rate your order — it helps us improve.",
+  rateStar: "{n} out of 5 stars",
+  rateComment: "Comment (optional)",
+  rateCommentPlaceholder: "What did you like, or what could we do better?",
+  rateSend: "Send rating",
+  rateThanks: "Thank you for your rating!",
+  rateError: "Could not send your rating. Please try again.",
+  orderAgain: "Order again",
+  orderAgainSkipped: "Some items are no longer available and were not added.",
+  orderAgainNone: "The items of this order are no longer available.",
 };
 
 const DICTIONARIES: Partial<Record<Language, Dictionary>> = { pt, en };

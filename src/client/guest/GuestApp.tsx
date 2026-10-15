@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { LOCATION_TYPES, type Language, type LocationType } from "../../shared/constants";
 import { localize } from "../../shared/localize";
 import { formatMoney } from "../../shared/money";
+import { isOrderable } from "../../shared/pricing";
 import type { GuestOrderDto, ProductDto, PublicMenuDto } from "../../shared/types";
 import { useToast } from "../components/Toasts";
 import { api } from "../lib/api";
@@ -156,6 +157,18 @@ export function GuestApp() {
             onForget={() => {
               storage.remove(LAST_ORDER_KEY);
               setLastOrder(null);
+            }}
+            onOrderAgain={(order) => {
+              // Only items still on the menu; the cart re-checks options and prices.
+              const available = new Map(menu!.products.filter(isOrderable).map((p) => [p.id, p]));
+              const again = order.items.filter((i) => i.productId !== null && available.has(i.productId));
+              for (const item of again) {
+                cart.add({ productId: item.productId!, quantity: item.quantity, optionIds: item.options.map((o) => o.optionId), notes: item.notes });
+              }
+              if (again.length === 0) return toast(t("orderAgainNone"), "error");
+              if (again.length < order.items.length) toast(t("orderAgainSkipped"));
+              showOrder(null);
+              setCartOpen(true);
             }}
           />
         ) : (

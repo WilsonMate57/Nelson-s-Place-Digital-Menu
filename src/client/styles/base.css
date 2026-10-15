@@ -548,3 +548,51 @@ dialog.sheet[open] {
   border-top: 1px solid var(--c-line);
   margin: var(--sp-4) 0;
 }
+
+/* Star ratings (guest rating form, dashboard) */
+.stars {
+  display: flex;
+  gap: var(--sp-1);
+}
+.star {
+  cursor: pointer;
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--c-line-strong);
+}
+.star input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.star.on {
+  color: var(--c-gold-500);
+}
+.star:focus-within {
+  outline: 2px solid var(--c-gold-500);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+.stars-static {
+  color: var(--c-gold-500);
+  letter-spacing: 1px;
+}
+.stars-off {
+  color: var(--c-line-strong);
+}
+.rating-box {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-md);
+  background: var(--c-cream);
+}
+.review-comments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}

@@ -290,4 +290,14 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX idx_service_requests_status ON service_requests(status, created_at);
   `,
+
+  /* 7 — guest rating (1–5) and optional comment, once per delivered order. */ `
+  CREATE TABLE order_reviews (
+    order_id    INTEGER PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE,
+    rating      INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment     TEXT    CHECK (comment IS NULL OR length(comment) <= 500),
+    created_at  TEXT    NOT NULL DEFAULT ${NOW}
+  );
+  CREATE INDEX idx_order_reviews_created ON order_reviews(created_at);
+  `,
 ];

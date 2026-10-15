@@ -125,7 +125,7 @@ describe("daily summary to the manager", () => {
       to: "2026-10-13",
       previousFrom: "2026-10-12",
       previousTo: "2026-10-12",
-      kpis: { ordersReceived: 0, ordersCompleted: 0, ordersCancelled: 0, ordersOpen: 0, revenueCents: 0, avgTicketCents: 0, itemsSold: 0, depositsConfirmedCents: 0, scheduledOrders: 0, avgMinutesToConfirm: null, avgMinutesToComplete: null },
+      kpis: { ordersReceived: 0, ordersCompleted: 0, ordersCancelled: 0, ordersOpen: 0, revenueCents: 0, avgTicketCents: 0, itemsSold: 0, depositsConfirmedCents: 0, scheduledOrders: 0, avgMinutesToConfirm: null, avgMinutesToComplete: null, avgRating: null, reviewCount: 0 },
       daily: [],
       hourly: [],
       topItems: [],
@@ -135,6 +135,7 @@ describe("daily summary to the manager", () => {
       staff: [],
       unsoldItems: [],
       weekday: [],
+      reviews: [],
       customers: { withPhone: 0, returning: 0, top: [] },
     };
     const text = buildDailySummary({ ...empty, previous: empty.kpis }, { hotelName: "Nelson's Place", currencySymbol: "MT" });

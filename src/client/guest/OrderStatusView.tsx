@@ -16,10 +16,12 @@ interface Props {
   initial: GuestOrderDto | null;
   onBackToMenu: () => void;
   onForget: () => void;
+  /** Puts this order's items back in the cart. */
+  onOrderAgain: (order: GuestOrderDto) => void;
 }
 
 /** Order confirmation and live status, reachable later through ?order=<private token>. */
-export function OrderStatusView({ token, initial, onBackToMenu, onForget }: Props) {
+export function OrderStatusView({ token, initial, onBackToMenu, onForget, onOrderAgain }: Props) {
   const { t, money, language } = useGuest();
   const [order, setOrder] = useState<GuestOrderDto | null>(initial);
   const [error, setError] = useState<"notFound" | "network" | null>(null);
@@ -222,14 +224,104 @@ export function OrderStatusView({ token, initial, onBackToMenu, onForget }: Prop
           <p className="alert alert-success small">{t("whatsappAutoSent")}</p>
         )}
 
+        {order.status === "COMPLETED" && <OrderRating token={token} order={order} onRated={setOrder} />}
+
         <OrderChat token={token} />
 
         <div className="order-actions">
+          {order.items.some((i) => i.productId !== null) && (
+            <button type="button" className="btn btn-primary btn-block" onClick={() => onOrderAgain(order)}>
+              {t("orderAgain")}
+            </button>
+          )}
           <button type="button" className="btn btn-secondary btn-block" onClick={onBackToMenu}>
             {isFinalStatus(order.status) ? t("newOrder") : t("backToMenu")}
           </button>
         </div>
       </div>
     </main>
+  );
+}
+
+/** 1–5 stars and an optional comment, once the order was delivered. */
+function OrderRating({ token, order, onRated }: { token: string; order: GuestOrderDto; onRated: (o: GuestOrderDto) => void }) {
+  const { t } = useGuest();
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (order.review) {
+    return (
+      <section className="rating-box" aria-labelledby="rate-title">
+        <h2 id="rate-title" className="label">
+          {t("rateThanks")}
+        </h2>
+        <p className="stars-static" aria-label={t("rateStar", { n: order.review.rating })}>
+          {"★".repeat(order.review.rating)}
+          <span className="stars-off">{"★".repeat(5 - order.review.rating)}</span>
+        </p>
+      </section>
+    );
+  }
+
+  const send = async () => {
+    setSending(true);
+    setError(false);
+    try {
+      onRated(
+        await api<GuestOrderDto>(`/api/orders/track/${encodeURIComponent(token)}/review`, {
+          method: "POST",
+          body: { rating, comment: comment.trim() || null },
+        }),
+      );
+    } catch {
+      setError(true);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <section className="rating-box" aria-labelledby="rate-title">
+      <h2 id="rate-title" className="label">
+        {t("rateTitle")}
+      </h2>
+      <p className="small muted">{t("rateIntro")}</p>
+      <div className="stars" role="radiogroup" aria-label={t("rateTitle")}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <label key={n} className={n <= rating ? "star on" : "star"}>
+            <input type="radio" name="rating" value={n} checked={rating === n} onChange={() => setRating(n)} />
+            <span aria-hidden="true">★</span>
+            <span className="visually-hidden">{t("rateStar", { n })}</span>
+          </label>
+        ))}
+      </div>
+      {rating > 0 && (
+        <>
+          <label className="label" htmlFor="rate-comment">
+            {t("rateComment")}
+          </label>
+          <textarea
+            id="rate-comment"
+            className="input"
+            rows={3}
+            maxLength={500}
+            placeholder={t("rateCommentPlaceholder")}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+          <button type="button" className="btn btn-primary btn-block" disabled={sending} onClick={() => void send()}>
+            {sending && <span className="spinner spinner-sm" aria-hidden="true" />}
+            {t("rateSend")}
+          </button>
+        </>
+      )}
+      {error && (
+        <p className="field-error" role="alert">
+          {t("rateError")}
+        </p>
+      )}
+    </section>
   );
 }

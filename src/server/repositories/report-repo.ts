@@ -137,6 +137,29 @@ export class ReportRepo {
       .all(r.fromIso, r.toIso) as { type: OrderLocationType; orders: number; revenueCents: number }[];
   }
 
+  /** Ratings of the period's delivered orders. */
+  ratings(r: Range): { avgRating: number | null; reviewCount: number } {
+    const row = this.db
+      .prepare(
+        `SELECT AVG(v.rating) AS avg, COUNT(*) AS n FROM order_reviews v JOIN orders o ON o.id = v.order_id
+         WHERE o.created_at >= ? AND o.created_at <= ? AND o.status = ${DELIVERED}`,
+      )
+      .get(r.fromIso, r.toIso) as { avg: number | null; n: number };
+    return { avgRating: row.avg === null ? null : Math.round(row.avg * 10) / 10, reviewCount: row.n };
+  }
+
+  /** Latest ratings that came with a comment. */
+  reviews(r: Range, limit: number) {
+    return this.db
+      .prepare(
+        `SELECT o.reference, o.location_type AS locationType, o.location_label AS locationLabel, v.rating, v.comment, v.created_at AS createdAt
+         FROM order_reviews v JOIN orders o ON o.id = v.order_id
+         WHERE o.created_at >= ? AND o.created_at <= ? AND o.status = ${DELIVERED} AND v.comment IS NOT NULL
+         ORDER BY v.created_at DESC LIMIT ?`,
+      )
+      .all(r.fromIso, r.toIso, limit) as { reference: string; locationType: OrderLocationType; locationLabel: string; rating: number; comment: string; createdAt: string }[];
+  }
+
   /** Average minutes from order to the first transition into `status`, over delivered immediate orders. */
   averageMinutesTo(r: Range, status: "CONFIRMED" | "COMPLETED"): number | null {
     const row = this.db

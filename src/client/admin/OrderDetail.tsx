@@ -248,6 +248,17 @@ export function OrderDetail({ id, version, onBack, onChanged }: Props) {
         </ol>
       </section>
 
+      {order.review && (
+        <section className="card">
+          <h2 className="card-title">Avaliação do cliente</h2>
+          <p className="stars-static" aria-label={`${order.review.rating} de 5 estrelas`}>
+            {"★".repeat(order.review.rating)}
+            <span className="stars-off">{"★".repeat(5 - order.review.rating)}</span>
+          </p>
+          {order.review.comment && <p>“{order.review.comment}”</p>}
+        </section>
+      )}
+
       <div className="no-print">
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => printReceipt("receipt", `Talao_${order.reference}`)}>
           Imprimir talão (80 mm)

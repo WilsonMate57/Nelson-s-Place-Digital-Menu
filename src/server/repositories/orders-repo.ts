@@ -11,6 +11,7 @@ import type {
   AppliedCharge,
   IntegrationEventDto,
   OrderDto,
+  OrderReviewDto,
   OrderSummaryDto,
   SelectedOptionSnapshot,
   StatusHistoryDto,
@@ -204,6 +205,22 @@ export class OrdersRepo {
       )
       .all(...params) as (OrderRow & { item_count: number; whatsapp_status: IntegrationStatus | null; unread_messages: number })[];
     return rows.map((r) => ({ ...this.toBase(r), itemCount: r.item_count, whatsappStatus: r.whatsapp_status, unreadMessages: r.unread_messages }));
+  }
+
+  getReview(orderId: number): OrderReviewDto | null {
+    const row = this.db.prepare("SELECT rating, comment, created_at FROM order_reviews WHERE order_id = ?").get(orderId) as
+      | { rating: number; comment: string | null; created_at: string }
+      | undefined;
+    return row ? { rating: row.rating, comment: row.comment, createdAt: row.created_at } : null;
+  }
+
+  /** False if the order was already rated. */
+  addReview(orderId: number, rating: number, comment: string | null): boolean {
+    return (
+      this.db
+        .prepare("INSERT INTO order_reviews (order_id, rating, comment, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(order_id) DO NOTHING")
+        .run(orderId, rating, comment, this.now()).changes === 1
+    );
   }
 
   /** Accepted orders the kitchen still has to prepare or hand over, oldest (or soonest scheduled) first. */

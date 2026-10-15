@@ -35,6 +35,7 @@ export function buildDailySummary(report: ReportDto, ctx: { hotelName: string; c
     lines.push(`Encomendas: ${k.scheduledOrders} · sinais recebidos: ${money(k.depositsConfirmedCents)}`);
   }
   if (k.avgMinutesToConfirm !== null) lines.push(`Tempo médio até confirmar: ${k.avgMinutesToConfirm} min`);
+  if (k.avgRating !== null) lines.push(`Avaliação dos clientes: ${k.avgRating.toLocaleString("pt-PT")}/5 (${k.reviewCount})`);
 
   if (report.topItems.length) {
     lines.push("", "*Mais pedidos*");

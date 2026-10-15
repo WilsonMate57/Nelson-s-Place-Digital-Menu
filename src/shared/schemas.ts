@@ -145,6 +145,11 @@ export const orderListQuerySchema = z.object({
 const hm = z.string().regex(HM_PATTERN, "Hora inválida (HH:MM)");
 const optionalHm = hm.nullish().transform((v) => v ?? null);
 
+export const reviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: optionalText(500),
+});
+
 export const chatMessageSchema = z.object({
   body: requiredText(ORDER_LIMITS.maxChatMessageLength),
 });

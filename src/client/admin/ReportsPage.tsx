@@ -4,7 +4,7 @@ import { formatMoney } from "../../shared/money";
 import { addDays } from "../../shared/schedule";
 import { buildDailySummary } from "../../shared/daily-summary";
 import type { DailySummaryStatusDto, ReportDto, ReportKpis } from "../../shared/types";
-import { buildWhatsAppLink } from "../../shared/whatsapp-message";
+import { buildWhatsAppLink, describeLocation } from "../../shared/whatsapp-message";
 import { useToast } from "../components/Toasts";
 import { ClosingReceipt } from "./ClosingReceipt";
 import { printReceipt } from "./PrintReceipt";
@@ -217,6 +217,38 @@ export function ReportsPage() {
                     labelEvery={1}
                   />
                 </ChartCard>
+                <ChartCard title="Avaliações dos clientes" subtitle="Dadas pelos clientes depois da entrega (1 a 5 estrelas)">
+                  {report.kpis.reviewCount === 0 ? (
+                    <p className="small muted">Ainda não há avaliações neste período.</p>
+                  ) : (
+                    <>
+                      <p>
+                        <span className="stars-static" aria-hidden="true">
+                          {"★".repeat(Math.round(report.kpis.avgRating ?? 0))}
+                          <span className="stars-off">{"★".repeat(5 - Math.round(report.kpis.avgRating ?? 0))}</span>
+                        </span>{" "}
+                        <strong>{report.kpis.avgRating?.toLocaleString("pt-PT")}</strong> de 5 · {report.kpis.reviewCount} avaliação(ões)
+                      </p>
+                      {report.reviews.length > 0 && (
+                        <ul className="review-comments">
+                          {report.reviews.map((r) => (
+                            <li key={r.reference}>
+                              <span className="stars-static small" aria-label={`${r.rating} de 5 estrelas`}>
+                                {"★".repeat(r.rating)}
+                                <span className="stars-off">{"★".repeat(5 - r.rating)}</span>
+                              </span>{" "}
+                              “{r.comment}”
+                              <span className="small muted">
+                                {" "}
+                                — {describeLocation(r.locationType, r.locationLabel)} · {r.reference}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+                </ChartCard>
                 <ChartCard title="Clientes" subtitle="Identificados pelo telefone que indicaram no pedido">
                   <div className="mini-kpis">
                     <div>
@@ -340,6 +372,12 @@ function Kpis({ k, prev, money }: { k: ReportKpis; prev: ReportKpis; money: (c: 
       <Tile label="Encomendas (para mais tarde)" value={String(k.scheduledOrders)} delta={delta(k.scheduledOrders, prev.scheduledOrders)} />
       <Tile label="Sinais recebidos" value={money(k.depositsConfirmedCents)} />
       <Tile label="Tempo médio até confirmar" value={minutes(k.avgMinutesToConfirm)} delta={delta(k.avgMinutesToConfirm ?? 0, prev.avgMinutesToConfirm ?? 0)} upIsBad />
+      <Tile
+        label="Avaliação dos clientes"
+        value={k.avgRating === null ? "—" : `${k.avgRating.toLocaleString("pt-PT")} ★`}
+        note={`${k.reviewCount} avaliação(ões)`}
+        delta={k.avgRating !== null && prev.avgRating !== null ? delta(k.avgRating, prev.avgRating) : undefined}
+      />
       <Tile label="Tempo médio até concluir" value={minutes(k.avgMinutesToComplete)} delta={delta(k.avgMinutesToComplete ?? 0, prev.avgMinutesToComplete ?? 0)} upIsBad />
     </div>
   );
