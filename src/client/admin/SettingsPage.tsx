@@ -100,6 +100,7 @@ export function SettingsPage() {
           dailySummaryEnabled: form.dailySummaryEnabled,
           managerWhatsapp: form.managerWhatsapp,
           managerEmail: form.managerEmail,
+          serviceRequestsEnabled: form.serviceRequestsEnabled,
         },
       });
       setSettings(saved);
@@ -229,6 +230,10 @@ export function SettingsPage() {
         <label className="check">
           <input type="checkbox" checked={form.requireContactPhone} onChange={(e) => set("requireContactPhone", e.target.checked)} />
           Telefone de contacto obrigatório
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={form.serviceRequestsEnabled} onChange={(e) => set("serviceRequestsEnabled", e.target.checked)} />
+          Os clientes podem chamar o empregado e pedir a conta pelo menu
         </label>
       </section>
 

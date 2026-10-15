@@ -922,3 +922,39 @@
 .chat-compose .textarea {
   min-height: 48px;
 }
+
+/* Call the waiter / ask for the bill */
+.call-options {
+  display: grid;
+  gap: var(--sp-3);
+}
+.call-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 2px solid var(--c-line-strong);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  cursor: pointer;
+}
+.call-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.call-option.active {
+  border-color: var(--c-green-800);
+  background: var(--c-green-100);
+}
+.call-option:focus-within {
+  outline: 2px solid var(--c-gold-500);
+  outline-offset: 2px;
+}
+.call-option > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+.call-option-icon {
+  font-size: 1.75rem;
+}

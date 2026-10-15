@@ -1,4 +1,5 @@
-import type { IntegrationStatus, OrderStatus } from "../../shared/constants";
+import type { IntegrationStatus, OrderStatus, PaymentMethod } from "../../shared/constants";
+import type { ServiceRequestDto } from "../../shared/types";
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING: "Pendente",
@@ -8,6 +9,14 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   COMPLETED: "Concluído",
   CANCELLED: "Cancelado",
 };
+
+export const PAYMENT_LABEL: Record<PaymentMethod, string> = { cash: "Dinheiro", card: "Cartão", mpesa: "M-Pesa" };
+
+/** What a guest's call is about, for the dashboard. */
+export function describeServiceRequest(r: Pick<ServiceRequestDto, "kind" | "paymentMethod">): string {
+  if (r.kind === "waiter") return "chama o empregado";
+  return r.paymentMethod ? `pede a conta (${PAYMENT_LABEL[r.paymentMethod]})` : "pede a conta";
+}
 
 /** Label of the button that moves an order to the given status. */
 export const STATUS_ACTION: Record<OrderStatus, string> = {

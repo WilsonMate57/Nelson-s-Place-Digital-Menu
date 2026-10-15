@@ -10,6 +10,7 @@ import { useNow, usePolling } from "./hooks";
 import { STATUS_LABEL, WHATSAPP_STATUS } from "./labels";
 import { OrderDetail } from "./OrderDetail";
 import { useOrderAlerts } from "./order-alerts";
+import { ServiceCalls } from "./ServiceCalls";
 import { useSession } from "./session";
 
 const POLL_MS = 10_000;
@@ -116,6 +117,7 @@ export function OrdersPage({ selectedId, navigate }: { selectedId: number | null
               )}
             </div>
           </div>
+          <ServiceCalls />
           {settings && !settings.ordersEnabled && <p className="alert alert-warning small">Os pedidos pelo menu digital estão pausados.</p>}
           {error && (
             <p className="alert alert-error small" role="alert">

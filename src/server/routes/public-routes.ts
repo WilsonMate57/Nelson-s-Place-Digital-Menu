@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { chatMessageSchema, orderSubmissionSchema } from "../../shared/schemas";
+import { chatMessageSchema, orderSubmissionSchema, serviceRequestSchema } from "../../shared/schemas";
 import type { PublicMenuDto, PublicSettings } from "../../shared/types";
 import { AppError, badRequest } from "../http/errors";
 import { RateLimiter, clientIp, rateLimit, readJson } from "../http/middleware";
@@ -41,6 +41,7 @@ export function publicRoutes(s: Services) {
       paymentInstructions: settings.paymentInstructions,
       whatsappContactNumber: settings.whatsappNumber || null,
       whatsappMode: s.whatsapp.mode,
+      serviceRequestsEnabled: settings.serviceRequestsEnabled,
     };
     const products = s.menuRepo
       .listProducts({ includeArchived: false, activeCategoriesOnly: true })
@@ -94,6 +95,24 @@ export function publicRoutes(s: Services) {
     if (!TOKEN_PATTERN.test(token)) throw new AppError(404, "NOT_FOUND", "Pedido não encontrado");
     s.orders.recordWhatsAppLinkOpened(token);
     return c.body(null, 204);
+  });
+
+  // Calling the waiter / asking for the bill (no order needed).
+  const serviceLimiter = new RateLimiter(20, 10 * 60_000);
+  app.post(
+    "/service-requests",
+    bodyLimit({ maxSize: 4 * 1024, onError: () => { throw badRequest("BODY_TOO_LARGE", "Pedido demasiado grande"); } }),
+    rateLimit(serviceLimiter, (c) => `service:${ip(c)}`),
+    async (c) => {
+      const input = await readJson(c, serviceRequestSchema);
+      const result = s.serviceRequests.create(input);
+      return c.json(result.request, result.created ? 201 : 200);
+    },
+  );
+  app.get("/service-requests/:token", rateLimit(trackLimiter, (c) => `track:${ip(c)}`), (c) => {
+    const token = c.req.param("token");
+    if (!TOKEN_PATTERN.test(token)) throw new AppError(404, "NOT_FOUND", "Chamada não encontrada");
+    return c.json(s.serviceRequests.guestStatus(token));
   });
 
   return app;

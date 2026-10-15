@@ -24,6 +24,8 @@ import { publicRoutes } from "./routes/public-routes";
 import { AuthService } from "./services/auth-service";
 import { ImageStore } from "./services/image-store";
 import { MaintenanceService } from "./services/maintenance-service";
+import { ServiceRequestsRepo } from "./repositories/service-requests-repo";
+import { ServiceRequestService } from "./services/service-request-service";
 import { OrderService } from "./services/order-service";
 import { ReportService } from "./services/report-service";
 import { CloudApiSender, type FetchLike } from "./whatsapp/cloud-api";
@@ -48,6 +50,7 @@ export interface Services {
   whatsapp: WhatsAppService;
   images: ImageStore;
   maintenance: MaintenanceService;
+  serviceRequests: ServiceRequestService;
 }
 
 export interface AppDeps {
@@ -111,6 +114,7 @@ export function createServices(config: AppConfig, db: Db, deps: AppDeps = {}): S
     whatsapp,
     images: new ImageStore(config.uploadsDir),
     maintenance: new MaintenanceService(db, ordersRepo, config.backupDir, deps.now),
+    serviceRequests: new ServiceRequestService(new ServiceRequestsRepo(db, deps.now), settingsRepo, deps.now),
   };
 }
 

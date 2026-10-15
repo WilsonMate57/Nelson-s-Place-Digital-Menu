@@ -274,4 +274,20 @@ export const MIGRATIONS: readonly string[] = [
   ALTER TABLE products ADD COLUMN stock_qty INTEGER CHECK (stock_qty IS NULL OR stock_qty >= 0);
   ALTER TABLE order_items ADD COLUMN stock_taken INTEGER NOT NULL DEFAULT 0 CHECK (stock_taken >= 0);
   `,
+
+  /* 6 — guests calling the waiter or asking for the bill from their table/apartment. */ `
+  CREATE TABLE service_requests (
+    id              INTEGER PRIMARY KEY,
+    public_token    TEXT    NOT NULL UNIQUE,
+    kind            TEXT    NOT NULL CHECK (kind IN ('waiter','bill')),
+    location_type   TEXT    NOT NULL CHECK (location_type IN ('room','table')),
+    location_label  TEXT    NOT NULL,
+    payment_method  TEXT    CHECK (payment_method IS NULL OR payment_method IN ('cash','card','mpesa')),
+    status          TEXT    NOT NULL DEFAULT 'open' CHECK (status IN ('open','done')),
+    handled_by      INTEGER REFERENCES staff(id) ON DELETE SET NULL,
+    handled_at      TEXT,
+    created_at      TEXT    NOT NULL DEFAULT ${NOW}
+  );
+  CREATE INDEX idx_service_requests_status ON service_requests(status, created_at);
+  `,
 ];

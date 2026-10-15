@@ -6,6 +6,8 @@ import {
   ORDER_LOCATION_TYPES,
   ORDER_STATUSES,
   PASSWORD_MIN_LENGTH,
+  PAYMENT_METHODS,
+  SERVICE_REQUEST_KINDS,
 } from "./constants";
 import { PERMISSIONS } from "./permissions";
 import { HM_PATTERN, parseHm } from "./schedule";
@@ -41,6 +43,9 @@ const optionalLocalizedText = (max: number) =>
 
 const id = z.number().int().positive();
 
+/** Table / apartment numbers: letters, digits, space and ._-/# only. */
+const LOCATION_LABEL_PATTERN = /^[\p{L}\p{N} ._\-/#]*$/u;
+
 // ---------------------------------------------------------------------------
 // Guest order submission
 // ---------------------------------------------------------------------------
@@ -60,7 +65,7 @@ export const orderSubmissionSchema = z.object({
       type: z.enum(ORDER_LOCATION_TYPES),
       // Table or apartment number; not used for take-away.
       label: text(ORDER_LIMITS.maxLocationLabelLength)
-        .pipe(z.string().regex(/^[\p{L}\p{N} ._\-/#]*$/u, "Caracteres inválidos"))
+        .pipe(z.string().regex(LOCATION_LABEL_PATTERN, "Caracteres inválidos"))
         .default(""),
     })
     .refine((l) => l.type === "takeaway" || l.label.length > 0, { message: "Obrigatório", path: ["label"] }),
@@ -84,6 +89,17 @@ export const orderSubmissionSchema = z.object({
 });
 
 export type OrderSubmission = z.infer<typeof orderSubmissionSchema>;
+
+export const serviceRequestSchema = z.object({
+  kind: z.enum(SERVICE_REQUEST_KINDS),
+  location: z.object({
+    type: z.enum(LOCATION_TYPES),
+    label: requiredText(ORDER_LIMITS.maxLocationLabelLength).pipe(z.string().regex(LOCATION_LABEL_PATTERN, "Caracteres inválidos")),
+  }),
+  paymentMethod: z.enum(PAYMENT_METHODS).nullish().transform((v) => v ?? null),
+});
+
+export type ServiceRequestInput = z.infer<typeof serviceRequestSchema>;
 export type OrderSubmissionInput = z.input<typeof orderSubmissionSchema>;
 
 // ---------------------------------------------------------------------------
@@ -261,6 +277,7 @@ export const settingsInputSchema = z.object({
     .transform((v) => v.replace(/[\s+()-]/g, ""))
     .refine((v) => v === "" || /^[1-9][0-9]{7,14}$/.test(v), "Use o formato internacional, ex.: 258XXXXXXXXX"),
   managerEmail: text(120).pipe(z.union([z.literal(""), z.email("Email inválido")])),
+  serviceRequestsEnabled: z.boolean(),
 }).refine((s) => parseHm(s.kitchenOpen) < parseHm(s.kitchenClose), {
   message: "O fecho da cozinha deve ser depois da abertura",
   path: ["kitchenClose"],

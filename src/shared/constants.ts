@@ -31,6 +31,14 @@ export type OrderLocationType = (typeof ORDER_LOCATION_TYPES)[number];
 export const DEPOSIT_STATUSES = ["not_required", "pending", "confirmed"] as const;
 export type DepositStatus = (typeof DEPOSIT_STATUSES)[number];
 
+/** What a guest can ask for without ordering. */
+export const SERVICE_REQUEST_KINDS = ["waiter", "bill"] as const;
+export type ServiceRequestKind = (typeof SERVICE_REQUEST_KINDS)[number];
+
+/** How the guest intends to pay the bill (so staff bring the card machine, etc.). */
+export const PAYMENT_METHODS = ["cash", "card", "mpesa"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 export const WHATSAPP_MODES = ["link", "cloud_api"] as const;
 export type WhatsAppMode = (typeof WHATSAPP_MODES)[number];
 

@@ -13,6 +13,7 @@ import { GUEST_LANGUAGES, makeTranslator } from "./i18n";
 import { MenuView } from "./MenuView";
 import { OrderStatusView } from "./OrderStatusView";
 import { ProductDialog } from "./ProductDialog";
+import { ServiceDialog } from "./ServiceDialog";
 
 const LANGUAGE_KEY = "np.language";
 const LAST_ORDER_KEY = "np.lastOrder";
@@ -49,6 +50,7 @@ export function GuestApp() {
   const [menuState, setMenuState] = useState<MenuState>({ status: "loading" });
   const [openProduct, setOpenProduct] = useState<ProductDto | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
   const [orderToken, setOrderToken] = useState<string | null>(readOrderToken);
   const [placedOrder, setPlacedOrder] = useState<GuestOrderDto | null>(null);
   const [lastOrder, setLastOrder] = useState<string | null>(() => storage.get<string>(LAST_ORDER_KEY));
@@ -141,6 +143,8 @@ export function GuestApp() {
           hotelName={settings.hotelName}
           lastOrder={lastOrder && !orderToken ? () => showOrder(lastOrder) : undefined}
           lastOrderLabel={t("myOrder")}
+          onCall={settings.serviceRequestsEnabled ? () => setCallOpen(true) : undefined}
+          callLabel={t("callStaff")}
         />
 
         {orderToken ? (
@@ -202,6 +206,7 @@ export function GuestApp() {
           </div>
         )}
 
+        {settings.serviceRequestsEnabled && <ServiceDialog open={callOpen} onClose={() => setCallOpen(false)} qrLocation={qrLocation} />}
         <ProductDialog
           product={openProduct}
           canOrder={settings.ordersEnabled}
@@ -243,6 +248,8 @@ function Header(props: {
   hotelName: string;
   lastOrder?: (() => void) | undefined;
   lastOrderLabel?: string;
+  onCall?: (() => void) | undefined;
+  callLabel?: string;
 }) {
   const t = makeTranslator(props.language);
   return (
@@ -258,6 +265,12 @@ function Header(props: {
           </span>
         </a>
         <div className="header-actions">
+          {props.onCall && (
+            <button type="button" className="my-order-btn call-btn" onClick={props.onCall} aria-label={props.callLabel} title={props.callLabel}>
+              <span aria-hidden="true">🛎️</span>
+              <span className="my-order-label">{props.callLabel}</span>
+            </button>
+          )}
           {props.lastOrder && (
             <button type="button" className="my-order-btn" onClick={props.lastOrder} aria-label={props.lastOrderLabel} title={props.lastOrderLabel}>
               <svg className="my-order-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">

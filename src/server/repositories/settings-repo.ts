@@ -39,6 +39,8 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   dailySummaryEnabled: false,
   managerWhatsapp: "",
   managerEmail: "",
+  // "Chamar o empregado / pedir a conta" from the menu.
+  serviceRequestsEnabled: true,
 };
 
 const KEY = "general";

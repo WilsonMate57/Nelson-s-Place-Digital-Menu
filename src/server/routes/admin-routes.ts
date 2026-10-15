@@ -78,6 +78,14 @@ export function adminRoutes(s: Services) {
 
   app.get("/kitchen", can("orders.view"), (c) => c.json(s.orders.kitchen()));
 
+  // --- Guests calling the waiter / asking for the bill -----------------------
+
+  app.get("/service-requests", can("orders.view"), (c) => c.json(s.serviceRequests.listOpen()));
+
+  app.post("/service-requests/:id/done", can("orders.status"), (c) =>
+    c.json(s.serviceRequests.markDone(parseId(c.req.param("id")), c.get("staff").id)),
+  );
+
   app.post("/orders/:id/status", can("orders.status", "orders.cancel"), async (c) => {
     const id = parseId(c.req.param("id"));
     const input = await readJson(c, orderStatusUpdateSchema);

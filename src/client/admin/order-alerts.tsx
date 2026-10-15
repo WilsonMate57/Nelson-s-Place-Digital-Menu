@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import type { OrderListResponse } from "../../shared/types";
+import type { OrderListResponse, ServiceRequestDto } from "../../shared/types";
 import { describeLocation } from "../../shared/whatsapp-message";
 import { useToast } from "../components/Toasts";
 import { api } from "../lib/api";
 import { withBase } from "../lib/base";
 import { formatTime, storage } from "../lib/util";
+import { describeServiceRequest } from "./labels";
 import { useSession } from "./session";
 
 /**
@@ -29,6 +30,10 @@ export interface OrderAlerts {
   /** Scheduled orders whose preparation should start now. */
   dueIds: ReadonlySet<number>;
   markSeen: (orderId: number) => void;
+  /** Guests calling the waiter / asking for the bill, oldest first. */
+  serviceRequests: ServiceRequestDto[];
+  /** Marks a call as handled and refreshes the list. */
+  resolveServiceRequest: (id: number) => Promise<void>;
   alertsOn: boolean;
   toggleAlerts: () => void;
 }
@@ -94,6 +99,8 @@ export function OrderAlertsProvider({ children }: { children: ReactNode }) {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [freshIds, setFreshIds] = useState<Set<number>>(new Set());
   const [dueIds, setDueIds] = useState<Set<number>>(new Set());
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequestDto[]>([]);
+  const knownCalls = useRef<Set<number> | null>(null);
   const knownPending = useRef<Set<number> | null>(null);
   const lastUnread = useRef<number | null>(null);
   const notifiedDue = useRef<Set<number>>(new Set());
@@ -141,6 +148,17 @@ export function OrderAlertsProvider({ children }: { children: ReactNode }) {
         lastUnread.current = pending.unreadMessagesTotal;
         setUnreadMessages(pending.unreadMessagesTotal);
 
+        const calls = await api<ServiceRequestDto[]>("/api/admin/service-requests");
+        if (stopped) return;
+        if (knownCalls.current) {
+          const known = knownCalls.current;
+          for (const call of calls.filter((x) => !known.has(x.id))) {
+            signal(call.kind === "bill" ? "🧾 Pedido de conta" : "🛎️ Chamada", `${describeLocation(call.locationType, call.locationLabel)} ${describeServiceRequest(call)}`);
+          }
+        }
+        knownCalls.current = new Set(calls.map((x) => x.id));
+        setServiceRequests(calls);
+
         const scheduled = await api<OrderListResponse>("/api/admin/orders?status=SCHEDULED&limit=200");
         if (stopped) return;
         const leadMs = leadMinutes.current * 60_000;
@@ -175,7 +193,12 @@ export function OrderAlertsProvider({ children }: { children: ReactNode }) {
     };
   }, [enabled, signal]);
 
-  const attention = pendingCount + unreadMessages + dueIds.size;
+  const attention = pendingCount + unreadMessages + dueIds.size + serviceRequests.length;
+
+  const resolveServiceRequest = useCallback(async (id: number) => {
+    await api(`/api/admin/service-requests/${id}/done`, { method: "POST" });
+    setServiceRequests((list) => list.filter((x) => x.id !== id));
+  }, []);
 
   useEffect(() => {
     document.title = attention > 0 ? `(${attention}) Pedidos | Nelson's Place` : BASE_TITLE;
@@ -209,6 +232,8 @@ export function OrderAlertsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ attention, pendingCount, unreadMessages, freshIds, dueIds, markSeen, alertsOn, toggleAlerts }}>{children}</Ctx.Provider>
+    <Ctx.Provider value={{ attention, pendingCount, unreadMessages, freshIds, dueIds, markSeen, serviceRequests, resolveServiceRequest, alertsOn, toggleAlerts }}>
+      {children}
+    </Ctx.Provider>
   );
 }

@@ -1460,3 +1460,30 @@ body {
   display: grid;
   gap: var(--sp-1);
 }
+
+/* Guests calling the waiter / asking for the bill */
+.service-calls {
+  border: 2px solid var(--c-gold-500);
+  background: var(--c-gold-100);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+}
+.service-calls-title {
+  font-size: 1rem;
+  margin: 0 0 var(--sp-2);
+}
+.service-calls ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.service-call {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.service-call-text {
+  flex: 1;
+}

@@ -5,6 +5,8 @@ import type {
   LocationType,
   OrderLocationType,
   OrderStatus,
+  PaymentMethod,
+  ServiceRequestKind,
   WhatsAppMode,
 } from "./constants";
 import type { Permission } from "./permissions";
@@ -100,6 +102,8 @@ export interface PublicSettings {
   paymentInstructions: LocalizedText | null;
   whatsappContactNumber: string | null;
   whatsappMode: WhatsAppMode;
+  /** Guests may call the waiter / ask for the bill. */
+  serviceRequestsEnabled: boolean;
 }
 
 /** Full settings, editable by administrators. */
@@ -256,6 +260,27 @@ export interface OrderListResponse {
   /** Unread guest chat messages across all orders. */
   unreadMessagesTotal: number;
   serverTime: string;
+}
+
+/** A guest calling the waiter or asking for the bill. */
+export interface ServiceRequestDto {
+  id: number;
+  kind: ServiceRequestKind;
+  locationType: LocationType;
+  locationLabel: string;
+  paymentMethod: PaymentMethod | null;
+  status: "open" | "done";
+  createdAt: string;
+  handledAt: string | null;
+  handledByName: string | null;
+}
+
+/** What the guest sees after calling (the token is their private reference). */
+export interface GuestServiceRequestDto {
+  token: string;
+  kind: ServiceRequestKind;
+  status: "open" | "done";
+  createdAt: string;
 }
 
 /** Kitchen screen: accepted orders with their items. */
