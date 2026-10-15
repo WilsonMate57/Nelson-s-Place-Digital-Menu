@@ -206,6 +206,17 @@ export class OrdersRepo {
     return rows.map((r) => ({ ...this.toBase(r), itemCount: r.item_count, whatsappStatus: r.whatsapp_status, unreadMessages: r.unread_messages }));
   }
 
+  /** Accepted orders the kitchen still has to prepare or hand over, oldest (or soonest scheduled) first. */
+  listForKitchen(): OrderDto[] {
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM orders WHERE status IN ('CONFIRMED','PREPARING','READY')
+         ORDER BY COALESCE(scheduled_for, created_at), id LIMIT 200`,
+      )
+      .all() as OrderRow[];
+    return rows.map((r) => this.toDto(r));
+  }
+
   countByStatus(): Record<OrderStatus, number> {
     const counts = Object.fromEntries(ORDER_STATUSES.map((s) => [s, 0])) as Record<OrderStatus, number>;
     const rows = this.db.prepare("SELECT status, COUNT(*) AS n FROM orders GROUP BY status").all() as { status: OrderStatus; n: number }[];

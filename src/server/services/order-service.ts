@@ -4,7 +4,7 @@ import { canTransition } from "../../shared/order-status";
 import { PricingError, priceOrder } from "../../shared/pricing";
 import { checkScheduledTime, hotelClock, inWindow, isKitchenOpen, type ScheduleError, type ScheduleRules } from "../../shared/schedule";
 import type { OrderSubmission } from "../../shared/schemas";
-import type { AdminOrderDetailDto, AdminSettings, GuestOrderDto, OrderDto, OrderListResponse, ProductDto } from "../../shared/types";
+import type { AdminOrderDetailDto, AdminSettings, GuestOrderDto, KitchenDto, OrderDto, OrderListResponse, ProductDto } from "../../shared/types";
 import type { Db } from "../db/connection";
 import { AppError, badRequest, conflict, notFound } from "../http/errors";
 import type { MenuRepo } from "../repositories/menu-repo";
@@ -174,6 +174,15 @@ export class OrderService {
       counts: this.orders.countByStatus(),
       scheduledCount: this.orders.countScheduledActive(),
       unreadMessagesTotal: this.orders.unreadMessagesTotal(),
+      serverTime: this.now().toISOString(),
+    };
+  }
+
+  kitchen(): KitchenDto {
+    return {
+      orders: this.orders.listForKitchen(),
+      pendingCount: this.orders.countByStatus().PENDING,
+      leadMinutes: this.settings.get().minLeadMinutes,
       serverTime: this.now().toISOString(),
     };
   }

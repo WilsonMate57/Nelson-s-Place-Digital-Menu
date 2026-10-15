@@ -258,6 +258,16 @@ export interface OrderListResponse {
   serverTime: string;
 }
 
+/** Kitchen screen: accepted orders with their items. */
+export interface KitchenDto {
+  orders: OrderDto[];
+  /** Orders still waiting for reception to confirm them. */
+  pendingCount: number;
+  /** Minutes before a scheduled time when preparation should start. */
+  leadMinutes: number;
+  serverTime: string;
+}
+
 export interface ApiErrorBody {
   error: { code: string; message: string; details?: unknown };
 }

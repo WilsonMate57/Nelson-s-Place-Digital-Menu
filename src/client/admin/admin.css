@@ -1338,3 +1338,125 @@ body {
 .danger-zone .card-title {
   color: var(--c-danger);
 }
+
+/* Kitchen screen: large type for a tablet on the pass */
+.kitchen {
+  display: grid;
+  gap: var(--sp-4);
+}
+.kitchen-head .kitchen-clock {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.kitchen-pending {
+  font-size: 1rem;
+  text-decoration: none;
+}
+.kitchen-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .kitchen-board {
+    grid-template-columns: 1fr;
+  }
+}
+.kitchen-col {
+  display: grid;
+  gap: var(--sp-3);
+  background: var(--c-cream);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  min-height: 8rem;
+}
+.kitchen-col-title {
+  font-size: 1.25rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.kitchen-count {
+  background: var(--c-green-800);
+  color: var(--c-paper);
+  border-radius: var(--r-pill);
+  padding: 0 0.6em;
+  font-size: 1rem;
+}
+.kitchen-empty {
+  margin: 0;
+}
+.kitchen-ticket {
+  background: var(--c-surface);
+  border: 2px solid var(--c-line-strong);
+  border-radius: var(--r-sm);
+  padding: var(--sp-3);
+  display: grid;
+  gap: var(--sp-2);
+}
+.kitchen-ticket.is-late {
+  border-color: var(--c-danger);
+  box-shadow: 0 0 0 2px var(--c-danger-bg);
+}
+.kitchen-ticket-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+.kitchen-where {
+  font-size: 1.4rem;
+}
+.kitchen-ref {
+  font-family: ui-monospace, monospace;
+  color: var(--c-muted);
+}
+.kitchen-time {
+  margin: 0;
+  color: var(--c-muted);
+}
+.is-late .kitchen-time {
+  color: var(--c-danger);
+  font-weight: 700;
+}
+.kitchen-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+  font-size: 1.15rem;
+}
+.kitchen-qty {
+  font-weight: 800;
+}
+.kitchen-options {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--c-muted);
+  padding-left: 1.6em;
+}
+.kitchen-note {
+  display: block;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--c-warning);
+}
+.kitchen-items .kitchen-note {
+  padding-left: 1.6em;
+}
+.kitchen-action {
+  width: 100%;
+  min-height: 3.25rem;
+  font-size: 1.15rem;
+}
+.kitchen-later ul {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: var(--sp-1);
+}

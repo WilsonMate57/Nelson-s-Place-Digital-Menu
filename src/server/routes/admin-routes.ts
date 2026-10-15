@@ -76,6 +76,8 @@ export function adminRoutes(s: Services) {
 
   app.get("/orders/:id", can("orders.view"), (c) => c.json(s.orders.detail(parseId(c.req.param("id")))));
 
+  app.get("/kitchen", can("orders.view"), (c) => c.json(s.orders.kitchen()));
+
   app.post("/orders/:id/status", can("orders.status", "orders.cancel"), async (c) => {
     const id = parseId(c.req.param("id"));
     const input = await readJson(c, orderStatusUpdateSchema);

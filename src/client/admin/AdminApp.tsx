@@ -7,6 +7,7 @@ import { AccountPage } from "./AccountPage";
 import { AuditPage } from "./AuditPage";
 import { DataCleanup } from "./DataCleanup";
 import { useHashRoute } from "./hooks";
+import { KitchenPage } from "./KitchenPage";
 import { LoginPage } from "./LoginPage";
 import { MenuPage } from "./MenuPage";
 import { OrdersPage } from "./OrdersPage";
@@ -71,6 +72,7 @@ export function AdminApp() {
 /** Each section is shown to profiles holding any of its permissions (none = everyone). */
 const NAV: { path: string; label: string; needs?: Permission[] }[] = [
   { path: "orders", label: "Pedidos", needs: ["orders.view"] },
+  { path: "kitchen", label: "Cozinha", needs: ["orders.view"] },
   { path: "menu", label: "Menu", needs: ["menu.availability", "menu.edit"] },
   { path: "reports", label: "Relatórios", needs: ["reports.view"] },
   { path: "staff", label: "Equipa", needs: ["staff.manage"] },
@@ -177,6 +179,7 @@ function Shell({ onSignedOut }: { onSignedOut: () => void }) {
       </header>
       <main id="admin-main" className="admin-main">
         {current === "orders" && <OrdersPage selectedId={route[1] ? Number(route[1]) : null} navigate={navigate} />}
+        {current === "kitchen" && <KitchenPage />}
         {current === "menu" && <MenuPage />}
         {current === "reports" && <ReportsPage />}
         {current === "staff" && <StaffPage />}
