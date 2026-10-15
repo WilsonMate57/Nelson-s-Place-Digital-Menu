@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ORDER_LIMITS, type LocationType, type OrderLocationType } from "../../shared/constants";
+import { LANGUAGE_LOCALES, ORDER_LIMITS, type LocationType, type OrderLocationType } from "../../shared/constants";
 import { addDays, availableSlots, formatHm, hotelClock, inWindow, isKitchenOpen, type TimeWindow } from "../../shared/schedule";
 import type { OrderSubmissionInput } from "../../shared/schemas";
 import type { CategoryDto, GuestOrderDto, ProductDto } from "../../shared/types";
@@ -199,7 +199,7 @@ function CheckoutStep({ lines, priced, qrLocation, products, categories, onBack,
     const today = hotelClock(now).day;
     if (d === today) return t("today");
     if (d === addDays(today, 1)) return t("tomorrow");
-    return new Intl.DateTimeFormat(language === "pt" ? "pt-PT" : "en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(
+    return new Intl.DateTimeFormat(LANGUAGE_LOCALES[language], { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(
       new Date(`${d}T12:00:00Z`),
     );
   };

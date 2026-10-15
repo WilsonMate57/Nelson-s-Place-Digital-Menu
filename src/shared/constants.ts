@@ -4,8 +4,20 @@
  * only their display labels are localised.
  */
 
-export const LANGUAGES = ["pt", "en", "fr", "es"] as const;
+export const LANGUAGES = ["pt", "en", "fr", "es", "ru", "de", "af", "zu"] as const;
 export type Language = (typeof LANGUAGES)[number];
+
+/** Locale used to format dates and numbers for each language. */
+export const LANGUAGE_LOCALES: Record<Language, string> = {
+  pt: "pt-PT",
+  en: "en-GB",
+  fr: "fr-FR",
+  es: "es-ES",
+  ru: "ru-RU",
+  de: "de-DE",
+  af: "af-ZA",
+  zu: "zu-ZA",
+};
 export const DEFAULT_LANGUAGE: Language = "pt";
 
 export const ORDER_STATUSES = [

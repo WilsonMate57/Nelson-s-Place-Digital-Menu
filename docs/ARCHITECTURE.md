@@ -83,7 +83,7 @@ SQLite has no row-level security; access control is enforced in the API, and the
 
 ## 5. Localisation and time
 
-- Guest UI: Portuguese (Mozambique) by default, English available; dictionaries in `src/client/guest/i18n.ts`. French/Spanish strings existed in the prototype but were unverified; add them as new dictionaries once professionally checked. Product/category content has `pt` (required) and optional `en`/`fr`/`es` fields.
+- Guest UI: Portuguese (Mozambique) by default; English built in; French, Spanish, German, Russian, Afrikaans and isiZulu in `src/client/guest/locales/`, downloaded only when chosen (machine-assisted, pending native review). Product/category content has `pt` (required) and optional fields for every language; untranslated content falls back to English, then Portuguese.
 - Admin UI and WhatsApp messages: Portuguese (read by staff). Item names are snapshotted in Portuguese.
 - Currency: MZN, stored as integer centavos, displayed as `650 MT` (symbol configurable).
 - Time: stored as UTC ISO-8601; displayed in `Africa/Maputo` (UTC+2, no DST). Order references use the Maputo date: `NP-YYMMDD-XXXX`.

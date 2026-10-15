@@ -34,6 +34,10 @@ export const localizedTextSchema = (max: number) =>
     en: optionalLang(max),
     fr: optionalLang(max),
     es: optionalLang(max),
+    ru: optionalLang(max),
+    de: optionalLang(max),
+    af: optionalLang(max),
+    zu: optionalLang(max),
   });
 
 const optionalLocalizedText = (max: number) =>

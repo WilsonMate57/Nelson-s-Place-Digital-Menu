@@ -1366,8 +1366,9 @@ body {
 }
 .kitchen-col {
   display: grid;
+  align-content: start;
   gap: var(--sp-3);
-  background: var(--c-cream);
+  background: var(--c-green-100);
   border-radius: var(--r-md);
   padding: var(--sp-3);
   min-height: 8rem;

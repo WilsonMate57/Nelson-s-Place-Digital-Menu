@@ -101,6 +101,18 @@ Admin-only "Relatórios" screen with one period filter (today, yesterday, 7/30 d
 
 Staff permissions are now granular and grouped into **editable profiles** (Equipa → Perfis de acesso): Administrador (everything, locked), Gerente (all but staff/settings/audit), Recepção and Cozinha (identical, as requested: orders, cancellations, deposits, chat, availability, pause, menu editing, prices, reports — no exports). Admins can create new profiles (e.g. "Caixa") with any combination. Enforced on the server for every route; the dashboard hides what a profile cannot do. Existing users were migrated automatically.
 
+## Operations and guest features (2026-10-15)
+
+- **Daily backup on the server** (production): `~/nelsons-menu/backup.sh` at 03:00 via the subscription crontab — database (last 30) and photos; first run verified (integrity ok). **Not yet copied off the server.**
+- **Limpar pedidos** (Definições, `settings.manage`): delete orders of a period (all or only cancelled) after a preview and typing APAGAR; automatic full database copy first (`BACKUP_DIR`), audit entry. Tested.
+- **Stock**: optional units per product (Menu → Stock), taken inside the order transaction, refused when insufficient, returned on cancellation, "Últimas N" for guests. Tested.
+- **Cozinha** (kitchen screen): accepted orders in three columns with items/options/notes, one-tap progress, late orders highlighted, scheduled orders when due, full-screen. API tested; layout checked in the browser e2e.
+- **Chamar o empregado / pedir a conta**: guest calls from the table/apartment (with payment preference for the bill), dashboard-wide alerts, «Chamadas» list with «Atendido», guest sees when handled, duplicates within 10 min merged, can be switched off. Tested.
+- **Avaliação** after delivery (1–5 stars + comment, once), shown on the order, in reports (average, trend, comments) and the daily summary. Tested.
+- **Pedir outra vez**: puts the same items/options back in the cart, skipping unavailable ones.
+- **Destaques e promoções**: featured items with a label at the top of the menu; promotional price with optional dates and daily hours, charged by the server only while it applies (needs `menu.prices`). Tested.
+- **Languages**: guest interface in pt, en, fr, es, de, ru, af, zu (others loaded on demand). The six new translations are **machine-assisted and not reviewed by native speakers** — isiZulu and Afrikaans especially need review. Dish names/descriptions are edited in PT/EN only; other languages show the English text. Cyrillic uses the phone's system font (the self-hosted fonts are Latin only).
+
 ## Pending business decisions (blockers for go-live)
 
 1. **Real menu**: partially transcribed (see above); management must confirm prices, resolve the doubts in MENU_REVISAO.md and provide dish photos.

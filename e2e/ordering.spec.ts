@@ -433,7 +433,7 @@ test("admin creates an access profile and the dashboard adapts to it", async ({ 
   await cashier.getByRole("button", { name: "Entrar" }).click();
   await expect(cashier.getByRole("heading", { name: "Pedidos", exact: true })).toBeVisible();
   const nav = cashier.getByRole("navigation", { name: "Secções do painel" });
-  await expect(nav.getByRole("link")).toHaveText([/^Pedidos/, "Conta"]); // "Pedidos" may carry the pending counter
+  await expect(nav.getByRole("link")).toHaveText([/^Pedidos/, "Cozinha", "Conta"]); // "Pedidos" may carry the pending counter
   await expect(cashier.locator(".admin-user-name small")).toHaveText("Caixa");
   expect((await cashier.request.get("/api/admin/reports?from=2026-10-13&to=2026-10-13")).status()).toBe(403);
   await other.close();

@@ -10,7 +10,7 @@ import { storage } from "../lib/util";
 import { useCart, usePricedCart } from "./cart";
 import { CartSheet, type QrLocation } from "./CartSheet";
 import { GuestContext, type GuestContextValue } from "./context";
-import { GUEST_LANGUAGES, makeTranslator } from "./i18n";
+import { GUEST_LANGUAGES, isDictionaryLoaded, loadDictionary, makeTranslator } from "./i18n";
 import { MenuView } from "./MenuView";
 import { OrderStatusView } from "./OrderStatusView";
 import { ProductDialog } from "./ProductDialog";
@@ -56,6 +56,8 @@ export function GuestApp() {
   const [placedOrder, setPlacedOrder] = useState<GuestOrderDto | null>(null);
   const [lastOrder, setLastOrder] = useState<string | null>(() => storage.get<string>(LAST_ORDER_KEY));
   const [qrLocation] = useState(readQrLocation);
+  // Bumped when a language's texts finish downloading.
+  const [dictionaries, setDictionaries] = useState(0);
   const cart = useCart();
 
   const loadMenu = useCallback(async () => {
@@ -75,10 +77,17 @@ export function GuestApp() {
   useEffect(() => {
     document.documentElement.lang = language === "pt" ? "pt-MZ" : language;
     storage.set(LANGUAGE_KEY, language);
+    if (!isDictionaryLoaded(language)) {
+      loadDictionary(language).then(
+        () => setDictionaries((n) => n + 1),
+        () => undefined, // offline: English stays on screen
+      );
+    }
   }, [language]);
 
   const menu = menuState.status === "ready" ? menuState.menu : null;
-  const t = useMemo(() => makeTranslator(language), [language]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- re-create when a dictionary arrives
+  const t = useMemo(() => makeTranslator(language), [language, dictionaries]);
   const ctx: GuestContextValue | null = useMemo(
     () =>
       menu && {
@@ -304,7 +313,7 @@ function Header(props: {
           </label>
           <select id="language" className="select language-select" value={props.language} onChange={(e) => props.onLanguage(e.target.value as Language)}>
             {GUEST_LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code} aria-label={l.label}>
+              <option key={l.code} value={l.code} aria-label={l.label} title={l.label}>
                 {l.code.toUpperCase()}
               </option>
             ))}

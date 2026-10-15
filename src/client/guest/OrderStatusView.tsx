@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { OrderStatus } from "../../shared/constants";
+import { LANGUAGE_LOCALES, type OrderStatus } from "../../shared/constants";
 import { isFinalStatus } from "../../shared/order-status";
 import type { GuestOrderDto } from "../../shared/types";
 import { api, ApiError } from "../lib/api";
@@ -113,7 +113,7 @@ export function OrderStatusView({ token, initial, onBackToMenu, onForget, onOrde
 
   const stepIndex = STEPS.indexOf(order.status);
   const cancelled = order.status === "CANCELLED";
-  const locale = language === "pt" ? "pt-PT" : "en-GB";
+  const locale = LANGUAGE_LOCALES[language];
 
   return (
     <main id="main" className="container order-view">

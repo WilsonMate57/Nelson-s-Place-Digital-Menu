@@ -193,7 +193,8 @@ const pt = {
 };
 
 export type MessageKey = keyof typeof pt;
-type Dictionary = Record<MessageKey, string>;
+export type Dictionary = Record<MessageKey, string>;
+export const MESSAGE_KEYS = Object.keys(pt) as MessageKey[];
 
 const en: Dictionary = {
   skipToMenu: "Skip to menu",
@@ -383,15 +384,40 @@ const en: Dictionary = {
 
 const DICTIONARIES: Partial<Record<Language, Dictionary>> = { pt, en };
 
+// Other languages are downloaded only when a guest picks them.
+const LOADERS: Partial<Record<Language, () => Promise<Dictionary>>> = {
+  fr: () => import("./locales/fr").then((m) => m.fr),
+  es: () => import("./locales/es").then((m) => m.es),
+  ru: () => import("./locales/ru").then((m) => m.ru),
+  de: () => import("./locales/de").then((m) => m.de),
+  af: () => import("./locales/af").then((m) => m.af),
+  zu: () => import("./locales/zu").then((m) => m.zu),
+};
+
+export const isDictionaryLoaded = (language: Language) => !!DICTIONARIES[language];
+
+export async function loadDictionary(language: Language): Promise<void> {
+  if (DICTIONARIES[language]) return;
+  const loader = LOADERS[language];
+  if (loader) DICTIONARIES[language] = await loader();
+}
+
 export const GUEST_LANGUAGES: { code: Language; label: string }[] = [
   { code: "pt", label: "Português" },
   { code: "en", label: "English" },
+  { code: "fr", label: "Français" },
+  { code: "es", label: "Español" },
+  { code: "de", label: "Deutsch" },
+  { code: "ru", label: "Русский" },
+  { code: "af", label: "Afrikaans" },
+  { code: "zu", label: "isiZulu" },
 ];
 
 export type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 export function makeTranslator(language: Language): Translate {
-  const dict = DICTIONARIES[language] ?? pt;
+  // While a language is still downloading, foreign guests see English.
+  const dict = DICTIONARIES[language] ?? (language === "pt" ? pt : en);
   return (key, vars) => {
     let text = dict[key] ?? pt[key];
     if (vars) for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v));

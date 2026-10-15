@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ORDER_LIMITS } from "../../shared/constants";
+import { LANGUAGE_LOCALES, ORDER_LIMITS } from "../../shared/constants";
 import type { ChatThreadDto } from "../../shared/types";
 import { ApiError, api } from "../lib/api";
 import { cx, formatTime } from "../lib/util";
@@ -18,7 +18,7 @@ export function OrderChat({ token }: { token: string }) {
   const lastStaffId = useRef<number | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
   const url = `/api/orders/track/${encodeURIComponent(token)}/messages`;
-  const locale = language === "pt" ? "pt-PT" : "en-GB";
+  const locale = LANGUAGE_LOCALES[language];
 
   const apply = useCallback((next: ChatThreadDto) => {
     const staff = next.messages.filter((m) => m.sender === "staff");
