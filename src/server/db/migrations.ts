@@ -268,4 +268,10 @@ export const MIGRATIONS: readonly string[] = [
   ALTER TABLE staff_v2 RENAME TO staff;
   CREATE INDEX idx_staff_role ON staff(role_id);
   `,
+
+  /* 5 — simple stock: optional quantity per product (NULL = not tracked), and
+     how much each order line took from it so a cancellation can give it back. */ `
+  ALTER TABLE products ADD COLUMN stock_qty INTEGER CHECK (stock_qty IS NULL OR stock_qty >= 0);
+  ALTER TABLE order_items ADD COLUMN stock_taken INTEGER NOT NULL DEFAULT 0 CHECK (stock_taken >= 0);
+  `,
 ];

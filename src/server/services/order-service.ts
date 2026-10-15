@@ -117,6 +117,8 @@ export class OrderService {
         throw err;
       }
 
+      const stockTracked = this.takeStock(submission.items, catalogue);
+
       let reference = generateReference();
       for (let attempt = 0; this.orders.referenceExists(reference); attempt++) {
         if (attempt > 10) throw new Error("Could not generate a unique order reference");
@@ -139,6 +141,7 @@ export class OrderService {
         language: submission.language,
         currency: settings.currency,
         priced,
+        stockTracked,
       });
       this.whatsapp.registerOrder(id);
       return { id, created: true };
@@ -195,9 +198,13 @@ export class OrderService {
     if (to === "CONFIRMED" && order.depositStatus === "pending") {
       throw conflict("DEPOSIT_NOT_CONFIRMED", "Confirme primeiro a recepção do sinal (pagamento de 50%).");
     }
-    if (!this.orders.updateStatus(id, expected, to, staffId, note)) {
-      throw conflict("STATUS_CHANGED", "O estado deste pedido foi alterado por outra pessoa. Actualize e tente novamente.");
-    }
+    this.db.transaction(() => {
+      if (!this.orders.updateStatus(id, expected, to, staffId, note)) {
+        throw conflict("STATUS_CHANGED", "O estado deste pedido foi alterado por outra pessoa. Actualize e tente novamente.");
+      }
+      // A cancelled order gives its units back to stock.
+      if (to === "CANCELLED") for (const r of this.orders.releaseStockTaken(id)) this.menu.returnStock(r.productId, r.quantity);
+    })();
     return this.detail(id);
   }
 
@@ -210,6 +217,29 @@ export class OrderService {
     }
     if (!this.orders.confirmDeposit(id, staffId)) throw conflict("DEPOSIT_NOT_PENDING", "O sinal já foi confirmado.");
     return this.detail(id);
+  }
+
+  /**
+   * Takes the ordered units from products whose stock is tracked. Runs inside
+   * the order transaction, so a refusal undoes everything already taken.
+   */
+  private takeStock(items: OrderSubmission["items"], catalogue: Map<number, ProductDto>): Set<number> {
+    const wanted = new Map<number, number>();
+    for (const item of items) wanted.set(item.productId, (wanted.get(item.productId) ?? 0) + item.quantity);
+    const tracked = new Set<number>();
+    for (const [productId, quantity] of wanted) {
+      const product = catalogue.get(productId);
+      if (!product || product.stockQty === null) continue;
+      if (!this.menu.takeStock(productId, quantity)) {
+        throw conflict("MENU_CHANGED", `«${product.name.pt}»: só restam ${product.stockQty} unidade(s).`, {
+          reason: "OUT_OF_STOCK",
+          productId,
+          available: product.stockQty,
+        });
+      }
+      tracked.add(productId);
+    }
+    return tracked;
   }
 
   /**

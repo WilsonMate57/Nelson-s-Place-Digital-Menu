@@ -49,6 +49,8 @@ export interface ProductDto {
   priceCents: number;
   currency: string;
   isAvailable: boolean;
+  /** Units left when stock is tracked; null = not tracked. 0 = sold out. */
+  stockQty: number | null;
   sortOrder: number;
   optionGroups: OptionGroupDto[];
 }

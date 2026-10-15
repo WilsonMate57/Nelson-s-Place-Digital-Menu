@@ -41,6 +41,7 @@ const ACTION_LABEL: Record<string, string> = {
   report_exported: "Exportou pedidos (CSV)",
   daily_summary_sent_manually: "Enviou resumo do dia",
   orders_deleted: "Apagou pedidos",
+  product_stock: "Alterou stock",
 };
 
 export function AuditPage() {

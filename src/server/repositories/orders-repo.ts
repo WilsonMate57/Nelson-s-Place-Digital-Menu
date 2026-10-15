@@ -72,6 +72,8 @@ export interface NewOrder {
   language: Language;
   currency: string;
   priced: PricedOrder;
+  /** Products whose stock is tracked: their lines record the units taken. */
+  stockTracked: ReadonlySet<number>;
 }
 
 export interface OrderListFilter {
@@ -134,11 +136,14 @@ export class OrdersRepo {
         ).lastInsertRowid,
     );
     const insertItem = this.db.prepare(
-      `INSERT INTO order_items (order_id, product_id, product_name, unit_price_cents, quantity, options_json, notes, line_total_cents)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO order_items (order_id, product_id, product_name, unit_price_cents, quantity, options_json, notes, line_total_cents, stock_taken)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     for (const line of priced.lines) {
-      insertItem.run(id, line.productId, line.productName, line.unitPriceCents, line.quantity, JSON.stringify(line.options), line.notes, line.lineTotalCents);
+      insertItem.run(
+        id, line.productId, line.productName, line.unitPriceCents, line.quantity, JSON.stringify(line.options), line.notes, line.lineTotalCents,
+        order.stockTracked.has(line.productId) ? line.quantity : 0,
+      );
     }
     this.db
       .prepare("INSERT INTO order_status_history (order_id, from_status, to_status, staff_id, note, created_at) VALUES (?, NULL, 'PENDING', NULL, NULL, ?)")
@@ -246,6 +251,18 @@ export class OrdersRepo {
         .run(id, from, to, staffId, note, now);
       return true;
     })();
+  }
+
+  /** Units each product gave to this order, and forgets them (so they are returned only once). */
+  releaseStockTaken(orderId: number): { productId: number; quantity: number }[] {
+    const rows = this.db
+      .prepare(
+        `SELECT product_id AS productId, SUM(stock_taken) AS quantity FROM order_items
+         WHERE order_id = ? AND stock_taken > 0 AND product_id IS NOT NULL GROUP BY product_id`,
+      )
+      .all(orderId) as { productId: number; quantity: number }[];
+    this.db.prepare("UPDATE order_items SET stock_taken = 0 WHERE order_id = ?").run(orderId);
+    return rows;
   }
 
   private purgeWhere(filter: PurgeFilter): { sql: string; params: unknown[] } {

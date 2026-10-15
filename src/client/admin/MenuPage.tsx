@@ -10,6 +10,9 @@ import { useErrorMessage } from "./errors";
 import { ProductEditor } from "./ProductEditor";
 import { useSession } from "./session";
 
+/** Stock at or below this is highlighted. */
+const LOW_STOCK = 3;
+
 interface AdminMenu {
   categories: AdminCategoryDto[];
   products: AdminProductDto[];
@@ -24,6 +27,7 @@ export function MenuPage() {
   const [menu, setMenu] = useState<AdminMenu | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(false);
   const [query, setQuery] = useState("");
   const [editingProduct, setEditingProduct] = useState<AdminProductDto | "new" | null>(null);
   const [newProductCategory, setNewProductCategory] = useState<number | null>(null);
@@ -61,7 +65,28 @@ export function MenuPage() {
   if (!menu) return <div className="state-block" aria-busy="true"><span className="spinner" aria-hidden="true" /></div>;
 
   const q = query.trim().toLowerCase();
-  const visible = menu.products.filter((p) => (showArchived || !p.isArchived) && (!q || p.name.pt.toLowerCase().includes(q) || (p.name.en ?? "").toLowerCase().includes(q)));
+  const visible = menu.products.filter(
+    (p) =>
+      (showArchived || !p.isArchived) &&
+      (!lowStockOnly || (p.stockQty !== null && p.stockQty <= LOW_STOCK)) &&
+      (!q || p.name.pt.toLowerCase().includes(q) || (p.name.en ?? "").toLowerCase().includes(q)),
+  );
+  const lowStockCount = menu.products.filter((p) => !p.isArchived && p.stockQty !== null && p.stockQty <= LOW_STOCK).length;
+
+  const editStock = (p: AdminProductDto) => {
+    const answer = prompt(
+      `Stock de «${p.name.pt}»
+
+Quantas unidades há? Cada pedido desconta automaticamente e, ao chegar a 0, o artigo fica esgotado.
+Deixe vazio para não controlar o stock deste artigo.`,
+      p.stockQty === null ? "" : String(p.stockQty),
+    );
+    if (answer === null) return;
+    const trimmed = answer.trim();
+    const stockQty = trimmed === "" ? null : Number(trimmed);
+    if (stockQty !== null && (!Number.isInteger(stockQty) || stockQty < 0)) return toast("Indique um número inteiro igual ou superior a 0.", "error");
+    void productAction(p, "stock", { stockQty }, "PATCH", stockQty === null ? `${p.name.pt}: stock não controlado` : `${p.name.pt}: ${stockQty} em stock`);
+  };
 
   return (
     <div className="admin-page">
@@ -99,6 +124,10 @@ export function MenuPage() {
         <label className="check">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
           Mostrar arquivados
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={lowStockOnly} onChange={(e) => setLowStockOnly(e.target.checked)} />
+          Só stock baixo{lowStockCount > 0 && <span className="badge badge-warning">{lowStockCount}</span>}
         </label>
       </div>
 
@@ -162,6 +191,11 @@ export function MenuPage() {
                       <span className="row wrap">
                         {p.isArchived && <span className="badge badge-muted">Arquivado</span>}
                         {!p.isArchived && !p.isAvailable && <span className="badge badge-danger">Esgotado</span>}
+                        {!p.isArchived && p.stockQty !== null && (
+                          <span className={cx("badge", p.stockQty === 0 ? "badge-danger" : p.stockQty <= LOW_STOCK ? "badge-warning" : "badge-muted")}>
+                            {p.stockQty === 0 ? "Sem stock" : `Stock: ${p.stockQty}`}
+                          </span>
+                        )}
                       </span>
                     </div>
                     <div className="admin-product-actions">
@@ -178,6 +212,11 @@ export function MenuPage() {
                           <span className="switch-track" aria-hidden="true" />
                           <span className="switch-label">{p.isAvailable ? "Disponível" : "Esgotado"}</span>
                         </label>
+                      )}
+                      {!p.isArchived && canToggle && (
+                        <button type="button" className="btn btn-ghost btn-sm" disabled={busyId === p.id} onClick={() => editStock(p)}>
+                          Stock
+                        </button>
                       )}
                       {isAdmin && !p.isArchived && (
                         <>

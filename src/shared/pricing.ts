@@ -51,6 +51,9 @@ export class PricingError extends Error {
   }
 }
 
+/** Sold out: switched off by staff, or tracked stock reached zero. */
+export const isOrderable = (product: Pick<ProductDto, "isAvailable" | "stockQty">) => product.isAvailable && product.stockQty !== 0;
+
 /** Catalogue entries must already exclude archived products and inactive categories. */
 export function priceOrder(
   lines: PricingLineInput[],
@@ -77,7 +80,7 @@ function priceLine(
 ): PricedLine {
   const product = catalogue.get(line.productId);
   if (!product) throw new PricingError("PRODUCT_NOT_FOUND", index, line.productId);
-  if (!product.isAvailable) throw new PricingError("PRODUCT_UNAVAILABLE", index, line.productId);
+  if (!isOrderable(product)) throw new PricingError("PRODUCT_UNAVAILABLE", index, line.productId);
 
   if (new Set(line.optionIds).size !== line.optionIds.length) {
     throw new PricingError("OPTION_DUPLICATE", index, line.productId);

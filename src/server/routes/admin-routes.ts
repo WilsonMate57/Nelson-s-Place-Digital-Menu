@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import {
   availabilitySchema,
+  stockSchema,
   chatMessageSchema,
   categoryInputSchema,
   orderListQuerySchema,
@@ -139,6 +140,15 @@ export function adminRoutes(s: Services) {
     const { isAvailable } = await readJson(c, availabilitySchema);
     s.menuRepo.setAvailability(id, isAvailable);
     s.auditRepo.record(c.get("staff").id, "product_availability", "product", id, { isAvailable });
+    return c.json(s.menuRepo.getProduct(id));
+  });
+
+  app.patch("/products/:id/stock", can("menu.availability", "menu.edit"), async (c) => {
+    const id = parseId(c.req.param("id"));
+    const { stockQty } = await readJson(c, stockSchema);
+    const before = s.menuRepo.getProduct(id).stockQty;
+    s.menuRepo.setStock(id, stockQty);
+    s.auditRepo.record(c.get("staff").id, "product_stock", "product", id, { from: before, to: stockQty });
     return c.json(s.menuRepo.getProduct(id));
   });
 

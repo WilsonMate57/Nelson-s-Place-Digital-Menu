@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { isOrderable } from "../../shared/pricing";
 import type { CategoryDto, ProductDto } from "../../shared/types";
 import { ProductImage } from "../components/ProductImage";
 import { cx } from "../lib/util";
 import { useGuest } from "./context";
+
+/** Show "only N left" from this many units down. */
+const LOW_STOCK = 3;
 
 interface Props {
   categories: CategoryDto[];
@@ -194,21 +198,25 @@ export function MenuView({ categories, products, onOpenProduct }: Props) {
 function ProductCard({ product, canOrder, onOpen }: { product: ProductDto; canOrder: boolean; onOpen: () => void }) {
   const { t, text, money } = useGuest();
   const name = text(product.name);
+  const available = isOrderable(product);
+  const lowStock = available && product.stockQty !== null && product.stockQty <= LOW_STOCK;
   return (
-    <article className={cx("product-card", !product.isAvailable && "is-unavailable")}>
-      <button type="button" className="product-card-hit" onClick={onOpen} aria-label={`${name}, ${money(product.priceCents)}${product.isAvailable ? "" : `, ${t("unavailable")}`}`} />
+    <article className={cx("product-card", !available && "is-unavailable")}>
+      <button type="button" className="product-card-hit" onClick={onOpen} aria-label={`${name}, ${money(product.priceCents)}${available ? "" : `, ${t("unavailable")}`}`} />
       <ProductImage src={product.imageUrl} alt="" className="product-card-image" />
       <div className="product-card-body">
         <h3 className="product-card-title">{name}</h3>
         {product.description && <p className="product-card-description">{text(product.description)}</p>}
         <div className="product-card-footer">
           <span className="price">{money(product.priceCents)}</span>
-          {!product.isAvailable ? (
+          {!available ? (
             <span className="badge badge-muted">{t("unavailable")}</span>
+          ) : lowStock ? (
+            <span className="badge badge-warning">{t("lowStock", { n: product.stockQty! })}</span>
           ) : product.optionGroups.length > 0 ? (
             <span className="badge badge-muted">{t("optionsAvailable")}</span>
           ) : null}
-          {product.isAvailable && canOrder && (
+          {available && canOrder && (
             <span className="product-card-add" aria-hidden="true">
               +
             </span>

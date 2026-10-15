@@ -196,6 +196,9 @@ export type CategoryInput = z.infer<typeof categoryInputSchema>;
 
 export const availabilitySchema = z.object({ isAvailable: z.boolean() });
 
+/** Units in stock; null = do not track stock for this product. */
+export const stockSchema = z.object({ stockQty: z.number().int().min(0).max(100_000).nullable() });
+
 export const staffCreateSchema = z.object({
   email: z.email().trim().toLowerCase().max(254),
   displayName: requiredText(80),

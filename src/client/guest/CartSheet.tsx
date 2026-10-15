@@ -261,7 +261,8 @@ function CheckoutStep({ lines, priced, qrLocation, products, categories, onBack,
       let message: string = t("errGeneric");
       if (e.isNetwork) message = t("errNetwork");
       else if (e.code === "MENU_CHANGED") {
-        message = t("errMenuChanged");
+        const details = e.details as { reason?: string; available?: number } | undefined;
+        message = details?.reason === "OUT_OF_STOCK" ? t("errOutOfStock", { n: details.available ?? 0 }) : t("errMenuChanged");
         onMenuStale();
       } else if (e.code === "ORDERS_PAUSED") message = t("errPaused");
       else if (e.code === "RATE_LIMITED") message = t("errRateLimited");

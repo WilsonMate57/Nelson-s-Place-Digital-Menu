@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ORDER_LIMITS } from "../../shared/constants";
+import { isOrderable } from "../../shared/pricing";
 import type { OptionGroupDto, ProductDto } from "../../shared/types";
 import { Dialog } from "../components/Dialog";
 import { ProductImage } from "../components/ProductImage";
@@ -43,6 +44,7 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
     Object.fromEntries(product.optionGroups.map((g) => [g.id, [] as number[]])),
   );
   const [quantity, setQuantity] = useState(1);
+  const maxQuantity = Math.min(ORDER_LIMITS.maxQuantityPerLine, product.stockQty ?? ORDER_LIMITS.maxQuantityPerLine);
   const [notes, setNotes] = useState("");
   const [showErrors, setShowErrors] = useState(false);
 
@@ -120,7 +122,7 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
         );
       })}
 
-      {canOrder && product.isAvailable && (
+      {canOrder && isOrderable(product) && (
         <>
           <div className="field">
             <label className="label" htmlFor="item-notes">
@@ -149,8 +151,8 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
               <output aria-live="polite">{quantity}</output>
               <button
                 type="button"
-                onClick={() => setQuantity((q) => Math.min(ORDER_LIMITS.maxQuantityPerLine, q + 1))}
-                disabled={quantity >= ORDER_LIMITS.maxQuantityPerLine}
+                onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                disabled={quantity >= maxQuantity}
                 aria-label={t("increase")}
               >
                 +
@@ -162,7 +164,7 @@ function ProductForm({ product, canOrder, onAdd }: { product: ProductDto; canOrd
           </div>
         </>
       )}
-      {!product.isAvailable && <p className="alert alert-warning">{t("unavailable")}</p>}
+      {!isOrderable(product) && <p className="alert alert-warning">{t("unavailable")}</p>}
     </div>
   );
 }

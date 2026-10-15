@@ -12,6 +12,7 @@ const chicken: ProductDto = {
   priceCents: 65000,
   currency: "MZN",
   isAvailable: true,
+  stockQty: null,
   sortOrder: 0,
   optionGroups: [
     {

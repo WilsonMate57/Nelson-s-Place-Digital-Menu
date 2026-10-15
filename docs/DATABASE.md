@@ -17,6 +17,8 @@ SQLite 3 (via `better-sqlite3`), one file at `DATABASE_PATH` (default `data/nels
 
 4. Access profiles (2026-10-14): `roles` (name, description, `permissions` JSON array, `is_system`) with Administrador (`["*"]`), Gerente, Recepção and Cozinha; `staff` rebuilt with `role_id` (FK → roles, RESTRICT) instead of the fixed `role` column (admin → Administrador, reception → Recepção, restaurant → Cozinha).
 
+5. Simple stock (2026-10-15): `products.stock_qty` (NULL = not tracked, CHECK ≥ 0) and `order_items.stock_taken` (units the line took from stock; given back once if the order is cancelled).
+
 ## Entity overview
 
 ```
@@ -52,6 +54,7 @@ A category can be deleted only if it has no products at all (`ON DELETE RESTRICT
 | `currency` | `MZN` |
 | `is_available` | Sold-out toggle (any staff role) |
 | `is_archived` | Soft delete; archived products disappear from the menu but past orders keep their snapshots |
+| `stock_qty` | Optional units in stock (NULL = not tracked). Each order takes its units inside the order transaction (`UPDATE … WHERE stock_qty >= ?`), refusing the order if there are not enough; at 0 the product is sold out for guests |
 | `sort_order`, timestamps | Index `(category_id, sort_order)` |
 
 ### `option_groups` / `options`
@@ -71,10 +74,10 @@ Per-product customisation. `option_groups.min_select` / `max_select` (CHECK `max
 | `subtotal_cents`, `charges_cents`, `charges_json`, `total_cents` | CHECK `total = subtotal + charges`; `charges_json` snapshots applied surcharges |
 | timestamps | Indexes `(status, created_at)`, `(created_at)` |
 
-Orders are never deleted by the application.
+Orders are deleted only by an administrator through **Definições → Limpar pedidos** (period + all/cancelled, confirmation word `APAGAR`); the server first writes a full copy of the database to `BACKUP_DIR` (`antes-de-limpar-<timestamp>.db`) and records the deletion in `audit_log`. Items, history, chat and WhatsApp records cascade.
 
 ### `order_items`
-Snapshot per line: `product_id` (nullable, SET NULL if the product is ever hard-deleted), `product_name` (Portuguese), `unit_price_cents` (base + options), `quantity` (1–100), `options_json` (`[{optionId, groupName, name, priceDeltaCents}]`), `notes`, `line_total_cents` (CHECK `= unit × quantity`).
+Snapshot per line: `product_id` (nullable, SET NULL if the product is ever hard-deleted), `product_name` (Portuguese), `unit_price_cents` (base + options), `quantity` (1–100), `options_json` (`[{optionId, groupName, name, priceDeltaCents}]`), `notes`, `line_total_cents` (CHECK `= unit × quantity`), `stock_taken` (units taken from the product's stock; reset to 0 when returned on cancellation).
 
 ### `order_status_history`
 Every transition with `from_status`, `to_status`, `staff_id` (NULL = created by the guest), optional `note` (e.g. cancellation reason).
@@ -101,6 +104,7 @@ SQLite has no users or row-level security. Protection comes from:
 ## Backups and restore
 
 - `npm run db:backup -- --dir backups --keep 14` uses SQLite's online backup API (consistent while the server is running) and keeps the newest N files.
+- Production (nelsonsplace.co.mz): `~/nelsons-menu/backup.sh` runs daily at 03:00 from the subscription's crontab — database to `backups/diario` (last 30) and new photos to `backups/fotos`; log in `backups/backup.log`.
 - Schedule daily (Plesk → Scheduled Tasks, or cron) **and copy the backup folder off the server** (e.g. Plesk Backup Manager to remote storage). Back up `uploads/` too.
 - Restore: stop the app, replace `DATABASE_PATH` with the backup file (delete stale `-wal`/`-shm` files next to it), start the app. Test a restore before go-live.
 

@@ -33,6 +33,7 @@ interface ProductRow {
   currency: string;
   is_available: number;
   is_archived: number;
+  stock_qty: number | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -172,6 +173,7 @@ export class MenuRepo {
       currency: r.currency,
       isAvailable: r.is_available === 1,
       isArchived: r.is_archived === 1,
+      stockQty: r.stock_qty,
       sortOrder: r.sort_order,
       optionGroups: groups.get(r.id) ?? [],
       createdAt: r.created_at,
@@ -235,6 +237,26 @@ export class MenuRepo {
       .prepare("UPDATE products SET is_available = ?, updated_at = ? WHERE id = ?")
       .run(isAvailable ? 1 : 0, nowIso(), id);
     if (result.changes === 0) throw notFound("Produto não encontrado");
+  }
+
+  /** Sets the units in stock; null stops tracking stock for the product. */
+  setStock(id: number, stockQty: number | null): void {
+    const result = this.db.prepare("UPDATE products SET stock_qty = ?, updated_at = ? WHERE id = ?").run(stockQty, nowIso(), id);
+    if (result.changes === 0) throw notFound("Produto não encontrado");
+  }
+
+  /** Takes units from a tracked product; false if there are not enough. Call inside the order transaction. */
+  takeStock(id: number, quantity: number): boolean {
+    return (
+      this.db
+        .prepare("UPDATE products SET stock_qty = stock_qty - ?, updated_at = ? WHERE id = ? AND stock_qty IS NOT NULL AND stock_qty >= ?")
+        .run(quantity, nowIso(), id, quantity).changes === 1
+    );
+  }
+
+  /** Gives units back (cancelled order), unless tracking was switched off meanwhile. */
+  returnStock(id: number, quantity: number): void {
+    this.db.prepare("UPDATE products SET stock_qty = stock_qty + ?, updated_at = ? WHERE id = ? AND stock_qty IS NOT NULL").run(quantity, nowIso(), id);
   }
 
   setArchived(id: number, archived: boolean): void {
