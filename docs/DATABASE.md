@@ -21,6 +21,8 @@ SQLite 3 (via `better-sqlite3`), one file at `DATABASE_PATH` (default `data/nels
 
 6. Calls from guests (2026-10-15): `service_requests` (`kind` waiter/bill, `location_type` room/table + `location_label`, optional `payment_method` cash/card/mpesa for the bill, `status` open/done, `handled_by`, `handled_at`, random `public_token` for the guest to follow it). A repeated call from the same place within 10 minutes returns the open one.
 
+6. Guest calls (2026-10-15): `service_requests` — `kind` waiter/bill, `location_type`/`location_label`, optional `payment_method` (cash/card/mpesa, bill only), `status` open/done, `handled_by`/`handled_at`, random `public_token` for the guest's status view. A repeated open call from the same place within 10 minutes is returned instead of duplicated.
+
 ## Entity overview
 
 ```
