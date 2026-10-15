@@ -26,11 +26,10 @@ export function ClosingReceipt({ report, hotelName, hotel, currencySymbol }: { r
       <div className="r-center r-strong">{periodLabel(report)}</div>
       <div className="r-rule" />
       {row("VENDAS", money(k.revenueCents), true)}
-      {row("Pedidos aceites", k.ordersSold)}
+      {row("Pedidos entregues", k.ordersCompleted)}
       {row("Pedidos recebidos", k.ordersReceived)}
-      {row("Concluídos", k.ordersCompleted)}
+      {row("Por entregar", k.ordersOpen)}
       {row("Cancelados", k.ordersCancelled)}
-      {row("Pendentes", k.ordersPending)}
       {row("Valor médio", money(k.avgTicketCents))}
       {row("Artigos vendidos", k.itemsSold)}
       {row("Encomendas", k.scheduledOrders)}
@@ -63,7 +62,7 @@ export function ClosingReceipt({ report, hotelName, hotel, currencySymbol }: { r
         </>
       )}
       <div className="r-rule" />
-      <div className="r-center r-small">Vendas = pedidos aceites. Não serve de documento fiscal.</div>
+      <div className="r-center r-small">Vendas = pedidos entregues. Não serve de documento fiscal.</div>
       <div className="r-center r-small">Impresso {formatDateTime(new Date().toISOString())}</div>
     </div>,
     document.body,

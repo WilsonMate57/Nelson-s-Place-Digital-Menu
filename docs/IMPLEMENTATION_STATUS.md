@@ -85,10 +85,10 @@ Decided by the hotel: anyone may order; kitchen closes at **23:00**; **45 min** 
 ## Reports (2026-10-13)
 
 Admin-only "Relatórios" screen with one period filter (today, yesterday, 7/30 days, this/last month, custom) and comparison with the previous period of the same length:
-- KPIs: sales, accepted orders, average order value, items sold, cancellations (rate), scheduled orders, deposits received, average time to confirm / complete.
+- KPIs: sales, delivered orders (with received / not yet delivered for information), average order value, items sold, cancellations (rate), scheduled orders, deposits received, average time to confirm / complete.
 - Charts: sales per day, orders per hour (Maputo time), top items, sales per category, how guests receive (table/apartment/take-away), most chosen options. Every chart has a table view.
 - CSV export of the period's orders (semicolon-separated, comma decimals, UTF-8 BOM for Excel in Portuguese).
-- "Sales" = orders accepted by staff (confirmed or later, not cancelled). These are operational figures from the menu system, **not fiscal invoicing**.
+- **Only delivered orders (status `COMPLETED`) count** in every statistic — sales, items, rankings, charts, customers, average times, the closing ticket and the daily summary (owner's decision, 2026-10-15, so cancelled and test orders never pollute the figures). Orders are dated by when they were placed. Staff performance still shows each person's confirm/complete/cancel actions. The CSV export lists every order in the period with its status. These are operational figures from the menu system, **not fiscal invoicing**.
 
 ## Chat, more reports, closing ticket, daily summary (2026-10-13)
 

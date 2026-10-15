@@ -98,7 +98,7 @@ export class ReportService {
     const t = this.reports.totals(range);
     return {
       ...t,
-      avgTicketCents: t.ordersSold > 0 ? Math.round(t.revenueCents / t.ordersSold) : 0,
+      avgTicketCents: t.ordersCompleted > 0 ? Math.round(t.revenueCents / t.ordersCompleted) : 0,
       avgMinutesToConfirm: this.reports.averageMinutesTo(range, "CONFIRMED"),
       avgMinutesToComplete: this.reports.averageMinutesTo(range, "COMPLETED"),
     };

@@ -35,15 +35,19 @@ async function advance(t: TestContext, cookie: string, id: number, steps: string
 }
 
 describe("admin reports", () => {
-  it("summarises sales, items, options and hours for the period", async () => {
+  it("counts only delivered orders in sales, items, options and hours", async () => {
     const { t, setClock, juice, chicken, rice, admin } = await setup();
     // 13/10 12:00 — 2 juices, completed (360 MT)
     const a = await order(t, [{ productId: juice.id, quantity: 2, optionIds: [] }]);
     await advance(t, admin, a, ["CONFIRMED", "PREPARING", "READY", "COMPLETED"]);
-    // 13/10 19:00 — 1 chicken with rice, confirmed (650 MT)
+    // 13/10 19:00 — 1 chicken with rice, completed (650 MT)
     setClock(at("2026-10-13", "19:00"));
     const b = await order(t, [{ productId: chicken.id, quantity: 1, optionIds: [rice.id] }]);
-    await advance(t, admin, b, ["CONFIRMED"]);
+    await advance(t, admin, b, ["CONFIRMED", "PREPARING", "READY", "COMPLETED"]);
+    // 13/10 19:15 — confirmed but not delivered yet: not counted
+    setClock(at("2026-10-13", "19:15"));
+    const d = await order(t, [{ productId: chicken.id, quantity: 3, optionIds: [rice.id] }]);
+    await advance(t, admin, d, ["CONFIRMED", "PREPARING"]);
     // 13/10 19:30 — cancelled, must not count as a sale
     setClock(at("2026-10-13", "19:30"));
     const c = await order(t, [{ productId: juice.id, quantity: 5, optionIds: [] }]);
@@ -56,45 +60,49 @@ describe("admin reports", () => {
     expect(res.status).toBe(200);
     const r = (await res.json()) as ReportDto;
     expect(r.kpis).toMatchObject({
-      ordersReceived: 4,
-      ordersSold: 2,
-      ordersCompleted: 1,
+      ordersReceived: 5,
+      ordersCompleted: 2,
       ordersCancelled: 1,
-      ordersPending: 1,
+      ordersOpen: 2,
       revenueCents: 36000 + 65000,
       avgTicketCents: 50500,
       itemsSold: 3,
     });
     expect(r.previousFrom).toBe("2026-10-12");
     expect(r.previous.ordersReceived).toBe(0);
-    expect(r.daily).toEqual([{ day: "2026-10-13", orders: 3, revenueCents: 101000 }]);
+    expect(r.daily).toEqual([{ day: "2026-10-13", orders: 2, revenueCents: 101000 }]);
     expect(r.hourly).toHaveLength(24);
     expect(r.hourly[12]!.orders).toBe(1);
     expect(r.hourly[19]!.orders).toBe(1);
-    expect(r.hourly[20]!.orders).toBe(1);
+    expect(r.hourly[20]!.orders).toBe(0);
     expect(r.topItems[0]).toEqual({ name: "Sumo natural", quantity: 2, revenueCents: 36000 });
     expect(r.topOptions).toEqual([{ group: "Acompanhamento", name: "Arroz", count: 1 }]);
     expect(r.categories.map((x) => x.name).sort()).toEqual(["Bebidas", "Pratos principais"]);
-    expect(r.byLocation).toEqual([{ type: "room", orders: 3, revenueCents: 101000 }]);
+    expect(r.byLocation).toEqual([{ type: "room", orders: 2, revenueCents: 101000 }]);
     expect(r.kpis.avgMinutesToConfirm).toBe(0);
 
     // Staff performance, unsold items and weekday breakdown.
-    expect(r.staff).toEqual([{ name: "Admin", confirmed: 2, completed: 1, cancelled: 1, avgMinutesToConfirm: 0, replies: 0 }]);
+    expect(r.staff).toEqual([{ name: "Admin", confirmed: 3, completed: 2, cancelled: 1, avgMinutesToConfirm: 0, replies: 0 }]);
     expect(r.unsoldItems.map((u) => u.name)).toEqual(["Sopa do dia", "Água mineral", "Fatia de bolo"]);
     expect(r.unsoldItems.find((u) => u.name === "Água mineral")!.isAvailable).toBe(false);
     expect(r.weekday.map((w) => w.weekday)).toEqual([1, 2, 3, 4, 5, 6, 0]);
-    expect(r.weekday[1]).toEqual({ weekday: 2, orders: 3, revenueCents: 101000 }); // 13/10/2026 is a Tuesday
+    expect(r.weekday[1]).toEqual({ weekday: 2, orders: 2, revenueCents: 101000 }); // 13/10/2026 is a Tuesday
   });
 
   it("recognises returning customers by phone number, whatever the formatting", async () => {
     const { t, setClock, juice, admin } = await setup();
-    const place = async (phone: string, name: string) =>
-      t.request("/api/orders", {
+    const place = async (phone: string, name: string, delivered = true) => {
+      const res = await t.request("/api/orders", {
         method: "POST",
         body: JSON.stringify(buildSubmission({ guestName: name, contactPhone: phone, items: [{ productId: juice.id, quantity: 1, optionIds: [] }] })),
       });
+      const { reference } = (await res.json()) as GuestOrderDto;
+      const id = t.services.ordersRepo.list({ status: "ALL", q: reference, limit: 1 })[0]!.id;
+      await advance(t, admin, id, delivered ? ["CONFIRMED", "PREPARING", "READY", "COMPLETED"] : ["CANCELLED"]);
+    };
     setClock(at("2026-10-12", "12:00"));
     await place("+258 84 111 2222", "Rita");
+    await place("+258 82 999 0000", "Novo", false); // cancelled: does not make "Novo" a returning customer
     setClock(at("2026-10-13", "12:00"));
     await place("258841112222", "Rita");
     await place("+258 82 999 0000", "Novo");

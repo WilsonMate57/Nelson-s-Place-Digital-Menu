@@ -265,13 +265,14 @@ export interface ApiErrorBody {
 // ---------------------------------------------------------------------------
 
 export interface ReportKpis {
+  /** Every order placed in the period, whatever its status (information only). */
   ordersReceived: number;
-  /** Orders accepted by the hotel (confirmed or later, not cancelled). */
-  ordersSold: number;
+  /** Delivered orders (COMPLETED): the only ones counted in sales and statistics. */
   ordersCompleted: number;
   ordersCancelled: number;
-  ordersPending: number;
-  /** Sales = total of accepted orders. */
+  /** Not delivered yet (pending, confirmed, preparing or ready): not counted. */
+  ordersOpen: number;
+  /** Sales = total of delivered orders. */
   revenueCents: number;
   avgTicketCents: number;
   itemsSold: number;

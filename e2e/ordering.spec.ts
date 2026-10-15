@@ -311,7 +311,7 @@ for (const vp of VIEWPORTS) {
 test("admin sees reports for the period and can export orders", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await adminLogin(page);
-  // Make sure today has at least one accepted order.
+  // Make sure today has at least one delivered order (only those count).
   const menu = (await (await page.request.get("/api/menu")).json()) as { products: { id: number; name: { pt: string } }[] };
   const juice = menu.products.find((p) => p.name.pt === "Sumo natural")!;
   const placed = await page.request.post("/api/orders", {
@@ -319,11 +319,15 @@ test("admin sees reports for the period and can export orders", async ({ page })
   });
   expect(placed.status()).toBe(201);
   const list = (await (await page.request.get("/api/admin/orders?status=PENDING")).json()) as { orders: { id: number }[] };
-  const confirm = await page.request.post(`/api/admin/orders/${list.orders[0]!.id}/status`, {
-    headers: { "x-np-request": "1" },
-    data: { to: "CONFIRMED", expectedStatus: "PENDING" },
-  });
-  expect(confirm.status()).toBe(200);
+  let expectedStatus = "PENDING";
+  for (const to of ["CONFIRMED", "PREPARING", "READY", "COMPLETED"]) {
+    const res = await page.request.post(`/api/admin/orders/${list.orders[0]!.id}/status`, { headers: { "x-np-request": "1" }, data: { to, expectedStatus } });
+    expect(res.status()).toBe(200);
+    expectedStatus = to;
+  }
+  await page.goto("/admin/#/reports");
+  await page.getByRole("button", { name: "Hoje" }).click();
+  await expect(page.locator(".kpi").filter({ hasText: "Pedidos entregues" })).toContainText("não contam");
 
   await page.getByRole("link", { name: "Relatórios" }).click();
   await expect(page.getByRole("heading", { name: "Relatórios" })).toBeVisible();

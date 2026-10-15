@@ -28,7 +28,7 @@ export function buildDailySummary(report: ReportDto, ctx: { hotelName: string; c
     `*${ctx.hotelName} — ${title} ${periodLabel(report)}*`,
     "",
     `Vendas: *${money(k.revenueCents)}*${change(k.revenueCents, report.previous.revenueCents)}`,
-    `Pedidos aceites: ${k.ordersSold} · recebidos: ${k.ordersReceived} · cancelados: ${k.ordersCancelled} · pendentes: ${k.ordersPending}`,
+    `Pedidos entregues: ${k.ordersCompleted} · recebidos: ${k.ordersReceived} · cancelados: ${k.ordersCancelled} · por entregar: ${k.ordersOpen}`,
     `Valor médio por pedido: ${money(k.avgTicketCents)} · artigos vendidos: ${k.itemsSold}`,
   ];
   if (k.scheduledOrders || k.depositsConfirmedCents) {
@@ -47,5 +47,6 @@ export function buildDailySummary(report: ReportDto, ctx: { hotelName: string; c
     for (const s of report.staff) lines.push(`${s.name}: ${s.confirmed} confirmados · ${s.completed} concluídos${s.cancelled ? ` · ${s.cancelled} cancelados` : ""}`);
   }
   if (k.ordersReceived === 0) lines.push("", "Sem pedidos neste período.");
+  else lines.push("", "Só os pedidos entregues contam nas vendas.");
   return lines.join("\n");
 }

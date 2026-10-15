@@ -94,7 +94,7 @@ export function ReportsPage() {
         <div>
           <h1 className="admin-title">Relatórios</h1>
           <p className="muted small">
-            «Vendas» = pedidos aceites pela equipa (confirmados, em preparação, prontos ou concluídos). Pedidos pendentes e cancelados não contam.
+            Os relatórios contam apenas pedidos <strong>entregues</strong> (estado «Concluído»). Pedidos por entregar ou cancelados (por exemplo, testes) não entram nas vendas nem nos gráficos.
           </p>
         </div>
         {can("reports.export") && (
@@ -154,10 +154,14 @@ export function ReportsPage() {
           <ClosingActions report={report} />
           <Kpis k={report.kpis} prev={report.previous} money={money} />
 
-          {report.kpis.ordersReceived === 0 ? (
+          {report.kpis.ordersCompleted === 0 ? (
             <div className="state-block card">
-              <h2>Sem pedidos neste período</h2>
-              <p>Escolha outro período acima.</p>
+              <h2>Nenhum pedido entregue neste período</h2>
+              <p>
+                {report.kpis.ordersReceived > 0
+                  ? `Há ${report.kpis.ordersReceived} pedido(s) neste período, mas nenhum foi marcado como concluído (entregue).`
+                  : "Escolha outro período acima."}
+              </p>
             </div>
           ) : (
             <>
@@ -329,10 +333,10 @@ function Kpis({ k, prev, money }: { k: ReportKpis; prev: ReportKpis; money: (c: 
   return (
     <div className="kpis">
       <Tile hero label="Vendas" value={money(k.revenueCents)} delta={delta(k.revenueCents, prev.revenueCents)} />
-      <Tile label="Pedidos aceites" value={String(k.ordersSold)} delta={delta(k.ordersSold, prev.ordersSold)} note={`${k.ordersReceived} recebidos · ${k.ordersPending} pendentes`} />
+      <Tile label="Pedidos entregues" value={String(k.ordersCompleted)} delta={delta(k.ordersCompleted, prev.ordersCompleted)} note={`${k.ordersReceived} recebidos · ${k.ordersOpen} por entregar (não contam)`} />
       <Tile label="Valor médio por pedido" value={money(k.avgTicketCents)} delta={delta(k.avgTicketCents, prev.avgTicketCents)} />
       <Tile label="Artigos vendidos" value={String(k.itemsSold)} delta={delta(k.itemsSold, prev.itemsSold)} />
-      <Tile label="Cancelados" value={`${k.ordersCancelled}`} note={`${cancelRate}% dos pedidos`} delta={delta(cancelRate, prevCancelRate)} upIsBad />
+      <Tile label="Cancelados" value={`${k.ordersCancelled}`} note={`${cancelRate}% dos pedidos recebidos (não contam)`} delta={delta(cancelRate, prevCancelRate)} upIsBad />
       <Tile label="Encomendas (para mais tarde)" value={String(k.scheduledOrders)} delta={delta(k.scheduledOrders, prev.scheduledOrders)} />
       <Tile label="Sinais recebidos" value={money(k.depositsConfirmedCents)} />
       <Tile label="Tempo médio até confirmar" value={minutes(k.avgMinutesToConfirm)} delta={delta(k.avgMinutesToConfirm ?? 0, prev.avgMinutesToConfirm ?? 0)} upIsBad />

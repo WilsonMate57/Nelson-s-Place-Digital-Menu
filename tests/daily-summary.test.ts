@@ -22,7 +22,12 @@ async function withSale(t: TestContext) {
   await t.request("/api/orders", { method: "POST", body: JSON.stringify(buildSubmission({ items: [{ productId: juice.id, quantity: 2, optionIds: [] }] })) });
   const id = t.services.ordersRepo.list({ status: "ALL", limit: 1 })[0]!.id;
   const cookie = await t.login("reception@test.local");
-  await t.request(`/api/admin/orders/${id}/status`, { method: "POST", cookie, body: JSON.stringify({ to: "CONFIRMED", expectedStatus: "PENDING" }) });
+  // Only delivered orders count in the figures.
+  let expectedStatus = "PENDING";
+  for (const to of ["CONFIRMED", "PREPARING", "READY", "COMPLETED"]) {
+    await t.request(`/api/admin/orders/${id}/status`, { method: "POST", cookie, body: JSON.stringify({ to, expectedStatus }) });
+    expectedStatus = to;
+  }
 }
 
 describe("daily summary to the manager", () => {
@@ -120,7 +125,7 @@ describe("daily summary to the manager", () => {
       to: "2026-10-13",
       previousFrom: "2026-10-12",
       previousTo: "2026-10-12",
-      kpis: { ordersReceived: 0, ordersSold: 0, ordersCompleted: 0, ordersCancelled: 0, ordersPending: 0, revenueCents: 0, avgTicketCents: 0, itemsSold: 0, depositsConfirmedCents: 0, scheduledOrders: 0, avgMinutesToConfirm: null, avgMinutesToComplete: null },
+      kpis: { ordersReceived: 0, ordersCompleted: 0, ordersCancelled: 0, ordersOpen: 0, revenueCents: 0, avgTicketCents: 0, itemsSold: 0, depositsConfirmedCents: 0, scheduledOrders: 0, avgMinutesToConfirm: null, avgMinutesToComplete: null },
       daily: [],
       hourly: [],
       topItems: [],
